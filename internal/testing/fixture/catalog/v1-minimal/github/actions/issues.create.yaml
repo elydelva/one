@@ -1,0 +1,30 @@
+id: issues.create
+description: Create an issue
+permission: issues.write
+request:
+  method: POST
+  path: /repos/{owner}/{repo}/issues
+  body: $inputs
+inputs:
+  - name: owner
+    type: string
+    required: true
+    location: path
+  - name: repo
+    type: string
+    required: true
+    location: path
+  - name: title
+    type: string
+    required: true
+    location: body
+    min_length: 1
+  - name: body
+    type: string
+    location: body
+  - name: labels
+    type: array
+    location: body
+    items:
+      name: _
+      type: string

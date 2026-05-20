@@ -2,7 +2,6 @@ package auth
 
 import (
 	"context"
-	"errors"
 
 	"elydelva/one/internal/core"
 	"elydelva/one/internal/ports"
@@ -18,8 +17,17 @@ func (p *APIKeyProvider) Supports(kind core.ProviderKind) bool {
 	return kind == core.ProviderAPIKey
 }
 
-func (p *APIKeyProvider) Login(_ context.Context, _ core.ServiceID, _ core.AccountAlias) (core.Credential, error) {
-	return core.Credential{}, errors.New("not implemented")
+func (p *APIKeyProvider) Login(_ context.Context, svc core.ServiceID, alias core.AccountAlias) (core.Credential, error) {
+	tok, err := promptSecret("Paste your API key for " + string(svc) + " (input hidden): ")
+	if err != nil {
+		return core.Credential{}, err
+	}
+	return core.Credential{
+		Provider:    core.ProviderAPIKey,
+		Service:     svc,
+		Account:     alias,
+		AccessToken: tok,
+	}, nil
 }
 
 func (p *APIKeyProvider) Refresh(_ context.Context, cred core.Credential) (core.Credential, error) {

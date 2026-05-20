@@ -41,6 +41,22 @@ func ExitCode(err error) int {
 	if errors.As(err, &unknownSvc) {
 		return ExitUnknownService
 	}
+	var unknownAct core.ErrUnknownAction
+	if errors.As(err, &unknownAct) {
+		return ExitUnknownService
+	}
+	var notFound core.ErrNotFound
+	if errors.As(err, &notFound) {
+		return ExitUnknownService
+	}
+	var forbidden core.ErrForbidden
+	if errors.As(err, &forbidden) {
+		return ExitNotInScope
+	}
+	var unsup core.ErrUnsupportedRuntime
+	if errors.As(err, &unsup) {
+		return ExitSetupRequired
+	}
 
 	return ExitError
 }

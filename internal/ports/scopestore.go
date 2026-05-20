@@ -7,3 +7,9 @@ import "elydelva/one/internal/core"
 type ScopeStore interface {
 	Load(dir string) (core.Scope, error)
 }
+
+// ScopeWriter persists a scope back to disk (for `one scope add/remove/init`).
+// Adapters that are read-only (env, merged view) need not implement this.
+type ScopeWriter interface {
+	Save(dir string, scope core.Scope) error
+}

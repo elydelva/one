@@ -1,0 +1,23 @@
+id: issues.read
+description: Get a single issue
+permission: issues.read
+request:
+  method: GET
+  path: /repos/{owner}/{repo}/issues/{issue_number}
+inputs:
+  - name: owner
+    type: string
+    required: true
+    location: path
+  - name: repo
+    type: string
+    required: true
+    location: path
+  - name: issue_number
+    type: integer
+    required: true
+    location: path
+errors:
+  "404":
+    code: not_found
+    hint: "Issue not found or repo not accessible."

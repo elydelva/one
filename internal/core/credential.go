@@ -1,6 +1,9 @@
 package core
 
-import "time"
+import (
+	"encoding/json"
+	"time"
+)
 
 // ProviderKind identifies the authentication mechanism used.
 type ProviderKind string
@@ -37,4 +40,48 @@ func (c Credential) NeedsRefresh(now time.Time) bool {
 // Ref returns the AccountRef for this credential.
 func (c Credential) Ref() AccountRef {
 	return AccountRef{Service: c.Service, Alias: c.Account}
+}
+
+// credentialStorage is the on-disk / in-keychain shape of a credential.
+// Secrets are stored in plaintext at this boundary; the vault layer is responsible
+// for encryption (OS keychain, age, etc.).
+type credentialStorage struct {
+	Provider     ProviderKind `json:"provider"`
+	Service      ServiceID    `json:"service"`
+	Account      AccountAlias `json:"account"`
+	AccessToken  string       `json:"access_token,omitempty"`
+	RefreshToken string       `json:"refresh_token,omitempty"`
+	ExpiresAt    *time.Time   `json:"expires_at,omitempty"`
+	Scopes       []string     `json:"scopes,omitempty"`
+}
+
+// MarshalForStorage serializes the credential with secrets in plaintext.
+// Only vault adapters should call this. Never log or transmit the result.
+func (c Credential) MarshalForStorage() ([]byte, error) {
+	return json.Marshal(credentialStorage{
+		Provider:     c.Provider,
+		Service:      c.Service,
+		Account:      c.Account,
+		AccessToken:  c.AccessToken.Reveal(),
+		RefreshToken: c.RefreshToken.Reveal(),
+		ExpiresAt:    c.ExpiresAt,
+		Scopes:       c.Scopes,
+	})
+}
+
+// UnmarshalCredentialFromStorage reverses MarshalForStorage.
+func UnmarshalCredentialFromStorage(data []byte) (Credential, error) {
+	var s credentialStorage
+	if err := json.Unmarshal(data, &s); err != nil {
+		return Credential{}, err
+	}
+	return Credential{
+		Provider:     s.Provider,
+		Service:      s.Service,
+		Account:      s.Account,
+		AccessToken:  NewSecret(s.AccessToken),
+		RefreshToken: NewSecret(s.RefreshToken),
+		ExpiresAt:    s.ExpiresAt,
+		Scopes:       s.Scopes,
+	}, nil
 }

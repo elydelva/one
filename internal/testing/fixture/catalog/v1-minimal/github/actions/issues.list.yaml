@@ -1,0 +1,29 @@
+id: issues.list
+description: List issues for a repository (cursor-paginated)
+permission: issues.read
+request:
+  method: GET
+  path: /repos/{owner}/{repo}/issues
+inputs:
+  - name: owner
+    type: string
+    required: true
+    location: path
+  - name: repo
+    type: string
+    required: true
+    location: path
+  - name: state
+    type: string
+    location: query
+    enum: [open, closed, all]
+    default: open
+  - name: page
+    type: integer
+    location: query
+pagination:
+  style: cursor
+  request_param: page
+  request_location: query
+  response_token: next_page
+  max_pages: 10

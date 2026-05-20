@@ -38,6 +38,9 @@ func (v *Vault) Fetch(_ context.Context, ref core.AccountRef) (core.Credential, 
 func (v *Vault) Delete(_ context.Context, ref core.AccountRef) error {
 	v.mu.Lock()
 	defer v.mu.Unlock()
+	if _, ok := v.creds[ref]; !ok {
+		return core.ErrNotAuthenticated{Service: ref.Service, Account: ref.Alias}
+	}
 	delete(v.creds, ref)
 	return nil
 }

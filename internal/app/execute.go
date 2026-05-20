@@ -2,9 +2,12 @@ package app
 
 import (
 	"context"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
+	"fmt"
 
+	"elydelva/one/internal/core"
 	"elydelva/one/internal/ports"
 )
 
@@ -34,6 +37,7 @@ type ExecuteAction struct {
 	auth    []ports.AuthProvider
 	log     ports.Logger
 	clock   ports.Clock
+	crypto  ports.Crypto
 }
 
 // NewExecuteAction creates an ExecuteAction use case.
@@ -45,19 +49,133 @@ func NewExecuteAction(
 	auth []ports.AuthProvider,
 	log ports.Logger,
 	clock ports.Clock,
+	crypto ports.Crypto,
 ) *ExecuteAction {
 	return &ExecuteAction{
-		catalog: catalog,
-		vault:   vault,
-		runtime: runtime,
-		scope:   scope,
-		auth:    auth,
-		log:     log,
-		clock:   clock,
+		catalog: catalog, vault: vault, runtime: runtime, scope: scope,
+		auth: auth, log: log, clock: clock, crypto: crypto,
 	}
 }
 
 // Run executes the action.
-func (uc *ExecuteAction) Run(_ context.Context, _ ExecuteInput) (ExecuteOutput, error) {
-	return ExecuteOutput{}, errors.New("not implemented")
+func (uc *ExecuteAction) Run(ctx context.Context, in ExecuteInput) (ExecuteOutput, error) {
+	if in.Service == "" || in.Action == "" {
+		return ExecuteOutput{}, core.ErrInputValidation{Field: "service+action", Reason: "required"}
+	}
+	svcID := core.ServiceID(in.Service)
+	actionID := core.ActionID(in.Action)
+
+	// 1. Resolve catalog.
+	svc, err := uc.catalog.GetService(ctx, svcID)
+	if err != nil {
+		return ExecuteOutput{}, err
+	}
+	var action *core.Action
+	for i := range svc.Actions {
+		if svc.Actions[i].ID == actionID {
+			action = &svc.Actions[i]
+			break
+		}
+	}
+	if action == nil {
+		return ExecuteOutput{}, core.ErrUnknownAction{Service: svcID, Action: actionID}
+	}
+
+	// 2. Load scope.
+	scope, err := uc.scope.Load(in.ProjectDir)
+	if err != nil {
+		return ExecuteOutput{}, err
+	}
+
+	// 3. Check scope.
+	perm := core.Permission{Service: svcID, Path: action.Permission}
+	if !scope.Allows(perm) {
+		return ExecuteOutput{}, core.ErrNotInScope{Permission: perm}
+	}
+
+	// 4. Resolve account alias.
+	alias := core.AccountAlias(in.Account)
+	if alias == "" {
+		alias = scope.AccountFor(svcID)
+	}
+
+	// 5. Fetch credential.
+	cred, err := uc.vault.Fetch(ctx, core.AccountRef{Service: svcID, Alias: alias})
+	if err != nil {
+		return ExecuteOutput{}, err
+	}
+
+	// 6. Lazy refresh.
+	if uc.clock != nil && cred.NeedsRefresh(uc.clock.Now()) {
+		refreshed, rerr := uc.refresh(ctx, cred)
+		if rerr != nil {
+			return ExecuteOutput{}, rerr
+		}
+		cred = refreshed
+		if err := uc.vault.Store(ctx, cred.Ref(), cred); err != nil {
+			uc.log.Warn("refresh store failed", "service", svcID, "err", err.Error())
+		}
+	}
+
+	// 7. Validate inputs.
+	schema, err := core.ParseInputSchema(action.InputSchema)
+	if err != nil {
+		return ExecuteOutput{}, err
+	}
+	inputs := core.Inputs(in.Inputs)
+	if inputs == nil {
+		inputs = core.Inputs{}
+	}
+	inputs = schema.ApplyDefaults(inputs)
+	if err := schema.Validate(inputs); err != nil {
+		return ExecuteOutput{}, err
+	}
+
+	// 8. Generate trace ID.
+	traceID := uc.newTraceID()
+
+	// 9. Execute.
+	req := ports.ExecuteRequest{
+		Action:     *action,
+		Inputs:     inputs,
+		Credential: cred,
+		DryRun:     in.DryRun,
+		TraceID:    traceID,
+	}
+	result, err := uc.runtime.Execute(ctx, req)
+	if err != nil {
+		uc.log.Info("action failed",
+			"service", svcID, "action", actionID, "trace_id", traceID, "err", err.Error())
+		return ExecuteOutput{TraceID: traceID, Calls: result.Calls}, err
+	}
+
+	uc.log.Info("action succeeded",
+		"service", svcID, "action", actionID, "trace_id", traceID, "calls", len(result.Calls))
+
+	return ExecuteOutput{Result: result.Output, TraceID: traceID, Calls: result.Calls}, nil
 }
+
+// refresh finds a provider supporting the credential's kind and refreshes it.
+func (uc *ExecuteAction) refresh(ctx context.Context, cred core.Credential) (core.Credential, error) {
+	for _, p := range uc.auth {
+		if p.Supports(cred.Provider) {
+			return p.Refresh(ctx, cred)
+		}
+	}
+	return core.Credential{}, fmt.Errorf("no auth provider supports %s for refresh", cred.Provider)
+}
+
+// newTraceID returns a 16-byte hex identifier from the crypto port.
+func (uc *ExecuteAction) newTraceID() string {
+	if uc.crypto == nil {
+		return ""
+	}
+	buf, err := uc.crypto.RandomBytes(8)
+	if err != nil || len(buf) == 0 {
+		return ""
+	}
+	return hex.EncodeToString(buf)
+}
+
+// ensure errors-as keeps typed errors visible above.
+var _ = errors.As

@@ -46,3 +46,34 @@ func (s Scope) AccountFor(svc ServiceID) AccountAlias {
 	}
 	return "default"
 }
+
+// AllowsWithReason returns the same decision as Allows, plus a human-readable reason
+// indicating which rule fired (or "default deny" if none).
+func (s Scope) AllowsWithReason(perm Permission) (bool, string) {
+	ss, ok := s.Services[perm.Service]
+	if !ok {
+		return false, "default deny (service not in scope)"
+	}
+
+	for _, d := range ss.Deny {
+		if string(d) == string(perm.Path) {
+			return false, "denied (deny exact: " + string(d) + ")"
+		}
+	}
+	for _, d := range ss.Deny {
+		if d.Matches(perm) {
+			return false, "denied (deny glob: " + string(d) + ")"
+		}
+	}
+	for _, a := range ss.Allow {
+		if string(a) == string(perm.Path) {
+			return true, "allowed (allow exact: " + string(a) + ")"
+		}
+	}
+	for _, a := range ss.Allow {
+		if a.Matches(perm) {
+			return true, "allowed (allow glob: " + string(a) + ")"
+		}
+	}
+	return false, "default deny (no matching rule)"
+}

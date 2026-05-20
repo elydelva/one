@@ -2,15 +2,17 @@ package app
 
 import (
 	"context"
-	"errors"
+	"fmt"
 
+	"elydelva/one/internal/core"
 	"elydelva/one/internal/ports"
 )
 
 // LoginInput holds parameters for the Login use case.
 type LoginInput struct {
-	Service string
-	Account string
+	Service  string
+	Account  string
+	Provider core.ProviderKind // empty = default (PAT)
 }
 
 // Login authenticates a user for a service and stores the credential in the vault.
@@ -27,6 +29,37 @@ func NewLogin(vault ports.Vault, catalog ports.Catalog, auth []ports.AuthProvide
 }
 
 // Run starts the login flow.
-func (uc *Login) Run(_ context.Context, _ LoginInput) error {
-	return errors.New("not implemented")
+func (uc *Login) Run(ctx context.Context, in LoginInput) error {
+	if in.Service == "" {
+		return core.ErrInputValidation{Field: "service", Reason: "required"}
+	}
+	alias := core.AccountAlias(in.Account)
+	if alias == "" {
+		alias = "default"
+	}
+	kind := in.Provider
+	if kind == "" {
+		kind = core.ProviderPAT
+	}
+
+	var provider ports.AuthProvider
+	for _, p := range uc.auth {
+		if p.Supports(kind) {
+			provider = p
+			break
+		}
+	}
+	if provider == nil {
+		return fmt.Errorf("no auth provider supports %s", kind)
+	}
+
+	cred, err := provider.Login(ctx, core.ServiceID(in.Service), alias)
+	if err != nil {
+		return err
+	}
+	if err := uc.vault.Store(ctx, cred.Ref(), cred); err != nil {
+		return err
+	}
+	uc.log.Info("login succeeded", "service", in.Service, "account", string(alias), "provider", string(kind))
+	return nil
 }

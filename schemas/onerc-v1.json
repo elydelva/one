@@ -1,0 +1,74 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://one-cli.dev/schemas/onerc-v1.json",
+  "title": ".onerc.yaml v1",
+  "description": "Scope file format declaring per-service allow/deny permission patterns. Default deny strict.",
+  "type": "object",
+  "required": ["version"],
+  "additionalProperties": false,
+  "properties": {
+    "version": {
+      "type": "integer",
+      "const": 1,
+      "description": "Schema version. Only 1 is supported in this version of One CLI."
+    },
+    "project": {
+      "type": "object",
+      "description": "Optional project metadata (advisory).",
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string" }
+      }
+    },
+    "defaults": {
+      "type": "object",
+      "description": "Per-service default account alias (overridden by services.<id>.account).",
+      "additionalProperties": { "type": "string" }
+    },
+    "services": {
+      "type": "object",
+      "description": "Per-service permission lists.",
+      "additionalProperties": { "$ref": "#/$defs/serviceScope" }
+    }
+  },
+  "$defs": {
+    "permissionPattern": {
+      "type": "string",
+      "description": "A permission path with optional single-level wildcard suffix. Disallowed: **, ?, brace expansion.",
+      "pattern": "^[A-Za-z0-9_.:-]+(\\*)?$"
+    },
+    "serviceScope": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "account": {
+          "type": "string",
+          "description": "Account alias to use when invoking this service (defaults to \"default\")."
+        },
+        "allow": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/permissionPattern" },
+          "description": "Permissions granted. Empty list = nothing allowed (default deny)."
+        },
+        "deny": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/permissionPattern" },
+          "description": "Permissions explicitly denied. Deny always wins over allow."
+        }
+      }
+    }
+  },
+  "examples": [
+    {
+      "version": 1,
+      "project": { "name": "kaampus-backend" },
+      "services": {
+        "github": {
+          "account": "work",
+          "allow": ["issues.*", "pulls.read"],
+          "deny":  ["repos.delete"]
+        }
+      }
+    }
+  ]
+}

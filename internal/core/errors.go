@@ -74,3 +74,110 @@ type ErrReAuthRequired struct {
 func (e ErrReAuthRequired) Error() string {
 	return fmt.Sprintf("re-authentication required: %s (account: %s)", e.Service, e.Account)
 }
+
+// ErrReadOnly is returned when a write is attempted on a read-only vault layer.
+type ErrReadOnly struct {
+	Source string
+}
+
+func (e ErrReadOnly) Error() string {
+	if e.Source == "" {
+		return "vault is read-only"
+	}
+	return fmt.Sprintf("vault is read-only: %s", e.Source)
+}
+
+// ErrNotSupported is returned when an operation is not supported by an adapter.
+type ErrNotSupported struct {
+	Source string
+	Op     string
+}
+
+func (e ErrNotSupported) Error() string {
+	return fmt.Sprintf("%s: operation not supported by %s", e.Op, e.Source)
+}
+
+// ErrInvalidScopeFile is returned when .onerc.yaml fails to parse or validate.
+type ErrInvalidScopeFile struct {
+	Path   string
+	Reason string
+}
+
+func (e ErrInvalidScopeFile) Error() string {
+	return fmt.Sprintf("invalid scope file %s: %s", e.Path, e.Reason)
+}
+
+// ErrInvalidPattern is returned when a permission pattern is malformed.
+type ErrInvalidPattern struct {
+	Pattern string
+	Reason  string
+}
+
+func (e ErrInvalidPattern) Error() string {
+	return fmt.Sprintf("invalid permission pattern %q: %s", e.Pattern, e.Reason)
+}
+
+// ErrForbidden is returned when the upstream API rejects a request as forbidden (HTTP 403).
+// Distinct from ErrNotInScope, which is a local scope refusal.
+type ErrForbidden struct {
+	Service ServiceID
+	Action  ActionID
+	Hint    string
+}
+
+func (e ErrForbidden) Error() string {
+	if e.Hint != "" {
+		return fmt.Sprintf("forbidden by %s API on action %s: %s", e.Service, e.Action, e.Hint)
+	}
+	return fmt.Sprintf("forbidden by %s API on action %s", e.Service, e.Action)
+}
+
+// ErrNotFound is returned for HTTP 404 from the upstream API.
+type ErrNotFound struct {
+	Service ServiceID
+	Action  ActionID
+	Hint    string
+	Guide   string // optional install_guide reference
+}
+
+func (e ErrNotFound) Error() string {
+	if e.Hint != "" {
+		return fmt.Sprintf("not found (%s %s): %s", e.Service, e.Action, e.Hint)
+	}
+	return fmt.Sprintf("not found (%s %s)", e.Service, e.Action)
+}
+
+// ErrRateLimited is returned for HTTP 429.
+type ErrRateLimited struct {
+	Service    ServiceID
+	RetryAfter string // raw Retry-After header value
+}
+
+func (e ErrRateLimited) Error() string {
+	if e.RetryAfter != "" {
+		return fmt.Sprintf("rate limited by %s (retry after %s)", e.Service, e.RetryAfter)
+	}
+	return fmt.Sprintf("rate limited by %s", e.Service)
+}
+
+// ErrAPIError is returned for HTTP 5xx and any unmapped >= 400 status.
+type ErrAPIError struct {
+	Service ServiceID
+	Status  int
+	Body    string
+}
+
+func (e ErrAPIError) Error() string {
+	return fmt.Sprintf("API error from %s (status %d): %s", e.Service, e.Status, e.Body)
+}
+
+// ErrUnsupportedRuntime is returned when an action requires a runtime not
+// available in this version of the binary (e.g. WASM in v0.2).
+type ErrUnsupportedRuntime struct {
+	Action ActionID
+	Reason string
+}
+
+func (e ErrUnsupportedRuntime) Error() string {
+	return fmt.Sprintf("action %s requires an unsupported runtime: %s", e.Action, e.Reason)
+}

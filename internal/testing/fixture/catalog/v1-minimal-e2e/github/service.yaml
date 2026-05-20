@@ -1,0 +1,10 @@
+version: 1
+id: github
+name: GitHub
+base_url: http://127.0.0.1:49697
+auth:
+  providers: [pat]
+  injection:
+    pat:
+      header: Authorization
+      format: "Bearer {access_token}"
