@@ -1,0 +1,8 @@
+version: 1
+services:
+  github:
+    allow:
+      - "*"
+  notion:
+    allow:
+      - "*"

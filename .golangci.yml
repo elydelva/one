@@ -1,0 +1,67 @@
+version: "2"
+
+linters:
+  enable:
+    - staticcheck
+    - errcheck
+    - govet
+    - unused
+    - gocritic
+    - gosec
+    - revive
+    - exhaustive
+    - bodyclose
+    - contextcheck
+    - noctx
+    - depguard
+  settings:
+    depguard:
+      rules:
+        core-no-external:
+          files:
+            - "internal/core/**"
+          deny:
+            - pkg: "github.com/**"
+              desc: "internal/core must only import stdlib"
+            - pkg: "golang.org/x/**"
+              desc: "internal/core must only import stdlib"
+            - pkg: "filippo.io/**"
+              desc: "internal/core must only import stdlib"
+    gosec:
+      excludes:
+        - G304
+    revive:
+      rules:
+        - name: var-naming
+          severity: warning
+        - name: error-return
+          severity: warning
+    exhaustive:
+      default-signifies-exhaustive: true
+
+formatters:
+  enable:
+    - goimports
+  settings:
+    goimports:
+      local-prefixes:
+        - elydelva/one
+
+issues:
+  exclude-rules:
+    - path: "internal/testing/"
+      linters:
+        - errcheck
+    - path: "_test.go"
+      linters:
+        - gosec
+        - errcheck
+    - path: "cmd/one/main.go"
+      linters:
+        - revive
+    - path: "internal/adapters/renderer/tty.go"
+      linters:
+        - errcheck
+    - path: "internal/adapters/transport/nethttp.go"
+      linters:
+        - gosec

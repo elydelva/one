@@ -1,0 +1,34 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/elydelva/one/schemas/execute-output-v1.json",
+  "title": "ExecuteOutput v1",
+  "description": "The JSON output of 'one <service> <action>' — a public API for agents.",
+  "type": "object",
+  "required": ["data"],
+  "properties": {
+    "data": {
+      "description": "The action result (shape is service-specific)"
+    },
+    "trace_id": {
+      "type": "string",
+      "description": "Opaque trace identifier for audit log correlation"
+    },
+    "error": {
+      "type": "object",
+      "properties": {
+        "message": { "type": "string" },
+        "code": {
+          "type": "string",
+          "enum": ["not_authenticated", "not_in_scope", "setup_required", "unknown_service", "input_validation", "internal"]
+        },
+        "install": {
+          "type": "object",
+          "properties": {
+            "guide": { "type": "string" },
+            "command": { "type": "string" }
+          }
+        }
+      }
+    }
+  }
+}

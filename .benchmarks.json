@@ -1,0 +1,5 @@
+{
+  "BenchmarkColdStart_Version": { "max_ns_per_op": 30000000 },
+  "BenchmarkColdStart_DeclarativeAction": { "max_ns_per_op": 50000000 },
+  "BenchmarkColdStart_WASMHandler": { "max_ns_per_op": 80000000 }
+}

@@ -1,0 +1,26 @@
+version: 1
+id: github
+name: GitHub
+description: GitHub REST API
+auth:
+  providers:
+    - oauth2_user
+    - pat
+actions:
+  issues.read:
+    description: Get a single issue
+    permission: issues.read
+    inputs:
+      - name: repo
+        type: string
+        required: true
+      - name: issue_number
+        type: integer
+        required: true
+  issues.list:
+    description: List issues for a repository
+    permission: issues.read
+    inputs:
+      - name: repo
+        type: string
+        required: true

@@ -1,0 +1,37 @@
+colors: true
+output:
+  - meta
+  - summary
+  - failure
+
+pre-commit:
+  parallel: true
+  commands:
+    goimports:
+      glob: "*.go"
+      run: goimports -l {staged_files}
+      fail_text: "Run: goimports -w ./..."
+
+    lint:
+      glob: "*.go"
+      run: golangci-lint run --fast --new-from-rev HEAD {staged_files}
+      fail_text: "Run: golangci-lint run --fix"
+
+commit-msg:
+  commands:
+    conventional:
+      run: |
+        msg=$(cat {1})
+        pattern='^(feat|fix|docs|test|refactor|perf|chore|ci|build)(\([a-z]+\))?: .{1,100}$'
+        if ! echo "$msg" | grep -qE "$pattern"; then
+          echo "Commit message must follow conventional commits:"
+          echo "  type(scope): message"
+          echo "  types: feat fix docs test refactor perf chore ci build"
+          exit 1
+        fi
+
+pre-push:
+  commands:
+    test:
+      run: go test ./...
+      fail_text: "Tests failed. Fix before pushing."
