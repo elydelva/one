@@ -3,7 +3,9 @@ module elydelva/one
 go 1.26.1
 
 require (
+	github.com/google/uuid v1.6.0
 	github.com/spf13/cobra v1.10.2
+	github.com/tetratelabs/wazero v1.11.0
 	github.com/zalando/go-keyring v0.2.8
 	go.yaml.in/yaml/v3 v3.0.4
 	golang.org/x/term v0.43.0

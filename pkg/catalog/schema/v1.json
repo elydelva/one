@@ -2,7 +2,7 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "https://github.com/elydelva/one/catalog/schema/v1.json",
   "title": "service.yaml",
-  "description": "One CLI catalog service definition",
+  "description": "One CLI catalog service definition (v0.3: handler allowlists)",
   "type": "object",
   "required": ["version", "id", "name", "actions"],
   "properties": {
@@ -59,11 +59,26 @@
           },
           "handler": {
             "type": "object",
-            "required": ["file", "sha256"],
+            "required": ["file", "sha256", "host_api_version"],
             "properties": {
               "file": { "type": "string" },
-              "sha256": { "type": "string" },
-              "host_api_version": { "type": "integer" }
+              "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+              "host_api_version": { "type": "integer", "enum": [1] },
+              "entry": { "type": "string" },
+              "calls": {
+                "type": "array",
+                "items": { "type": "string" }
+              },
+              "credentials": {
+                "type": "array",
+                "items": { "type": "string" }
+              },
+              "fail_codes": {
+                "type": "array",
+                "items": { "type": "string" }
+              },
+              "memory_mb": { "type": "integer", "minimum": 1, "maximum": 256 },
+              "cpu_seconds": { "type": "integer", "minimum": 1, "maximum": 120 }
             }
           }
         }

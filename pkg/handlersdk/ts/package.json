@@ -1,0 +1,19 @@
+{
+  "name": "@one-cli/handler-sdk-ts",
+  "version": "0.3.0",
+  "description": "TypeScript SDK for One CLI WASM handlers. Compiled to wasm via Javy.",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": ["dist", "src"],
+  "scripts": {
+    "build": "tsc -p tsconfig.json && bash scripts/build-wasm.sh",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@bytecodealliance/javy": "^4",
+    "typescript": "^5",
+    "vitest": "^2"
+  },
+  "license": "MIT"
+}

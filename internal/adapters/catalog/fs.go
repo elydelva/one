@@ -207,7 +207,15 @@ func toCoreAction(svcID core.ServiceID, def pkgcatalog.ActionDef) (core.Action, 
 	}
 	if def.Handler != nil {
 		out.Handler = &core.HandlerRef{
-			File: def.Handler.File, Sha256: def.Handler.Sha256, HostAPI: def.Handler.HostAPIVersion,
+			File:        def.Handler.File,
+			Sha256:      def.Handler.Sha256,
+			HostAPI:     def.Handler.HostAPIVersion,
+			Entry:       def.Handler.Entry,
+			Calls:       append([]string(nil), def.Handler.Calls...),
+			Credentials: append([]string(nil), def.Handler.Credentials...),
+			FailCodes:   append([]string(nil), def.Handler.FailCodes...),
+			MemoryMB:    def.Handler.MemoryMB,
+			CPUSeconds:  def.Handler.CPUSeconds,
 		}
 	}
 	if len(def.Errors) > 0 {

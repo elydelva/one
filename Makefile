@@ -4,11 +4,15 @@ MODULE     := elydelva/one
 VERSION    ?= $(shell git describe --tags --always --dirty 2>/dev/null || echo "dev")
 LDFLAGS    := -ldflags "-X main.version=$(VERSION)"
 
-.PHONY: build install test test-security test-e2e bench lint clean release tidy
+.PHONY: build build-nowasm install test test-security test-e2e bench lint clean release tidy
 
 build:
 	@mkdir -p bin
 	go build $(LDFLAGS) -o $(BINARY) $(CMD)
+
+build-nowasm:
+	@mkdir -p bin
+	go build -tags=nowasm $(LDFLAGS) -o $(BINARY)-nowasm $(CMD)
 
 install:
 	go install $(LDFLAGS) $(CMD)

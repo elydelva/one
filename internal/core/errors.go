@@ -181,3 +181,44 @@ type ErrUnsupportedRuntime struct {
 func (e ErrUnsupportedRuntime) Error() string {
 	return fmt.Sprintf("action %s requires an unsupported runtime: %s", e.Action, e.Reason)
 }
+
+// ErrResourceExhausted is returned when a WASM handler exceeds a resource cap
+// (memory, CPU time, HTTP calls, log lines, cumulative sleep).
+type ErrResourceExhausted struct {
+	Action   ActionID
+	Resource string
+	Cap      string
+}
+
+func (e ErrResourceExhausted) Error() string {
+	return fmt.Sprintf("handler %s exceeded %s cap (%s)", e.Action, e.Resource, e.Cap)
+}
+
+// ErrSandboxViolation is returned when a WASM handler attempts something
+// outside its declared allowlist (URL not in calls, credential key not declared,
+// fail code not registered, host API version mismatch).
+type ErrSandboxViolation struct {
+	Action ActionID
+	Kind   string
+	Detail string
+}
+
+func (e ErrSandboxViolation) Error() string {
+	return fmt.Sprintf("sandbox violation in %s: %s — %s", e.Action, e.Kind, e.Detail)
+}
+
+// ErrHandlerFailed wraps a structured failure emitted by a handler via
+// host.fail.withCode.
+type ErrHandlerFailed struct {
+	Action ActionID
+	Code   string
+	Msg    string
+	Hint   string
+}
+
+func (e ErrHandlerFailed) Error() string {
+	if e.Hint != "" {
+		return fmt.Sprintf("%s: %s (%s) — %s", e.Action, e.Code, e.Msg, e.Hint)
+	}
+	return fmt.Sprintf("%s: %s (%s)", e.Action, e.Code, e.Msg)
+}

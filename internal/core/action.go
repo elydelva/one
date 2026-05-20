@@ -5,11 +5,24 @@ import "encoding/json"
 // ActionID identifies an action within a service (e.g. "issues.create").
 type ActionID string
 
-// HandlerRef points to a WASM handler file in the catalog.
+// HandlerRef points to a WASM handler file in the catalog and carries the
+// per-action capability allowlists enforced by the runtime.
 type HandlerRef struct {
 	File    string
 	Sha256  string
 	HostAPI int
+	// Entry is the exported function name to invoke; empty falls back to "handle".
+	Entry string
+	// Calls is the URL-pattern allowlist for host.http.request.
+	Calls []string
+	// Credentials is the allowlist of keys host.creds.get may resolve.
+	Credentials []string
+	// FailCodes is the allowlist of codes host.fail.withCode may emit.
+	FailCodes []string
+	// MemoryMB raises the per-invocation memory cap (0 = default 64; max 256).
+	MemoryMB int
+	// CPUSeconds raises the per-invocation CPU cap (0 = default 30; max 120).
+	CPUSeconds int
 }
 
 // RequestSpec is the HTTP template for a declarative action.

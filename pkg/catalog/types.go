@@ -90,8 +90,20 @@ type ErrorDef struct {
 }
 
 // HandlerDef points to a WASM handler binary (Phase 3+).
+//
+// Calls / Credentials / FailCodes declare host-side allowlists enforced by the
+// WASM runtime: a handler may only reach URLs matching Calls, fetch creds whose
+// keys appear in Credentials, and emit fail codes listed in FailCodes.
+// MemoryMB and CPUSeconds let an action raise its caps within the runtime hard
+// ceilings (256 MB / 120 s).
 type HandlerDef struct {
-	File           string `yaml:"file" json:"file"`
-	Sha256         string `yaml:"sha256" json:"sha256"`
-	HostAPIVersion int    `yaml:"host_api_version" json:"host_api_version"`
+	File           string   `yaml:"file" json:"file"`
+	Sha256         string   `yaml:"sha256" json:"sha256"`
+	HostAPIVersion int      `yaml:"host_api_version" json:"host_api_version"`
+	Entry          string   `yaml:"entry,omitempty" json:"entry,omitempty"`
+	Calls          []string `yaml:"calls,omitempty" json:"calls,omitempty"`
+	Credentials    []string `yaml:"credentials,omitempty" json:"credentials,omitempty"`
+	FailCodes      []string `yaml:"fail_codes,omitempty" json:"fail_codes,omitempty"`
+	MemoryMB       int      `yaml:"memory_mb,omitempty" json:"memory_mb,omitempty"`
+	CPUSeconds     int      `yaml:"cpu_seconds,omitempty" json:"cpu_seconds,omitempty"`
 }

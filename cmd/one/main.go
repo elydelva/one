@@ -41,10 +41,10 @@ func main() {
 	// Adapters
 	cat := catalog.NewCatalogFS(catalogRoot())
 	vlt := vault.NewChainVault(vault.NewEnvVarVault(), vault.NewKeyringVault("one"))
-	// WASM runtime deferred to Phase 3; Router returns ErrUnsupportedRuntime for handler-backed actions.
+	wasmCache := os.ExpandEnv("$HOME/.one/cache/wasm")
 	rt := runtime.NewRouter(
 		runtime.NewDeclarativeRuntime(http, clk, runtime.NewCatalogResolver(cat)),
-		nil,
+		runtime.NewWazeroRuntime(http, vlt, clk, log, runtime.NewFSHandlerResolver(catalogRoot()), wasmCache),
 	)
 	scp := scopestore.NewFileScopeStore()
 

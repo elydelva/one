@@ -1,30 +1,43 @@
-# One Handler SDK
+# One CLI Handler SDKs
 
-> SDKs for writing One CLI WASM handlers in Go, TypeScript, and Rust.
+Two official SDKs ship with the binary:
 
-## Status
+- `ts/` — `@one-cli/handler-sdk-ts`, compiled to wasm via [Javy](https://github.com/bytecodealliance/javy).
+- `go/handler` — tinygo (`-target=wasi`) SDK.
 
-Planned for Phase 3. Not yet implemented.
+Both expose the same host surface: `creds`, `http`, `log`, `time`, `fail`, plus
+crypto primitives. Every host capability is bounded by the per-action allowlists
+declared in `service.yaml > actions.<id>.handler`:
 
-## Overview
+```yaml
+handler:
+  file: handler.wasm
+  sha256: <hex>
+  host_api_version: 1
+  calls:        ["^https://api\\.notion\\.com/v1/pages$"]
+  credentials:  ["access_token"]
+  fail_codes:   ["not_found", "api_error"]
+```
 
-Handlers are WASM modules that implement complex API interactions that cannot be expressed in the declarative YAML format. They run inside a sandboxed wazero environment with access to a set of host functions.
+## Testing without WASM
 
-## Host Functions (planned)
+- **Go**: `handler/handlertest.FakeHost` installs in-process bridges so handler
+  logic runs as a plain Go test (no tinygo required). See `handler_test.go`.
+- **TS**: `test/fake-host.ts` outlines the shim recipe; vitest's
+  `vi.stubGlobal` mocks the host imports for unit tests.
 
-| Function | Description |
-|---|---|
-| `host.creds.get(service, account)` | Get credentials for a service account |
-| `host.http.fetch(method, url, headers, body)` | Make an allowlisted HTTP request |
-| `host.crypto.random_bytes(n)` | Get n random bytes |
-| `host.time.now()` | Get current Unix timestamp |
-| `host.log(level, message)` | Emit a structured log line |
-| `host.fail(code, message)` | Fail with a typed error code |
+## Building
 
-## Language Support (planned)
+```bash
+# Go (tinygo)
+tinygo build -o handler.wasm -target=wasi -no-debug ./main.go
 
-- **Go**: via TinyGo
-- **TypeScript**: via Extism JS PDK
-- **Rust**: via wasm-bindgen + wasi
+# TS (Javy)
+npm run build   # bundles src then runs scripts/build-wasm.sh
+```
 
-See [HANDLERS.md](../../docs/HANDLERS.md) for the full specification.
+## Host API version
+
+Pinned in `internal/adapters/runtime/wazero.go > HostAPIVersion`. Bump only on
+breaking ABI changes; handlers are refused at load time when they request a
+different major. See `docs/HANDLERS.md` for the full spec.
