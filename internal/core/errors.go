@@ -171,6 +171,18 @@ func (e ErrAPIError) Error() string {
 	return fmt.Sprintf("API error from %s (status %d): %s", e.Service, e.Status, e.Body)
 }
 
+// ErrIntegrityCheckFailed is returned when a fetched artifact's hash does not
+// match the expected value (e.g. catalog tarball SHA256 mismatch).
+type ErrIntegrityCheckFailed struct {
+	Source   string
+	Expected string
+	Actual   string
+}
+
+func (e ErrIntegrityCheckFailed) Error() string {
+	return fmt.Sprintf("integrity check failed for %s: expected %s, got %s", e.Source, e.Expected, e.Actual)
+}
+
 // ErrUnsupportedRuntime is returned when an action requires a runtime not
 // available in this version of the binary (e.g. WASM in v0.2).
 type ErrUnsupportedRuntime struct {

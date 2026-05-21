@@ -17,8 +17,20 @@ type ServiceDef struct {
 
 // AuthDef describes supported authentication providers and how to inject them.
 type AuthDef struct {
-	Providers []string               `yaml:"providers,omitempty" json:"providers,omitempty"`
-	Injection map[string]InjectionDef `yaml:"injection,omitempty" json:"injection,omitempty"`
+	Providers []string                     `yaml:"providers,omitempty" json:"providers,omitempty"`
+	Injection map[string]InjectionDef      `yaml:"injection,omitempty" json:"injection,omitempty"`
+	Config    map[string]ProviderConfigDef `yaml:"config,omitempty" json:"config,omitempty"`
+}
+
+// ProviderConfigDef holds per-provider configuration (OAuth endpoints, validation URL, etc.).
+type ProviderConfigDef struct {
+	ClientID       string   `yaml:"client_id,omitempty" json:"client_id,omitempty"`
+	AuthEndpoint   string   `yaml:"auth_endpoint,omitempty" json:"auth_endpoint,omitempty"`
+	TokenEndpoint  string   `yaml:"token_endpoint,omitempty" json:"token_endpoint,omitempty"`
+	DeviceEndpoint string   `yaml:"device_endpoint,omitempty" json:"device_endpoint,omitempty"`
+	Scopes         []string `yaml:"scopes,omitempty" json:"scopes,omitempty"`
+	RedirectPath   string   `yaml:"redirect_path,omitempty" json:"redirect_path,omitempty"`
+	ValidateURL    string   `yaml:"validate_url,omitempty" json:"validate_url,omitempty"`
 }
 
 // InjectionDef tells the runtime how to inject a credential into HTTP requests.

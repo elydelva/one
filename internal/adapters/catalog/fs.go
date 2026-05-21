@@ -128,12 +128,44 @@ func (c *CatalogFS) GetSkill(_ context.Context, id core.ServiceID) (string, erro
 	return string(raw), nil
 }
 
-func (c *CatalogFS) GetGuide(_ context.Context, _ core.ServiceID, _ string) (*core.InstallGuide, error) {
-	return nil, core.ErrNotSupported{Source: "catalog/fs", Op: "GetGuide (Phase 4)"}
+func (c *CatalogFS) GetGuide(_ context.Context, svc core.ServiceID, id string) (*core.InstallGuide, error) {
+	raw, err := os.ReadFile(filepath.Join(c.root, string(svc), "guides", id+".md"))
+	if err != nil {
+		if errors.Is(err, fs.ErrNotExist) {
+			return nil, core.ErrUnknownService{Service: svc}
+		}
+		return nil, err
+	}
+	return parseGuideMarkdown(raw, id, svc)
 }
 
-func (c *CatalogFS) ListGuides(_ context.Context, _ core.ServiceID) ([]core.InstallGuide, error) {
-	return nil, core.ErrNotSupported{Source: "catalog/fs", Op: "ListGuides (Phase 4)"}
+func (c *CatalogFS) ListGuides(_ context.Context, svc core.ServiceID) ([]core.InstallGuide, error) {
+	dir := filepath.Join(c.root, string(svc), "guides")
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		if errors.Is(err, fs.ErrNotExist) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	var out []core.InstallGuide
+	for _, e := range entries {
+		if e.IsDir() || !strings.HasSuffix(e.Name(), ".md") {
+			continue
+		}
+		id := strings.TrimSuffix(e.Name(), ".md")
+		raw, err := os.ReadFile(filepath.Join(dir, e.Name()))
+		if err != nil {
+			return nil, err
+		}
+		g, err := parseGuideMarkdown(raw, id, svc)
+		if err != nil {
+			return nil, fmt.Errorf("guide %s: %w", id, err)
+		}
+		out = append(out, *g)
+	}
+	sort.Slice(out, func(i, j int) bool { return out[i].ID < out[j].ID })
+	return out, nil
 }
 
 // loadActions merges actions declared inline in service.yaml with per-file actions/<id>.yaml.

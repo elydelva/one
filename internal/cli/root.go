@@ -27,6 +27,12 @@ type Deps struct {
 	ShowTrace    *app.ShowTrace
 	RunDoctor    *app.RunDoctor
 	Init         *app.Init
+	Accounts     *app.ListAccounts
+	Rotate       *app.Rotate
+	Refresh      *app.ForceRefresh
+	VaultStatus  *app.VaultStatus
+	VaultExport  *app.VaultExport
+	VaultImport  *app.VaultImport
 	Renderer     ports.Renderer
 	Catalog      ports.Catalog
 }
@@ -89,6 +95,10 @@ func BuildRoot(deps Deps) *cobra.Command {
 		newSkillCommand(),
 		newInitCommand(deps.Init),
 		newCanCommand(deps.CheckScope),
+		newAccountsCommand(deps.Accounts),
+		newRotateCommand(deps.Rotate),
+		newRefreshCommand(deps.Refresh),
+		newVaultCommand(deps.VaultStatus, deps.VaultExport, deps.VaultImport),
 	)
 
 	return root

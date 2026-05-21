@@ -38,6 +38,14 @@ type ExecuteAction struct {
 	log     ports.Logger
 	clock   ports.Clock
 	crypto  ports.Crypto
+	refresh *RefreshIfNeeded
+}
+
+// WithRefresh installs a refresh use case (lazy + file-locked).
+// If not called, refresh falls back to the legacy in-process path.
+func (uc *ExecuteAction) WithRefresh(r *RefreshIfNeeded) *ExecuteAction {
+	uc.refresh = r
+	return uc
 }
 
 // NewExecuteAction creates an ExecuteAction use case.
@@ -106,8 +114,14 @@ func (uc *ExecuteAction) Run(ctx context.Context, in ExecuteInput) (ExecuteOutpu
 	}
 
 	// 6. Lazy refresh.
-	if uc.clock != nil && cred.NeedsRefresh(uc.clock.Now()) {
-		refreshed, rerr := uc.refresh(ctx, cred)
+	if uc.refresh != nil {
+		refreshed, rerr := uc.refresh.Run(ctx, cred)
+		if rerr != nil {
+			return ExecuteOutput{}, rerr
+		}
+		cred = refreshed
+	} else if uc.clock != nil && cred.NeedsRefresh(uc.clock.Now()) {
+		refreshed, rerr := uc.legacyRefresh(ctx, cred)
 		if rerr != nil {
 			return ExecuteOutput{}, rerr
 		}
@@ -155,8 +169,9 @@ func (uc *ExecuteAction) Run(ctx context.Context, in ExecuteInput) (ExecuteOutpu
 	return ExecuteOutput{Result: result.Output, TraceID: traceID, Calls: result.Calls}, nil
 }
 
-// refresh finds a provider supporting the credential's kind and refreshes it.
-func (uc *ExecuteAction) refresh(ctx context.Context, cred core.Credential) (core.Credential, error) {
+// legacyRefresh finds a provider supporting the credential's kind and refreshes it.
+// Used only when WithRefresh has not been called.
+func (uc *ExecuteAction) legacyRefresh(ctx context.Context, cred core.Credential) (core.Credential, error) {
 	for _, p := range uc.auth {
 		if p.Supports(cred.Provider) {
 			return p.Refresh(ctx, cred)

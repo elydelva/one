@@ -13,20 +13,18 @@ one <service> <action> [inputs]                # forme courte pour l'exec
 
 ### Flags globaux
 
+Persistants sur la racine cobra :
+
 | Flag | Description |
 |---|---|
-| `--profile <name>` | Profil de scope à utiliser (override de `.onerc.yaml`) |
-| `--as <alias>` | Compte à utiliser pour cette commande (override de `defaults`) |
-| `--dry-run` | Exécute sans effet de bord (pour les actions mutations) |
-| `--json` | Force la sortie JSON même en TTY |
-| `--tty` | Force la sortie TTY même en pipe |
-| `--quiet`, `-q` | Réduit la verbosité (warnings seulement) |
-| `--debug` | Verbose, affiche les requêtes HTTP, durées, traces |
-| `--trace <id>` | Préfixe un trace ID custom au lieu d'en générer un |
-| `--no-color` | Désactive les couleurs ANSI |
-| `--catalog-dir <path>` | Override le catalog local |
-| `--help`, `-h` | Affiche l'aide de la commande |
-| `--version` | Affiche la version et exit 0 |
+| `--json` | Force la sortie JSON même en TTY (défaut : auto-détecté) |
+| `--account <alias>` | Compte à utiliser (équivalent de `--as` côté exec) |
+| `--dry-run` | Exécute sans effet de bord (pour les mutations) |
+| `--project <dir>` | Dossier de projet (défaut : cwd) |
+| `--help`, `-h` | Affiche l'aide |
+| `--version`, `-v` | Affiche la version |
+
+Profil : se contrôle via la variable d'environnement `ONE_PROFILE` (pas un flag). Pas de `--tty`, `--quiet`, `--debug`, `--trace`, `--no-color`, `--catalog-dir` en v0.4.
 
 ### Détection TTY
 
@@ -104,22 +102,13 @@ Avec `install` quand pertinent :
 
 #### `one init`
 
-Crée un `.onerc.yaml` vide dans le répertoire courant.
+Crée un `.onerc.yaml` minimal dans le répertoire courant et ajoute `.onerc.local.yaml` au `.gitignore` (créé ou complété).
 
 ```bash
-one init                              # crée .onerc.yaml minimal
-one init --from-template readonly     # template pré-configuré
+one init
 ```
 
-Effet :
-
-```yaml
-# .onerc.yaml créé
-version: 1
-services: {}
-```
-
-Ajoute aussi `.onerc.local.yaml` à un `.gitignore` créé/modifié.
+Pas de `--from-template` en v0.4.
 
 #### `one doctor`
 
@@ -129,51 +118,36 @@ Diagnostic complet de l'installation et de la config.
 one doctor
 ```
 
-Sortie :
+Sortie : une ligne par check, préfixée par `✓` (ok), `!` (warn) ou `✗` (fail).
 
 ```
-✓ Binary version: v0.3.2
-✓ Catalog: 47 services indexed (last update: 2h ago)
-✓ Vault: keychain (macOS)
-  ├─ github:work     authenticated, refresh in 23m
-  ├─ github:perso    authenticated, refresh in 1h2m
-  └─ notion:kaampus  authenticated, refresh in 4h
-✓ Scope file: .onerc.yaml v1 valid
-✓ Lock file: .onerc.lock matches installed catalog
-⚠ Project has 3 services in scope, but only 2 are authenticated
-  → Run `one login stripe` to complete setup
-
-Recommendations:
-  - Update catalog: `one catalog update` (last: 2h ago)
+✓ scope    2 service(s) in scope
+✓ catalog:github
+! vault:github   no accounts (run `one login github`)
+✓ lock     /path/.onerc.lock
+✓ home     /Users/x/.one
 ```
 
-Exit 0 si tout OK, 1 si warnings, 2 si erreurs.
+Exit 0 si aucun fail, 1 dès qu'un check `fail` apparaît (les `warn` ne font pas échouer).
 
 #### `one upgrade`
 
-Upgrade le binaire vers la dernière version stable.
-
-```bash
-one upgrade                           # latest stable
-one upgrade --to v0.3.2               # version spécifique
-one upgrade --check                   # juste check, n'installe pas
-```
+Reporté à v0.5.
 
 ### Authentification
 
 #### `one login <service>`
 
-Authentifie au service via le provider par défaut.
+Authentifie au service. Provider par défaut : `pat`.
 
 ```bash
-one login github                      # OAuth (provider par défaut)
-one login github --provider pat       # provider spécifique
-one login github --as perso           # crée un nouvel alias
-one login github --device             # device flow (headless)
-one login github --client-id ABC123   # BYOC
+one login github                              # provider pat
+one login github --provider oauth2_user       # OAuth user-flow
+one login github --provider oauth2_device     # device flow (headless)
+one login github --as perso                   # crée/écrase l'alias "perso"
 ```
 
-Voir [AUTH.md](./AUTH.md) pour le détail de chaque provider.
+Pas de `--client-id` flag en v0.4 (les `client_id` sont résolus depuis le catalogue / variables d'env documentées par le service). Voir [AUTH.md](./AUTH.md).
 
 #### `one logout <service>`
 
@@ -181,42 +155,30 @@ Supprime un compte du vault.
 
 ```bash
 one logout github                     # supprime "default"
-one logout github --account perso     # supprime "perso"
-one logout --all                      # supprime TOUS les comptes (confirmation requise)
+one logout github --as perso          # supprime "perso"
 ```
 
-#### `one accounts [service]`
+Pas de `--all` en v0.4.
 
-Liste les comptes authentifiés.
+#### `one accounts <service>`
+
+Liste les comptes registrés pour un service (arg obligatoire).
 
 ```bash
-one accounts                          # tous les services
-one accounts github                   # un service spécifique
+one accounts github
 ```
 
-Sortie :
-
-```
-github
-  work    elydelva@protonmail.com     valid (refresh in 1h2m)
-  perso   ely.delvallee@gmail.com     valid (refresh in 23m)
-
-notion
-  kaampus elydelva                    valid
-
-stripe
-  test    sk_test_...                 valid
-```
+Sortie : une ligne `<service>:<alias>` par compte, ou `no accounts`.
 
 #### `one rotate <service> <account>`
 
-Force un re-login (cas de fuite suspectée).
+Re-run le login flow et écrase la credential dans le vault.
 
 ```bash
 one rotate github work
 ```
 
-Révoque l'ancien token via l'endpoint OAuth si supporté, puis ouvre le flow de login.
+La révocation côté OAuth provider est reportée à v0.5.
 
 #### `one refresh <service> <account>`
 
@@ -230,152 +192,95 @@ Utile pour diagnostiquer un problème de refresh.
 
 #### `one vault export`
 
-Exporte le vault dans un fichier age chiffré.
+Dump JSON **plaintext** des credentials in-scope sur stdout. Pipe à `age -p` (ou équivalent) avant de persister.
 
 ```bash
-one vault export --to /path/to/vault.age
-# prompt for passphrase
+one vault export | age -p > backup.age
 ```
-
-Pour backup ou pour transférer vers une CI.
 
 #### `one vault import`
 
-Importe un vault depuis un fichier age.
+Restaure depuis un JSON bundle lu sur stdin. Écrase systématiquement les entrées existantes (pas de flag `--overwrite` : c'est le comportement par défaut).
 
 ```bash
-one vault import /path/to/vault.age
-# prompt for passphrase
+age -d backup.age | one vault import
 ```
-
-Le vault courant est fusionné (les comptes existants ne sont pas écrasés sauf flag `--overwrite`).
 
 #### `one vault status`
 
-Affiche quelle source de vault est active.
+JSON : compte de credentials par service en scope.
 
 ```bash
-one vault status
-```
-
-Sortie :
-
-```
-Active source: keychain (macOS)
-Env var override: none
-
-Other sources available:
-  - age file: ~/.one/vault.age (would be used if keychain unavailable)
+$ one vault status
+{
+  "services": { "github": 2, "notion": 1 },
+  "total": 3
+}
 ```
 
 ### Scope et permissions
 
-#### `one scope show`
+#### `one scope show [service]`
 
-Affiche le scope effectif après merge.
+Affiche le scope effectif (merge `.onerc.yaml` + `.onerc.local.yaml`, et override `.onerc.<profile>.yaml` si `ONE_PROFILE` est défini), au format JSON.
 
 ```bash
-one scope show                        # JSON par défaut
-one scope show --tty                  # format lisible
-one scope show --raw                  # affiche les deux fichiers sans merge
+one scope show
+one scope show github
 ```
 
 #### `one scope add <service> <permission>`
 
-Ajoute une permission à l'`allow`.
+Ajoute une permission à `allow` (ou à `deny` avec `--deny`). Écrit toujours dans `.onerc.yaml`.
 
 ```bash
 one scope add github issues.read
-one scope add github "issues.*"       # glob, quote pour le shell
+one scope add github "issues.*"
 one scope add github issues.delete --deny
-one scope add github issues.read --local  # dans .onerc.local.yaml
 ```
+
+Pas de `--local` en v0.4.
 
 #### `one scope remove <service> <permission>`
 
-Inverse de `add`.
+Retire une permission (cherche dans `allow` et `deny`).
 
 ```bash
 one scope remove github issues.read
-one scope remove github issues.delete --deny
 ```
 
-#### `one scope use <service> --as <alias>`
+#### `one scope check <service> <action>`
 
-Change le compte par défaut pour un service.
+Exit 0 si autorisé, exit 3 (`ErrNotInScope`) sinon.
 
 ```bash
-one scope use github --as perso
-# modifie defaults.github ou services.github.account
+one scope check github issues.delete
 ```
 
-#### `one scope check`
+#### `one scope explain <service> <action>`
 
-Validation exhaustive.
+Affiche en JSON `{allowed, reason, service, action}` puis exit 0 si autorisé, non-zéro avec la raison sinon.
 
-```bash
-one scope check
-one scope check --strict              # warnings deviennent erreurs
-```
-
-Voir [SCOPE.md](./SCOPE.md#one-scope-check) pour la liste des checks.
-
-#### `one scope explain <service> <permission>`
-
-Trace l'évaluation d'une permission.
-
-```bash
-one scope explain github issues.delete
-```
-
-Sortie :
-
-```
-Permission: github.issues.delete
-Result: DENIED
-
-Evaluated in order:
-  1. .onerc.local.yaml > deny: matched 'issues.delete' (exact) → DENY (final)
-
-Rules not evaluated (would have applied if no prior match):
-  - .onerc.yaml > allow: 'issues.*' would have matched
-
-To allow:
-  Remove the deny rule:
-    one scope remove github issues.delete --deny --local
-```
+`one scope use`, `--strict`, `--raw` : reportés à v0.5.
 
 ### Catalogue et lock
 
-#### `one catalog update`
+#### `one catalog ...`
 
-Fetch les dernières versions du catalogue depuis le CDN.
-
-```bash
-one catalog update                    # interactif
-one catalog update --pin              # update les services et regénère le lock
-one catalog update --check            # juste check, n'installe pas
-```
-
-#### `one catalog search <query>`
-
-Recherche dans le catalogue.
-
-```bash
-one catalog search payment
-# affiche stripe, paypal, square, ...
-```
+`one catalog update`, `search`, `lint`, `scaffold`, `test` : reportés à v0.5. En v0.4, le catalogue HTTP est piloté par `ONE_CATALOG_URL` (cache 15 min) et la chaîne FS → HTTP. Cf. [CATALOG.md](./CATALOG.md).
 
 #### `one lock`
 
-Génère ou met à jour `.onerc.lock`.
+Génère ou met à jour `.onerc.lock` (schema v1).
 
 ```bash
-one lock                              # snapshot des versions actuelles
-one lock --update notion              # update un service spécifique
-one lock --update-all                 # update tous
-one lock --check                      # vérifie matche actuel (exit 0/1)
+one lock                              # (re)génère depuis le scope courant
+one lock --update notion              # refresh un service
+one lock --update-all                 # refresh tous les services en scope
+one lock --check                      # exit 1 (ErrLockDrift) si drift
 ```
+
+`--check` retourne une erreur `lock drift detected: ...` listant les services divergents, avec hint `run \`one lock --update-all\` to refresh`.
 
 ### Exécution d'actions
 
@@ -417,20 +322,15 @@ one notion blocks.append --children @blocks.json
 one s3 objects.put --bucket mybucket --key file.pdf --body @./file.pdf
 ```
 
-**4. stdin pour piping** :
-
-```bash
-echo '{"properties": {...}}' | one notion pages.create --stdin
-cat data.json | one bigservice action --stdin
-```
+**4. stdin pour piping** : reporté à v0.5.
 
 #### Options pour les mutations
 
 ```bash
 --dry-run                             # validation sans side effect
---idempotency-key <key>               # passage explicite (sinon généré)
---confirm                             # requis pour destructive en TTY
 ```
+
+`--idempotency-key` / `--confirm` : reportés à v0.5.
 
 ### Introspection (verbes agent)
 
@@ -499,151 +399,74 @@ Utile pour les agents qui veulent vérifier avant de tenter, ou pour scripter.
 
 ### Install et setup
 
-#### `one install <service> <guide>`
+#### `one install <service> [guide]`
 
-Affiche un guide d'install.
+Affiche un guide d'install. Sans `[guide]`, requiert `--list`.
 
 ```bash
-one install notion share-page
-one install notion share-page --json  # output structuré pour agent
-one install notion share-page --verify --page_id abc
+one install notion share-page          # affiche le guide
+one install notion --list              # liste tous les guides du service
 ```
 
-En mode TTY, render le markdown joliment avec une checklist navigable. En mode JSON, retourne le frontmatter + content :
+Sortie TTY (guide simple) :
 
-```json
-{
-  "guide": {
-    "id": "share-page",
-    "title": "Share a Notion page with your integration",
-    "estimated_time": "30s",
-    "requires_human": true,
-    "content_md": "Notion's permission model is opt-in...",
-    "verify_command": "one install notion share-page --verify --page_id <PAGE_ID>",
-    "open_url": "https://notion.so"
-  }
-}
 ```
+# <title>
+
+<content markdown>
+
+Verify: one <service> <action>          # si le frontmatter a `verify.action`
+```
+
+`--list` affiche `<id>\t<title>` par ligne. Pas de `--verify`, ni d'exécution automatique en v0.4.
 
 ### Skill et intégration IDE
 
 #### `one skill`
 
-Affiche le skill markdown du binaire.
-
-```bash
-one skill                             # affiche le skill onecli
-one skill <service>                   # skill d'un service spécifique
-one skill --install                   # détecte l'IDE et installe le skill
-one skill --install --ide claude-code # force un IDE
-```
-
-`--install` :
-
-- Détecte Claude Code, Cursor, Aider, etc.
-- Crée le fichier au bon endroit (genre `.claude/skills/onecli.md`)
-- Affiche un message de confirmation
+Stub en v0.4: retourne `not implemented`. Le flag `--install` est déclaré mais inerte. Reporté à v0.5.
 
 ### Audit et debug
 
 #### `one trace`
 
-Affiche le journal d'audit.
-
-```bash
-one trace                             # 50 dernières entrées
-one trace --since=1h                  # depuis 1h
-one trace --since=2026-05-20          # depuis une date
-one trace --auth                      # seulement les events d'auth
-one trace <trace_id>                  # détail d'une exécution spécifique
-one trace --service github            # filtré par service
-```
-
-Format : NDJSON par défaut, TTY tabulaire en interactif.
-
-#### `one trace <trace_id>` (détail)
-
-Trace complète d'une exécution :
-
-```
-Trace: 01HXYZ123ABC
-Service: notion
-Action: pages.read
-Account: kaampus
-Start: 2026-05-20T14:32:11Z
-Duration: 234ms
-Result: success
-
-Scope check:
-  Permission: pages.read
-  Result: ALLOWED via .onerc.yaml > allow: ['pages.*']
-
-Auth:
-  Provider: oauth
-  Refreshed: no (valid 47m23s)
-
-HTTP calls:
-  1. GET https://api.notion.com/v1/pages/abc-123
-     Status: 200
-     Duration: 198ms
-
-Output: 1.4 KB JSON
-```
+Câblé côté CLI mais l'implémentation retourne `not implemented`. Persistence de l'audit log reportée à v0.5.
 
 #### `--debug`
 
-Active la verbosité maximale.
-
-```bash
-one --debug github issues.read --issue 42
-```
-
-Affiche sur stderr :
-
-- Logs slog en JSON (toutes les étapes du use case)
-- Requêtes HTTP émises (méthode, URL, status, durée)
-- Trace ID
-- Source du vault utilisée
-- Décisions de scope
-
-Utile pour debugger un comportement inattendu.
+Reporté à v0.5. Le logger interne tourne à niveau `warn` en sortie texte sur stderr.
 
 ## Variables d'environnement
 
 | Variable | Description |
 |---|---|
-| `ONE_CATALOG_URL` | Override l'URL du CDN du catalogue |
-| `ONE_CATALOG_DIR` | Override le dossier local du catalogue |
-| `ONE_VAULT_FILE` | Path du fichier age vault (fallback si pas de keychain) |
-| `ONE_VAULT_PASSPHRASE` | Passphrase du vault age (sinon prompt interactif) |
-| `ONE_PROFILE` | Profil de scope actif |
-| `ONE_DEBUG` | Active le mode debug (équivalent à `--debug`) |
-| `ONE_NO_COLOR` | Désactive les couleurs |
-| `ONE_<SERVICE>_CLIENT_ID` | Client ID OAuth pour un service (BYOC) |
-| `ONE_<SERVICE>_API_BASE` | Override l'URL de base d'une API (testing) |
-| `ONE_CREDS_<SERVICE>_<ACCOUNT>` | Credentials inline (JSON) pour override |
-| `ONE_PPROF` | Adresse pour le serveur pprof (debug, ex: `:6060`) |
-| `ONE_HOME` | Override `~/.one/` (par défaut : XDG ou home) |
+| `ONE_CATALOG_URL` | Active la couche HTTP du catalogue (sinon FS seul) |
+| `ONE_CATALOG_ROOT` | Override le dossier local du catalogue (défaut `$HOME/.one/catalog`) |
+| `ONE_AGE_VAULT_PATH` | Path du fichier age vault (défaut `$HOME/.one/vault.age`) |
+| `ONE_AGE_PASSPHRASE` | Passphrase du vault age (requise pour activer la couche age) |
+| `ONE_PROFILE` | Profil de scope actif (charge `.onerc.<profile>.yaml`) |
+| `ONE_CREDS_<SERVICE>_<ACCOUNT>` | Credential inline (JSON storage shape) — vault read-only |
+| `ONE_CERT_<SERVICE>_<ACCOUNT>_CERT` | Chemin PEM cert client (provider `certificate`) |
+| `ONE_CERT_<SERVICE>_<ACCOUNT>_KEY` | Chemin PEM clé privée (provider `certificate`) |
+| `ONE_TRANSPORT_ALLOW_HTTP` | `1` pour tolérer `http://` (tests; refuse par défaut) |
+| `ONE_TRANSPORT_ALLOWED_HOSTS` | Bypass SSRF pour ces hosts (CSV) |
+
+`ONE_DEBUG`, `ONE_NO_COLOR`, `ONE_<SERVICE>_API_BASE`, `ONE_PPROF`, `ONE_HOME`, `XDG_CONFIG_HOME` : pas câblés en v0.4.
 
 ### Exemples d'utilisation
 
 ```bash
-# CI : credentials via env, no keychain
+# CI: credentials via env, no keychain
 export ONE_CREDS_GITHUB_DEFAULT='{"access_token":"ghp_xxx","provider":"pat","service":"github","account":"default"}'
 one github issues.list --repo me/repo
 
-# Override d'URL pour tests E2E
-export ONE_GITHUB_API_BASE=http://localhost:8080
-one github issues.read --issue 1
+# CI: vault age depuis un secret
+export ONE_AGE_VAULT_PATH=/tmp/vault.age
+export ONE_AGE_PASSPHRASE="$VAULT_PASSPHRASE"
 
-# Profile production
+# Profil restrictif
 export ONE_PROFILE=production
 one stripe customers.create --email ...
-
-# Debug avec pprof
-export ONE_PPROF=:6060
-one github issues.read --issue 1 &
-go tool pprof http://localhost:6060/debug/pprof/profile
 ```
 
 ## Fichiers utilisés
@@ -660,18 +483,12 @@ go tool pprof http://localhost:6060/debug/pprof/profile
 
 | Fichier/dossier | Description |
 |---|---|
-| `~/.one/catalog/` | Cache du catalogue téléchargé |
-| `~/.one/catalog/_index.json` | Index des services |
-| `~/.one/catalog/services/<name>/` | Définition d'un service |
-| `~/.one/audit.log` | Journal d'audit local (NDJSON, rotation 30j) |
-| `~/.one/locks/` | File locks pour les opérations concurrentes |
-| `~/.one/vault.age` | Vault age (si non keychain) |
-| `~/.one/config.yaml` | Config globale (catalog URL, log level, etc.) |
-| `~/.one/cache/` | Caches divers (réponses HTTP courtes, etc.) |
+| `~/.one/catalog/` | Catalogue local FS (override via `ONE_CATALOG_ROOT`) |
+| `~/.one/locks/<service>:<alias>.lock` | File locks de refresh (gofrs/flock, 10s timeout) |
+| `~/.one/vault.age` | Vault age (si la couche age est activée) |
+| `~/.one/cache/wasm/` | Cache des modules WASM compilés |
 
-### Convention XDG
-
-Si `XDG_CONFIG_HOME` est défini, utilise `$XDG_CONFIG_HOME/one/` au lieu de `~/.one/`. Idem `XDG_DATA_HOME` pour le cache et l'audit.
+`audit.log`, `config.yaml`, convention XDG : reportés à v0.5.
 
 ## Workflow complet
 
@@ -738,15 +555,14 @@ one github issues.create \
 
 ```bash
 # Dans le pipeline
-export ONE_VAULT_FILE=/tmp/vault.age
-export ONE_VAULT_PASSPHRASE="$VAULT_PASSPHRASE"
+export ONE_AGE_VAULT_PATH=/tmp/vault.age
+export ONE_AGE_PASSPHRASE="$VAULT_PASSPHRASE"
 
-aws s3 cp s3://my-secrets/vault.age $ONE_VAULT_FILE
+aws s3 cp s3://my-secrets/vault.age $ONE_AGE_VAULT_PATH
 
 one doctor                            # vérifie tout est OK
-one lock --check                      # vérifie le catalog matche
+one lock --check                      # exit 1 (ErrLockDrift) si drift
 
-# Run l'agent ou les actions
 one github issues.list --repo me/repo
 ```
 
@@ -864,40 +680,7 @@ Si tu as un doute en contribuant un service, regarde des services existants du m
 
 ## Commandes pour les contributeurs au catalogue
 
-#### `one catalog lint <path>`
-
-Validation d'un service local.
-
-```bash
-one catalog lint ./services/my-service
-```
-
-#### `one catalog scaffold <name>`
-
-Crée la structure d'un nouveau service.
-
-```bash
-one catalog scaffold my-service --lang ts
-# crée services/my-service/{service.yaml, handlers/main.ts, package.json, tests/}
-```
-
-#### `one catalog test <path>`
-
-Run les tests d'un service local (handlers + integration).
-
-```bash
-one catalog test ./services/my-service
-```
-
-## Bash completion
-
-```bash
-one completion bash >> ~/.bashrc
-one completion zsh >> ~/.zshrc
-one completion fish > ~/.config/fish/completions/one.fish
-```
-
-Génère les fichiers de completion pour le shell. Inclut les services et actions du catalogue installé.
+`one catalog lint`, `scaffold`, `test`, ainsi que `one completion` (bash/zsh/fish) : reportés à v0.5.
 
 ---
 

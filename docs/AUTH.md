@@ -99,23 +99,17 @@ oauth:
 
 7. **Handle callback.** Vérifie `state`, extrait `code`. POST sur `token_url` avec `code` + `code_verifier`. Reçoit `access_token`, `refresh_token`, `expires_in`, `scope`.
 
-8. **Render success page.** HTML minimaliste "Login successful, you can close this tab".
+8. **Render success page.** Texte brut "Login complete. You can close this window."
 
-9. **Ask alias.** Terminal prompt "Save this account as [default]:".
-
-10. **Validate.** Avant de stocker, appel `validate` (genre `GET /me`). Si 401, erreur claire.
-
-11. **Store.** `vault.Store({service, alias}, credential)`.
+9. **Store.** `vault.Store({service, alias}, credential)`. L'alias vient du flag `--as` (défaut `default`). Pas de prompt interactif pour l'alias.
 
 ```
-$ one login notion
-Opening browser for Notion authentication...
-Waiting for callback on http://127.0.0.1:54287/callback
-
-✓ Authenticated as ely@kaampus.fr
-Save this account as [default]: kaampus
-✓ Stored notion:kaampus in keychain
+$ one login notion --as kaampus
+Open this URL to continue:
+  https://api.notion.com/v1/oauth/authorize?...
 ```
+
+(Validation post-login via `validate_url`: réservée aux providers `token_paste` / `api_key` / `aws_keys`; pas appliquée à `oauth2_user` actuellement.)
 
 ### `oauth2_device`
 
@@ -143,7 +137,7 @@ And enter the code:
 Waiting for authorization... (5 minutes)
 ```
 
-Le binaire poll le `token_url` toutes les 5s jusqu'à approbation ou timeout.
+Le binaire poll le `token_url` à l'intervalle annoncé par le serveur (`interval`, défaut 5s, augmenté de 5s sur `slow_down`) jusqu'à approbation ou expiration du `device_code`.
 
 ### `oauth2_client`
 
@@ -221,49 +215,33 @@ Identique à `token_paste` côté UX, mais sémantiquement différent (pas un PA
 
 ### `aws_keys`
 
-Access key ID + secret + session token optionnel + region.
-
-```yaml
-default:
-  type: aws_keys
-  prompts:
-    - { name: access_key_id, label: "AWS Access Key ID", secret: false }
-    - { name: secret_access_key, label: "AWS Secret Access Key", secret: true }
-    - { name: session_token, label: "Session Token (optional)", secret: true, optional: true }
-    - { name: region, label: "AWS Region", default: us-east-1 }
-```
+Access key ID + secret + session token optionnel. Trois prompts no-echo.
 
 Flow :
 
 ```
-$ one login aws
-AWS Access Key ID: AKIA...
-AWS Secret Access Key: ●●●●●●●●●●
-Session Token (optional, press Enter to skip):
-AWS Region [us-east-1]: eu-west-1
-
-Validating...
-✓ Authenticated as arn:aws:iam::123456789:user/ely
-
-Save this account as [default]:
-✓ Stored aws:default in keychain
+$ one login aws --as default
+AWS access key ID (input hidden): ●●●●●●●●●●
+AWS secret access key (input hidden): ●●●●●●●●●●
+AWS session token (optional; press enter to skip): _
 ```
 
-Validation via STS `GetCallerIdentity`. Region stockée dans `Credential.Extras.region`.
+Validation : signature SigV4 maison (sans `aws-sdk-go`) sur `sts.amazonaws.com` (region `us-east-1`) → `GetCallerIdentity`. Échec HTTP ≥ 300 → erreur.
+
+Stockage : `AccessToken = access_key_id`, `RefreshToken = JSON{secret, session_token}`. Pas de champ region: si une région est requise par le service, elle vient du `service.yaml`.
 
 ### `certificate`
 
-Path vers une clé et un cert (mutual TLS).
+mTLS. Pas de prompt (les PEMs sont trop lourds à coller). Le binaire lit deux fichiers via des variables d'environnement :
 
-```yaml
-mtls:
-  type: certificate
-  prompts:
-    - { name: cert_path, label: "Path to client certificate (PEM)" }
-    - { name: key_path, label: "Path to client key (PEM)" }
+```
+ONE_CERT_<SERVICE>_<ACCOUNT>_CERT=/path/to/cert.pem
+ONE_CERT_<SERVICE>_<ACCOUNT>_KEY=/path/to/key.pem
 ```
 
-Le binaire lit le contenu des fichiers et le stocke dans le vault (pas le path, pour éviter le déplacement). Utilisé via host TLS au moment de l'appel HTTP.
+(`<SERVICE>` et `<ACCOUNT>` upper-cased, caractères non `[A-Z0-9]` remplacés par `_`.)
+
+Validation : `tls.X509KeyPair` au login. Stockage : `AccessToken = cert PEM`, `RefreshToken = key PEM`. `Refresh` est un no-op (re-login pour rotater).
 
 ## Le type `Credential`
 
@@ -271,22 +249,16 @@ Le binaire lit le contenu des fichiers et le stocke dans le vault (pas le path, 
 // core/credential.go
 type Credential struct {
     Service      ServiceID
-    Account      AccountAlias              // "work", "perso", "default"
-    Provider     string                    // "oauth", "pat", "api_key", etc.
-    AccessToken  Secret                    // toujours présent (sauf certificate)
-    RefreshToken Secret                    // optionnel
-    ExpiresAt    *time.Time                // nil = pas d'expiration
-    Scopes       []string                  // ce qui a été accordé (peut différer du demandé)
-    Extras       map[string]Secret         // region AWS, session_token, etc.
-    CreatedAt    time.Time
-    LastUsedAt   time.Time
-}
-
-func (c Credential) NeedsRefresh(now time.Time) bool {
-    if c.ExpiresAt == nil { return false }
-    return c.ExpiresAt.Sub(now) < 60*time.Second
+    Account      AccountAlias    // "work", "perso", "default"
+    Provider     ProviderKind    // typé: ProviderOAuthUser, ProviderPAT, ...
+    AccessToken  Secret
+    RefreshToken Secret          // optionnel (ou champ secondaire selon le provider)
+    ExpiresAt    *time.Time      // nil = pas d'expiration
+    Scopes       []string
 }
 ```
+
+Pas de `Extras`, `CreatedAt`, `LastUsedAt` dans la v0.4: les providers qui ont besoin d'un second secret (AWS session token, mTLS key, OAuth client secret) le stockent dans `RefreshToken` au format adapté.
 
 Le type `Secret` masque la valeur dans tous les logs/erreurs. Pour révéler : `secret.Reveal()`. À n'appeler qu'au moment d'injecter dans un header HTTP.
 
@@ -296,14 +268,11 @@ Un service peut avoir N accounts. Le vault est indexé par `(service, alias)`.
 
 ### Créer un nouveau compte
 
-```bash
-$ one login github
-Save as [default]: work
-✓ Stored github:work
+L'alias se passe au flag `--as` (défaut `default`). Pas de prompt.
 
-$ one login github
-Save as [default]: perso
-✓ Stored github:perso
+```bash
+$ one login github --as work
+$ one login github --as perso
 ```
 
 ### Lister les comptes d'un service
@@ -316,21 +285,16 @@ perso   ely.delvallee@gmail.com     authenticated   refresh in 23m
 
 ### Sélectionner un compte
 
-Trois niveaux de précédence (du moins prioritaire au plus) :
-
-1. **`defaults.<service>` dans `.onerc.yaml`** : default du projet
-2. **`defaults.<service>` dans `.onerc.local.yaml`** : override perso
-3. **`--as <alias>` ad-hoc** : pour cette commande
+`--as <alias>` (ou `--account <alias>`) sur la commande d'exécution. Si absent, l'alias `default` est utilisé.
 
 ```bash
-one --as perso github issues.list           # override one-shot
+one github issues.list --as perso
 ```
 
 ### Supprimer un compte
 
 ```bash
-$ one logout github --account perso
-✓ Removed github:perso from keychain
+$ one logout github --as perso
 ```
 
 ## Le vault
@@ -364,11 +328,11 @@ Structure dans le keychain :
 Pour les contextes headless sans keychain (CI runners, conteneurs Docker, SSH headless).
 
 ```bash
-ONE_VAULT_FILE=/path/to/vault.age
-ONE_VAULT_PASSPHRASE=...               # ou prompt interactif
+ONE_AGE_VAULT_PATH=/path/to/vault.age    # défaut: $HOME/.one/vault.age
+ONE_AGE_PASSPHRASE=...                   # requis (pas de prompt en v0.4)
 ```
 
-Le fichier est chiffré avec [age](https://age-encryption.org/), un format moderne et auditable. La passphrase est demandée au prompt ou via env var.
+Chiffré avec [age](https://age-encryption.org/) en mode scrypt (passphrase). La couche age est wired uniquement si `ONE_AGE_PASSPHRASE` ou `ONE_AGE_VAULT_PATH` est défini (sinon vault = env + keyring seulement).
 
 ### Chaînage
 
@@ -418,7 +382,7 @@ Timeout d'acquisition : 10s. Au-delà, erreur "concurrent refresh timeout".
 
 Pour les services qui rotent le refresh token (GitHub, Google) : le nouveau refresh remplace l'ancien. Le vault est écrit **avant** que la requête API n'utilise le nouvel access token.
 
-Si l'écriture vault fail (genre keychain unreachable), on rollback (re-store l'ancien). Évite "j'ai un access valide mais j'ai perdu le refresh".
+Si l'écriture vault fail (keychain unreachable, etc.) : la credential refreshée n'est pas retournée; `ErrReAuthRequired` remonte. L'ancienne credential reste intacte côté vault.
 
 ### Refresh échoue
 
@@ -440,25 +404,21 @@ Le développeur copie le fichier `vault.age` chiffré depuis sa machine vers le 
 ```yaml
 # .github/workflows/agent.yml
 env:
-  ONE_VAULT_FILE: ${{ runner.temp }}/vault.age
-  ONE_VAULT_PASSPHRASE: ${{ secrets.ONE_VAULT_PASSPHRASE }}
+  ONE_AGE_VAULT_PATH: ${{ runner.temp }}/vault.age
+  ONE_AGE_PASSPHRASE: ${{ secrets.ONE_AGE_PASSPHRASE }}
 
 steps:
   - name: Download vault
-    run: aws s3 cp s3://secrets/vault.age $ONE_VAULT_FILE
+    run: aws s3 cp s3://secrets/vault.age $ONE_AGE_VAULT_PATH
   - name: Run agent
     run: ./run-agent.sh
 ```
 
 Bien pour les déploiements contrôlés, moins bien pour le grand nombre de devs (lourdeur du process).
 
-### Mécanisme 2 : service account files (pour AWS, Google)
+### Mécanisme 2 : service account files
 
-```bash
-one login google --service-account /path/to/sa.json
-```
-
-Pour les services qui supportent (Google, AWS via IAM roles), un fichier de credentials machine est importé directement.
+Reporté à v0.5.
 
 ### Mécanisme 3 : env var injection
 
@@ -470,10 +430,10 @@ Override total du vault. À utiliser uniquement en CI.
 
 ### Mécanisme 4 : device flow
 
-Pour les humains sur des terminaux headless mais qui ont accès à un browser ailleurs (téléphone).
+Pour les humains sur des terminaux headless mais qui ont accès à un browser ailleurs (téléphone). Sélection via le provider, pas un flag dédié :
 
 ```bash
-one login github --device
+one login github --provider oauth2_device
 ```
 
 Affiche un code et une URL, l'utilisateur valide sur son téléphone.
@@ -521,56 +481,36 @@ Test continu : un test de sécurité qui injecte un token de valeur reconnaissab
 
 ### Audit log d'auth
 
-Chaque login, refresh, logout est loggé dans `~/.one/audit.log` :
+Reporté à v0.5. `one trace` est câblé côté CLI mais retourne "not implemented".
 
-```
-2026-05-20T14:32:11Z LOGIN github:work via=oauth2_user expires=2026-05-20T15:32:11Z
-2026-05-20T15:31:45Z REFRESH github:work via=oauth2_user rotated=true
-2026-05-20T16:00:00Z LOGOUT github:work
-```
+### Détection d'anomalies
 
-Visible via `one trace --auth`. Sans les tokens, juste les métadonnées.
-
-### Détection d'anomalies (v1+)
-
-Optionnel et opt-in : alertes locales si :
-
-- Login d'un service depuis un device différent de l'historique
-- Refresh dans un intervalle de temps anormal
-- Échec de refresh répété
-
-Pas envoyé externe, juste un warning dans le terminal.
+Reporté à v0.5.
 
 ### Disclosure de credentials
 
-En cas de fuite suspectée (token loggé par erreur, vault.age partagé) : `one rotate <service> <account>` qui :
-
-1. Force un nouveau login pour ce compte
-2. Révoque l'ancien token via l'endpoint OAuth (si supporté par le service)
-3. Met à jour le vault
+`one rotate <service> <account>` re-run le login flow et écrase la credential dans le vault. La révocation de l'ancien token via l'endpoint OAuth est reportée à v0.5.
 
 ## Commandes récapitulatives
 
 ```bash
-one login <service>                       # login avec default_provider
-one login <service> --provider pat        # login avec un provider spécifique
-one login <service> --as <alias>          # créer un nouvel alias
-one login <service> --device              # device flow (headless)
-one login <service> --client-id <id>      # BYOC
+one login <service>                       # provider défaut: pat
+one login <service> --provider <kind>     # pat, api_key, oauth2_user, oauth2_device, oauth2_client, aws_keys, certificate
+one login <service> --as <alias>          # alias (défaut: default)
 
-one logout <service> [--account <alias>]  # déconnecter, supprime du vault
-one logout --all                          # déconnecte tout (debug, attention)
+one logout <service> [--as <alias>]       # supprime un compte du vault
 
-one accounts                              # liste tous les comptes
 one accounts <service>                    # liste les comptes d'un service
 
-one rotate <service> <account>            # force re-login (cas de fuite)
-one refresh <service> <account>           # force refresh manuellement
+one rotate <service> <account>            # re-run login flow
+one refresh <service> <account>           # force refresh (ignore le margin)
 
-one vault export --to vault.age           # export le vault (pour CI / backup)
-one vault import vault.age                # import (sur une nouvelle machine)
-one vault status                          # affiche quelle source du vault est active
+one vault status                          # JSON: comptes par service en scope
+one vault export                          # JSON plaintext sur stdout (pipe à `age -p`)
+one vault import                          # restore depuis JSON sur stdin
 ```
+
+Pas de `--device` / `--client-id` / `--all` / `one accounts` global / `one vault export --to` en v0.4.
 
 ## Anti-patterns
 

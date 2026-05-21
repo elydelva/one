@@ -8,6 +8,24 @@ Le catalogue est un repo Git public (`one-cli/catalog`) qui contient la définit
 
 **Ajouter un service = ouvrir une PR.** Le repo a une CI stricte qui valide le format, lance les tests, vérifie les contraintes de sécurité. Une fois mergée, la PR déclenche la publication automatique sur l'index.
 
+### Distribution HTTP
+
+Le binaire résout le catalogue dans cet ordre :
+
+1. Layer FS local (`$HOME/.one/catalog` ou `ONE_CATALOG_ROOT`)
+2. Si `ONE_CATALOG_URL` est défini : layer HTTP en fallback, wrappé par un cache TTL de 15 minutes (clock-driven, `ports.Clock`).
+
+Layout côté CDN :
+
+```
+<baseURL>/index.json
+<baseURL>/services/<id>.tar.gz
+```
+
+`index.json` (`version: 1`) liste pour chaque service son `version` et son `tarball_sha256`. Chaque tarball gz est récupéré et **vérifié SHA256** contre l'index avant parsing (`ErrIntegrityCheckFailed` sinon). Contenu attendu dans le tar : `service.yaml`, `actions/*.yaml`, `SKILL.md`, `guides/*.md` (avec un wrapper optionnel `<id>/` toléré).
+
+La chaîne `FS → HTTP` fallthrough sur `ErrUnknownService` / `ErrUnknownAction` / `ErrNotSupported`; toute autre erreur court-circuite.
+
 ## Structure d'un service
 
 ```
@@ -245,7 +263,7 @@ required_setup:
 - `blocks` : sur quelles permissions ce setup est requis (globs).
 - `optional` : si true, le setup est suggéré mais pas obligatoire pour utiliser ces permissions.
 - `detection` : description humaine de comment détecter qu'il faut faire ce setup.
-- `auto_detect_on_error` : code d'erreur (matché contre `errors.<code>`) qui déclenche automatiquement la suggestion du guide.
+- `auto_detect_on_error` : code d'erreur déclenchant la suggestion du guide. Reporté à v0.5 (champ accepté à la lecture mais non câblé au pipeline d'exécution).
 
 ## Le fichier `actions/<id>.yaml`
 
@@ -625,25 +643,7 @@ https://www.notion.so/profile/integrations.
 | `open_url` | URL | URL à ouvrir quand l'utilisateur tape `[o]` |
 | `auto_install` | object | pour les guides non-humains, l'action à exécuter |
 
-**Guides automatisables** :
-
-```markdown
----
-id: create-webhook
-title: Create a Stripe webhook
-requires_human: false
-auto_install:
-  action: webhooks.create
-  inputs_from_prompt:
-    url:
-      prompt: "Webhook endpoint URL"
-    events:
-      prompt: "Events to subscribe to"
-      default: "customer.created,customer.updated"
----
-```
-
-L'agent peut exécuter directement avec `one install stripe create-webhook --url X --events Y`.
+**Guides automatisables** : `auto_install` reporté à v0.5. En v0.4, `one install <service> <guide>` affiche le markdown et imprime la commande de `verify` si elle est définie.
 
 ## Process de contribution au catalogue
 

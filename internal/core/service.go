@@ -10,14 +10,29 @@ type AuthInjection struct {
 	Format string // e.g. "Bearer {access_token}"
 }
 
+// AuthConfig holds per-service, per-provider authentication parameters
+// (OAuth endpoints, client_id, validation URL, etc.).
+// Sensitive material (client secret, tokens) never belongs here — store in vault.
+type AuthConfig struct {
+	ClientID       string
+	AuthEndpoint   string   // OAuth authorization endpoint (user flow)
+	TokenEndpoint  string   // OAuth token endpoint
+	DeviceEndpoint string   // OAuth device authorization endpoint (RFC 8628)
+	Scopes         []string // OAuth scopes requested at login
+	RedirectPath   string   // local server callback path (default /callback)
+	ValidateURL    string   // health URL hit after token paste / api key entry
+}
+
 // Service is the catalog entry for a third-party API.
 type Service struct {
 	ID          ServiceID
 	Name        string
 	Description string
 	Version     string
-	BaseURL     string                          // e.g. "https://api.github.com"
-	Providers   []ProviderKind                  // declared auth providers
-	Injection   map[ProviderKind]AuthInjection  // per-provider injection rule
+	Sha256      string                         // tarball sha256 from HTTP index (empty for FS catalog)
+	BaseURL     string                         // e.g. "https://api.github.com"
+	Providers   []ProviderKind                 // declared auth providers
+	Injection   map[ProviderKind]AuthInjection // per-provider injection rule
+	AuthConfigs map[ProviderKind]AuthConfig    // per-provider configuration
 	Actions     []Action
 }

@@ -15,6 +15,7 @@ const (
 	ProviderPAT         ProviderKind = "pat"
 	ProviderAPIKey      ProviderKind = "api_key"
 	ProviderAWSKeys     ProviderKind = "aws_keys"
+	ProviderCertificate ProviderKind = "certificate"
 )
 
 // Credential stores the authentication state for one account.

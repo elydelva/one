@@ -4,6 +4,7 @@ import (
 	"log/slog"
 	"os"
 	"strings"
+	"time"
 
 	"elydelva/one/internal/adapters/auth"
 	"elydelva/one/internal/adapters/catalog"
@@ -28,25 +29,27 @@ func main() {
 	crp := crypto.NewStdCrypto()
 	log := newLogger()
 
-	// Auth providers
-	authProviders := []ports.AuthProvider{
-		auth.NewOAuthUserProvider(http),
-		auth.NewOAuthDeviceProvider(http),
-		auth.NewOAuthClientProvider(http),
-		auth.NewTokenPasteProvider(),
-		auth.NewAPIKeyProvider(),
-		auth.NewAWSKeysProvider(),
-	}
-
 	// Adapters
-	cat := catalog.NewCatalogFS(catalogRoot())
-	vlt := vault.NewChainVault(vault.NewEnvVarVault(), vault.NewKeyringVault("one"))
+	cat := buildCatalog(clk, http)
+
+	// Auth providers (built after catalog: OAuth providers resolve endpoints from it).
+	authProviders := []ports.AuthProvider{
+		auth.NewOAuthUserProvider(http, cat),
+		auth.NewOAuthDeviceProvider(http, cat, clk),
+		auth.NewOAuthClientProvider(http, cat),
+		auth.NewTokenPasteProvider().WithValidation(http, cat),
+		auth.NewAPIKeyProvider().WithValidation(http, cat),
+		auth.NewAWSKeysProvider().WithValidation(http),
+		auth.NewCertificateProvider(),
+	}
+	vlt := buildVault()
 	wasmCache := os.ExpandEnv("$HOME/.one/cache/wasm")
 	rt := runtime.NewRouter(
 		runtime.NewDeclarativeRuntime(http, clk, runtime.NewCatalogResolver(cat)),
 		runtime.NewWazeroRuntime(http, vlt, clk, log, runtime.NewFSHandlerResolver(catalogRoot()), wasmCache),
 	)
-	scp := scopestore.NewFileScopeStore()
+	scp := scopestore.NewProfileScopeStore(scopestore.NewMergedScopeStore(scopestore.NewFileScopeStore()))
+	scpWriter := scopestore.NewFileScopeStore()
 
 	// Renderer (auto-detect TTY)
 	var rnd ports.Renderer
@@ -57,21 +60,29 @@ func main() {
 	}
 
 	// Use cases
+	refresh := app.NewRefreshIfNeeded(vlt, authProviders, clk, log, os.ExpandEnv("$HOME/.one/locks"))
+
 	deps := cli.Deps{
-		Execute:      app.NewExecuteAction(cat, vlt, rt, scp, authProviders, log, clk, crp),
+		Execute:      app.NewExecuteAction(cat, vlt, rt, scp, authProviders, log, clk, crp).WithRefresh(refresh),
 		Login:        app.NewLogin(vlt, cat, authProviders, log),
 		Logout:       app.NewLogout(vlt, log),
 		Capabilities: app.NewListCapabilities(cat, scp),
 		Info:         app.NewShowInfo(cat),
 		ShowScope:    app.NewShowScope(scp),
-		AddScope:     app.NewAddScope(scp, scp),
-		RemoveScope:  app.NewRemoveScope(scp, scp),
+		AddScope:     app.NewAddScope(scp, scpWriter),
+		RemoveScope:  app.NewRemoveScope(scp, scpWriter),
 		CheckScope:   app.NewCheckScope(scp),
 		ShowGuide:    app.NewShowGuide(cat),
 		LockScope:    app.NewLockScope(cat, scp),
 		ShowTrace:    app.NewShowTrace(),
 		RunDoctor:    app.NewRunDoctor(vlt, cat, scp),
-		Init:         app.NewInit(scp),
+		Init:         app.NewInit(scpWriter),
+		Accounts:     app.NewListAccounts(vlt),
+		Rotate:       app.NewRotate(app.NewLogin(vlt, cat, authProviders, log)),
+		Refresh:      app.NewForceRefresh(vlt, refresh),
+		VaultStatus:  app.NewVaultStatus(vlt, cat, scp),
+		VaultExport:  app.NewVaultExport(vlt, scp),
+		VaultImport:  app.NewVaultImport(vlt),
 		Renderer:     rnd,
 		Catalog:      cat,
 	}
@@ -136,6 +147,33 @@ func catalogRoot() string {
 		return v
 	}
 	return os.ExpandEnv("$HOME/.one/catalog")
+}
+
+// buildVault wires the vault chain: EnvVar → Keyring → Age (if ONE_AGE_VAULT_PATH set
+// or ONE_AGE_PASSPHRASE present).
+func buildVault() ports.Vault {
+	layers := []ports.Vault{vault.NewEnvVarVault(), vault.NewKeyringVault("one")}
+	path := os.Getenv("ONE_AGE_VAULT_PATH")
+	if path == "" {
+		path = os.ExpandEnv("$HOME/.one/vault.age")
+	}
+	if os.Getenv("ONE_AGE_PASSPHRASE") != "" || os.Getenv("ONE_AGE_VAULT_PATH") != "" {
+		layers = append(layers, vault.NewAgeVault(path, nil))
+	}
+	return vault.NewChainVault(layers...)
+}
+
+// buildCatalog wires the catalog chain. Always includes FS (local catalog);
+// if ONE_CATALOG_URL is set, appends Cached(HTTP) as fallback.
+func buildCatalog(clk ports.Clock, httpc ports.Transport) ports.Catalog {
+	fs := catalog.NewCatalogFS(catalogRoot())
+	url := os.Getenv("ONE_CATALOG_URL")
+	if url == "" {
+		return fs
+	}
+	httpCat := catalog.NewCatalogHTTP(url, httpc)
+	cached := catalog.NewCachedCatalog(httpCat, 15*time.Minute, clk)
+	return catalog.NewChainCatalog(fs, cached)
 }
 
 func isatty() bool {
