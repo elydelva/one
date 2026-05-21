@@ -1,0 +1,48 @@
+id: databases.update
+description: Update database-level metadata (title, description, icon, cover, in_trash). To edit the schema (properties), patch the data_source instead — see `data_sources.update`.
+permission: databases.write
+side_effects: write
+request:
+  method: PATCH
+  path: /v1/databases/{database_id}
+  headers:
+    Notion-Version: "2025-09-03"
+  body: $inputs
+inputs:
+  - name: database_id
+    type: string
+    required: true
+    location: path
+  - name: title
+    type: array
+    location: body
+    description: "Rich text array. Pass [] to clear."
+  - name: description
+    type: array
+    location: body
+  - name: icon
+    type: object
+    location: body
+    description: "{type:'emoji', emoji:'🗂'} or {type:'external', external:{url}}"
+  - name: cover
+    type: object
+    location: body
+  - name: in_trash
+    type: boolean
+    location: body
+    description: "true = archive (recoverable), false = restore."
+errors:
+  "400":
+    code: validation_failed
+    hint: "Do NOT include `properties` here — schema edits go via data_sources.update."
+  "401":
+    code: auth_failed
+  "403":
+    code: forbidden
+  "404":
+    code: not_found
+  "409":
+    code: conflict
+  "429":
+    code: rate_limited
+    retry: backoff

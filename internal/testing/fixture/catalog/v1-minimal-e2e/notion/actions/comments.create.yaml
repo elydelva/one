@@ -1,0 +1,49 @@
+id: comments.create
+description: Post a comment on a page (top-level) or reply into an existing discussion thread.
+permission: comments.write
+side_effects: write
+request:
+  method: POST
+  path: /v1/comments
+  headers:
+    Notion-Version: "2025-09-03"
+  body: $inputs
+inputs:
+  - name: parent
+    type: object
+    location: body
+    description: "{page_id:'...'} for a new top-level comment. Mutually exclusive with discussion_id."
+  - name: discussion_id
+    type: string
+    location: body
+    description: "Reply into an existing thread. Get this from comments.list[].discussion_id."
+  - name: rich_text
+    type: array
+    required: true
+    location: body
+    description: |
+      Basic case: [{type:"text", text:{content:"Looks good"}}]
+      Mention a user: [{type:"mention", mention:{type:"user", user:{id:"<user-id>"}}}]
+      Link: [{type:"text", text:{content:"docs", link:{url:"https://..."}}}]
+  - name: display_name
+    type: object
+    location: body
+    description: "{type:'custom', custom:{name:'Bot Alice'}} — override how the bot signs the comment (2025-09-03+)."
+  - name: attachments
+    type: array
+    location: body
+    description: "[{file_upload_id:'<id>'}] — uploaded via file_uploads.* first (2025-09-03+)."
+errors:
+  "400":
+    code: validation_failed
+    hint: "Provide exactly one of {parent.page_id, discussion_id}. rich_text cannot be empty."
+  "401":
+    code: auth_failed
+  "403":
+    code: forbidden
+    hint: "Integration needs 'Insert comments' capability AND access to the parent page."
+  "404":
+    code: not_found
+  "429":
+    code: rate_limited
+    retry: backoff

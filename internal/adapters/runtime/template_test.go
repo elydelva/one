@@ -47,6 +47,38 @@ func TestInterpolate_NoEscape(t *testing.T) {
 	}
 }
 
+func TestInterpolate_JSONFilter_String(t *testing.T) {
+	out, err := Interpolate(`{"content":{c|json}}`, map[string]any{"c": "Hello \"world\"\nNext"}, false)
+	if err != nil {
+		t.Fatalf("err: %v", err)
+	}
+	want := `{"content":"Hello \"world\"\nNext"}`
+	if out != want {
+		t.Errorf("got %q want %q", out, want)
+	}
+}
+
+func TestInterpolate_JSONFilter_Bool(t *testing.T) {
+	out, _ := Interpolate(`{"b":{flag|json}}`, map[string]any{"flag": true}, false)
+	if out != `{"b":true}` {
+		t.Errorf("got %q", out)
+	}
+}
+
+func TestInterpolate_JSONFilter_Object(t *testing.T) {
+	out, _ := Interpolate(`{"p":{pos|json}}`, map[string]any{"pos": map[string]any{"type": "end"}}, false)
+	if out != `{"p":{"type":"end"}}` {
+		t.Errorf("got %q", out)
+	}
+}
+
+func TestInterpolate_UnknownFilter(t *testing.T) {
+	_, err := Interpolate(`{x|nope}`, map[string]any{"x": "a"}, false)
+	if err == nil {
+		t.Errorf("expected error for unknown filter")
+	}
+}
+
 func TestInjectAuth_Bearer(t *testing.T) {
 	req := httptest.NewRequest(http.MethodGet, "https://api.github.com/", nil)
 	cred := core.Credential{Provider: core.ProviderPAT, AccessToken: core.NewSecret("ghp_abc")}

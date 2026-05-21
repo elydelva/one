@@ -105,3 +105,57 @@ func TestCatalogFS_InputSchemaParseable(t *testing.T) {
 		t.Errorf("valid inputs rejected: %v", err)
 	}
 }
+
+// e2eFixtureRoot points at v1-minimal-e2e (used by tests/e2e and by the
+// Notion service fixture below).
+func e2eFixtureRoot(t *testing.T) string {
+	t.Helper()
+	_, thisFile, _, _ := runtime.Caller(0)
+	return filepath.Join(filepath.Dir(thisFile), "..", "..", "testing", "fixture", "catalog", "v1-minimal-e2e")
+}
+
+func TestCatalogFS_NotionFixture(t *testing.T) {
+	c := NewCatalogFS(e2eFixtureRoot(t))
+	svc, err := c.GetService(context.Background(), "notion")
+	if err != nil {
+		t.Fatalf("get notion: %v", err)
+	}
+	if svc.BaseURL != "https://api.notion.com" {
+		t.Errorf("base_url = %q", svc.BaseURL)
+	}
+	if inj := svc.Injection[core.ProviderPAT]; inj.Header != "Authorization" || inj.Format != "Bearer {access_token}" {
+		t.Errorf("pat injection = %+v", inj)
+	}
+	want := map[core.ActionID]string{
+		"pages.read":           "2026-03-11", // markdown endpoint, newer version
+		"pages.meta":           "2022-06-28",
+		"pages.create":         "2022-06-28",
+		"pages.append":         "2026-03-11",
+		"pages.prepend":        "2026-03-11",
+		"pages.replace":        "2026-03-11",
+		"pages.find_replace":   "2026-03-11",
+		"pages.update":         "2026-03-11",
+		"blocks.children.list": "2022-06-28",
+		"search":               "2022-06-28",
+	}
+	seen := map[core.ActionID]bool{}
+	for _, a := range svc.Actions {
+		wantVer, ok := want[a.ID]
+		if !ok {
+			continue
+		}
+		seen[a.ID] = true
+		if a.Request == nil {
+			t.Errorf("action %s has no request spec", a.ID)
+			continue
+		}
+		if got := a.Request.Headers["Notion-Version"]; got != wantVer {
+			t.Errorf("action %s Notion-Version = %q want %q", a.ID, got, wantVer)
+		}
+	}
+	for id := range want {
+		if !seen[id] {
+			t.Errorf("missing action %s", id)
+		}
+	}
+}

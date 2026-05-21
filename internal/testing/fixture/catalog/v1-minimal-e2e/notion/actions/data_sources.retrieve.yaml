@@ -1,0 +1,26 @@
+id: data_sources.retrieve
+description: Retrieve a data source — returns its property schema (the "columns" of a Notion DB) and parent database reference.
+permission: databases.read
+side_effects: read
+request:
+  method: GET
+  path: /v1/data_sources/{data_source_id}
+  headers:
+    Notion-Version: "2025-09-03"
+inputs:
+  - name: data_source_id
+    type: string
+    required: true
+    location: path
+    description: "Get this from databases.retrieve → data_sources[].id. A legacy DB has exactly one data source whose id equals the old database_id."
+errors:
+  "401":
+    code: auth_failed
+  "403":
+    code: forbidden
+  "404":
+    code: not_found
+    hint: "Pass a data_source_id, not a database_id. Use databases.retrieve to find data sources."
+  "429":
+    code: rate_limited
+    retry: backoff

@@ -1,0 +1,62 @@
+id: databases.create
+description: Create a Notion database. In API 2025-09-03 a database wraps one or more data sources; you pass an `initial_data_source` with the schema.
+permission: databases.write
+side_effects: write
+request:
+  method: POST
+  path: /v1/databases
+  headers:
+    Notion-Version: "2025-09-03"
+  body: $inputs
+inputs:
+  - name: parent
+    type: object
+    required: true
+    location: body
+    description: "{type: 'page_id', page_id: '...'} — DB must live under a page (not under another DB)."
+  - name: title
+    type: array
+    location: body
+    description: "Rich text array. Basic case: [{type:'text', text:{content:'My DB'}}]"
+  - name: description
+    type: array
+    location: body
+    description: "Rich text array (optional)."
+  - name: icon
+    type: object
+    location: body
+    description: "{type:'emoji', emoji:'📋'} or {type:'external', external:{url:'...'}}"
+  - name: cover
+    type: object
+    location: body
+    description: "{type:'external', external:{url:'...'}}"
+  - name: initial_data_source
+    type: object
+    required: true
+    location: body
+    description: |
+      {properties: {<name>: <PropertySchema>}}. Required props depend on type:
+        - title (mandatory exactly one): {title: {}}
+        - rich_text/number/checkbox/url/email/phone_number/date/people/files: {<type>: {}}
+        - select/multi_select/status: {<type>: {options: [{name, color}]}}
+        - relation: {relation: {data_source_id: '...', type: 'single_property'|'dual_property'}}
+        - rollup: {rollup: {relation_property_name, rollup_property_name, function}}
+        - formula: {formula: {expression: '...'}}
+errors:
+  "400":
+    code: validation_failed
+    hint: "Missing title property, invalid select options, or parent.type unsupported (must be page_id)."
+  "401":
+    code: auth_failed
+  "403":
+    code: forbidden
+    hint: "Integration lacks 'Update content' capability or parent page not shared."
+  "404":
+    code: not_found
+    hint: "Parent page not found OR not shared with integration."
+  "409":
+    code: conflict
+  "429":
+    code: rate_limited
+    retry: backoff
+    hint: "Honor Retry-After. Notion enforces ~3 req/s average."

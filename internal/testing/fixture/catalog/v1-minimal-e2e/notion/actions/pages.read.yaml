@@ -1,0 +1,29 @@
+id: pages.read
+description: Retrieve a Notion page rendered as Enhanced Markdown
+permission: pages.read
+side_effects: read
+request:
+  method: GET
+  path: /v1/pages/{page_id}/markdown
+  headers:
+    Notion-Version: "2026-03-11"
+inputs:
+  - name: page_id
+    type: string
+    required: true
+    location: path
+  - name: include_transcript
+    type: boolean
+    location: query
+    default: false
+    description: "Include meeting note transcripts in the markdown output"
+errors:
+  "401":
+    code: auth_failed
+    hint: "Token invalid; regenerate the integration token in Notion settings."
+  "403":
+    code: forbidden
+    hint: "Share the page with the integration first (Notion → Share → invite integration)."
+  "404":
+    code: not_found
+    hint: "Page not found or integration lacks access."

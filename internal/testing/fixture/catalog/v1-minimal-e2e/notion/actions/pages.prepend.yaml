@@ -1,0 +1,29 @@
+id: pages.prepend
+description: Prepend markdown content at the start of a Notion page
+permission: pages.write
+side_effects: write
+request:
+  method: PATCH
+  path: /v1/pages/{page_id}/markdown
+  headers:
+    Notion-Version: "2026-03-11"
+  body: '{"type":"insert_content","insert_content":{"position":{"type":"start"},"content":{content|json}}}'
+inputs:
+  - name: page_id
+    type: string
+    required: true
+    location: path
+  - name: content
+    type: string
+    required: true
+    location: body
+    description: "Markdown to prepend (newlines OK)"
+errors:
+  "400":
+    code: validation_failed
+  "401":
+    code: auth_failed
+  "403":
+    code: forbidden
+  "404":
+    code: not_found

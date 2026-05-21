@@ -1,0 +1,40 @@
+id: pages.find_replace
+description: Search-and-replace a string in a Notion page's markdown
+permission: pages.write
+side_effects: write
+request:
+  method: PATCH
+  path: /v1/pages/{page_id}/markdown
+  headers:
+    Notion-Version: "2026-03-11"
+  body: '{"type":"update_content","update_content":{"content_updates":[{"old_str":{old|json},"new_str":{new|json},"replace_all_matches":{replace_all|json}}]}}'
+inputs:
+  - name: page_id
+    type: string
+    required: true
+    location: path
+  - name: old
+    type: string
+    required: true
+    location: body
+    description: "Exact substring to find"
+  - name: new
+    type: string
+    required: true
+    location: body
+    description: "Replacement string"
+  - name: replace_all
+    type: boolean
+    location: body
+    default: false
+    description: "If true, replace every match; if false, fails when old matches 0 or 2+ locations"
+errors:
+  "400":
+    code: validation_failed
+    hint: "old_str matched 0 or 2+ locations — set replace_all=true or refine the query."
+  "401":
+    code: auth_failed
+  "403":
+    code: forbidden
+  "404":
+    code: not_found

@@ -1,0 +1,11 @@
+version: 1
+id: notion
+name: Notion
+description: Notion API (light) — pages, blocks, search via Internal Integration Token
+base_url: https://api.notion.com
+auth:
+  providers: [pat]
+  injection:
+    pat:
+      header: Authorization
+      format: "Bearer {access_token}"

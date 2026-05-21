@@ -2,6 +2,7 @@ package cli
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/spf13/cobra"
 
@@ -28,16 +29,18 @@ func newInstallCommand(uc *app.ShowGuide) *cobra.Command {
 				return err
 			}
 			if out.Guide != nil {
-				if nonInteractive {
-					fmt.Fprintln(cmd.OutOrStdout(), "# "+out.Guide.Title)
-					fmt.Fprintln(cmd.OutOrStdout())
-					fmt.Fprint(cmd.OutOrStdout(), out.Guide.Content)
-					if out.Guide.Verify != nil {
-						fmt.Fprintf(cmd.OutOrStdout(), "\nVerify: one %s %s\n", out.Service, out.Guide.Verify.Action)
-					}
-					return nil
+				// Interactive TUI only when stdout is a real TTY and user didn't opt out.
+				if !nonInteractive && stdoutIsTTY() {
+					return renderer.InteractiveGuide(cmd.OutOrStdout(), out.Guide)
 				}
-				return renderer.InteractiveGuide(cmd.OutOrStdout(), out.Guide)
+				// Piped / scripted: stable plain-text format for agents.
+				fmt.Fprintln(cmd.OutOrStdout(), "# "+out.Guide.Title)
+				fmt.Fprintln(cmd.OutOrStdout())
+				fmt.Fprint(cmd.OutOrStdout(), out.Guide.Content)
+				if out.Guide.Verify != nil {
+					fmt.Fprintf(cmd.OutOrStdout(), "\nVerify: one %s %s\n", out.Service, out.Guide.Verify.Action)
+				}
+				return nil
 			}
 			for _, g := range out.All {
 				fmt.Fprintf(cmd.OutOrStdout(), "%s\t%s\n", g.ID, g.Title)
@@ -48,4 +51,12 @@ func newInstallCommand(uc *app.ShowGuide) *cobra.Command {
 	cmd.Flags().BoolVar(&list, "list", false, "list all guides available for the service")
 	cmd.Flags().BoolVar(&nonInteractive, "non-interactive", false, "render guide as plain text (skip TUI)")
 	return cmd
+}
+
+func stdoutIsTTY() bool {
+	fi, err := os.Stdout.Stat()
+	if err != nil {
+		return false
+	}
+	return (fi.Mode() & os.ModeCharDevice) != 0
 }

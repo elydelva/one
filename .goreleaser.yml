@@ -25,7 +25,7 @@ builds:
 
 archives:
   - id: one
-    builds:
+    ids:
       - one
     name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
     format_overrides:

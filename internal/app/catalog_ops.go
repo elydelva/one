@@ -75,12 +75,12 @@ type LintReport struct {
 }
 
 // Lint walks the catalog root and validates each service.yaml + actions/*.yaml.
+// Layout matches the FS adapter: <root>/<service>/service.yaml.
 func (uc *CatalogOps) Lint(_ context.Context) ([]LintReport, error) {
 	if uc.root == "" {
 		return nil, fmt.Errorf("catalog lint: root not configured")
 	}
-	servicesDir := filepath.Join(uc.root, "services")
-	entries, err := os.ReadDir(servicesDir)
+	entries, err := os.ReadDir(uc.root)
 	if err != nil {
 		return nil, fmt.Errorf("catalog lint: %w", err)
 	}
@@ -89,8 +89,12 @@ func (uc *CatalogOps) Lint(_ context.Context) ([]LintReport, error) {
 		if !e.IsDir() {
 			continue
 		}
-		rep := lintService(filepath.Join(servicesDir, e.Name()), e.Name())
-		reports = append(reports, rep)
+		dir := filepath.Join(uc.root, e.Name())
+		// Skip directories that don't look like services (no service.yaml).
+		if _, err := os.Stat(filepath.Join(dir, "service.yaml")); err != nil {
+			continue
+		}
+		reports = append(reports, lintService(dir, e.Name()))
 	}
 	return reports, nil
 }
@@ -116,7 +120,8 @@ func lintService(dir, id string) LintReport {
 	return rep
 }
 
-// Scaffold creates a minimal service skeleton at <root>/services/<id>/.
+// Scaffold creates a minimal service skeleton at <root>/<id>/.
+// Layout matches the FS adapter convention (no `services/` prefix).
 func (uc *CatalogOps) Scaffold(_ context.Context, id string) (string, error) {
 	if uc.root == "" {
 		return "", fmt.Errorf("catalog scaffold: root not configured")
@@ -124,7 +129,7 @@ func (uc *CatalogOps) Scaffold(_ context.Context, id string) (string, error) {
 	if id == "" {
 		return "", core.ErrInputValidation{Field: "id", Reason: "required"}
 	}
-	dir := filepath.Join(uc.root, "services", id)
+	dir := filepath.Join(uc.root, id)
 	if _, err := os.Stat(dir); err == nil {
 		return dir, fmt.Errorf("catalog scaffold: %s already exists", dir)
 	}
@@ -142,8 +147,9 @@ base_url: https://api.example.com
 auth:
   providers: [token_paste]
   injection:
-    header: Authorization
-    prefix: "Bearer "
+    token_paste:
+      header: Authorization
+      format: "Bearer {access_token}"
 `, id, id)
 	if err := os.WriteFile(filepath.Join(dir, "service.yaml"), []byte(svcYAML), 0o644); err != nil {
 		return "", err

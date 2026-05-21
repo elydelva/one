@@ -1,0 +1,39 @@
+id: search
+description: Search pages and databases the integration has access to. Paginated → `.data` is a flat array (no `.results` wrapper).
+permission: search
+side_effects: read
+request:
+  method: POST
+  path: /v1/search
+  headers:
+    Notion-Version: "2022-06-28"
+  body: $inputs
+inputs:
+  - name: query
+    type: string
+    location: body
+    description: "Free-text query string"
+  - name: filter
+    type: object
+    location: body
+    description: "{value: 'page'|'database', property: 'object'}"
+  - name: sort
+    type: object
+    location: body
+    description: "{direction: 'ascending'|'descending', timestamp: 'last_edited_time'}"
+  - name: page_size
+    type: integer
+    location: body
+    default: 100
+    min: 1
+    max: 100
+pagination:
+  style: cursor
+  request_param: start_cursor
+  request_location: body
+  response_token: next_cursor
+  response_items: results
+  max_pages: 10
+errors:
+  "401":
+    code: auth_failed

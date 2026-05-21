@@ -97,6 +97,17 @@ func (e ErrNotSupported) Error() string {
 	return fmt.Sprintf("%s: operation not supported by %s", e.Op, e.Source)
 }
 
+// ErrNotInEnv is returned when an action is run outside a project initialized
+// with .onerc.yaml. The user must run `one init` (or set
+// ONECLI_BYPASS_PERMISSION=1 to skip all scope checks).
+type ErrNotInEnv struct {
+	Dir string
+}
+
+func (e ErrNotInEnv) Error() string {
+	return fmt.Sprintf("not in a One env (no .onerc.yaml in %s): run `one init`, or set ONECLI_BYPASS_PERMISSION=1 to bypass all scope checks", e.Dir)
+}
+
 // ErrInvalidScopeFile is returned when .onerc.yaml fails to parse or validate.
 type ErrInvalidScopeFile struct {
 	Path   string

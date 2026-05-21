@@ -6,10 +6,25 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"os"
+	"path/filepath"
 
 	"elydelva/one/internal/core"
 	"elydelva/one/internal/ports"
 )
+
+// BypassPermissionEnv, when set to a truthy value (1/true/yes), skips the
+// project-env presence check AND the scope allowlist enforcement. Intended for
+// agents running outside a checked-out project (e.g. one-shot scripts).
+const BypassPermissionEnv = "ONECLI_BYPASS_PERMISSION"
+
+func bypassPermissions() bool {
+	switch os.Getenv(BypassPermissionEnv) {
+	case "1", "true", "TRUE", "yes", "YES":
+		return true
+	}
+	return false
+}
 
 // ExecuteInput holds the parameters for the ExecuteAction use case.
 type ExecuteInput struct {
@@ -100,16 +115,32 @@ func (uc *ExecuteAction) Run(ctx context.Context, in ExecuteInput) (out ExecuteO
 		return ExecuteOutput{}, core.ErrUnknownAction{Service: svcID, Action: actionID}
 	}
 
-	// 2. Load scope.
+	// 2. Load scope (gated by env presence + bypass env var).
+	bypass := bypassPermissions()
+	if !bypass {
+		dir := in.ProjectDir
+		if dir == "" {
+			if wd, werr := os.Getwd(); werr == nil {
+				dir = wd
+			}
+		}
+		if _, serr := os.Stat(filepath.Join(dir, ".onerc.yaml")); errors.Is(serr, os.ErrNotExist) {
+			return ExecuteOutput{}, core.ErrNotInEnv{Dir: dir}
+		}
+	} else {
+		uc.log.Warn("scope checks bypassed via "+BypassPermissionEnv, "service", svcID, "action", actionID)
+	}
 	scope, err := uc.scope.Load(in.ProjectDir)
 	if err != nil {
 		return ExecuteOutput{}, err
 	}
 
-	// 3. Check scope.
-	perm := core.Permission{Service: svcID, Path: action.Permission}
-	if !scope.Allows(perm) {
-		return ExecuteOutput{}, core.ErrNotInScope{Permission: perm}
+	// 3. Check scope (skipped under bypass).
+	if !bypass {
+		perm := core.Permission{Service: svcID, Path: action.Permission}
+		if !scope.Allows(perm) {
+			return ExecuteOutput{}, core.ErrNotInScope{Permission: perm}
+		}
 	}
 
 	// 4. Resolve account alias.

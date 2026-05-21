@@ -37,6 +37,11 @@ func ExitCode(err error) int {
 		return ExitSetupRequired
 	}
 
+	var notInEnv core.ErrNotInEnv
+	if errors.As(err, &notInEnv) {
+		return ExitSetupRequired
+	}
+
 	var unknownSvc core.ErrUnknownService
 	if errors.As(err, &unknownSvc) {
 		return ExitUnknownService

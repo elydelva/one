@@ -1,0 +1,62 @@
+id: data_sources.query
+description: Query rows (pages) of a data source with filter + sort. Replaces the legacy POST /v1/databases/{id}/query. Paginated → `.data` is a flat array of page objects (no `.results` wrapper).
+permission: databases.read
+side_effects: read
+request:
+  method: POST
+  path: /v1/data_sources/{data_source_id}/query
+  headers:
+    Notion-Version: "2025-09-03"
+  body: $inputs
+inputs:
+  - name: data_source_id
+    type: string
+    required: true
+    location: path
+  - name: filter
+    type: object
+    location: body
+    description: |
+      Property filter. Examples:
+        {property:"Status", status:{equals:"Done"}}
+        {property:"Tags",   multi_select:{contains:"urgent"}}
+        {property:"Date",   date:{on_or_after:"2026-01-01"}}
+        {property:"Name",   title:{contains:"foo"}}
+        {property:"Done",   checkbox:{equals:true}}
+      Compose with: {and:[<f1>,<f2>]} or {or:[<f1>,<f2>]} (max 2 levels of nesting).
+      Timestamp filter (no `property`): {timestamp:"created_time", created_time:{past_week:{}}}
+  - name: sorts
+    type: array
+    location: body
+    description: |
+      [{property:"Date", direction:"descending"}] or [{timestamp:"last_edited_time", direction:"descending"}]
+  - name: page_size
+    type: integer
+    location: body
+    default: 100
+    min: 1
+    max: 100
+pagination:
+  style: cursor
+  request_param: start_cursor
+  request_location: body
+  response_token: next_cursor
+  response_items: results
+  max_pages: 10
+errors:
+  "400":
+    code: validation_failed
+    hint: |
+      Common: filter property name doesn't match the schema (case-sensitive, exact),
+      using wrong filter type (e.g. `text:` instead of `rich_text:`),
+      or `formula:` filter without the inner type wrapper ({string:{equals:...}}).
+  "401":
+    code: auth_failed
+  "403":
+    code: forbidden
+  "404":
+    code: not_found
+    hint: "Pass a data_source_id, not the database_id."
+  "429":
+    code: rate_limited
+    retry: backoff

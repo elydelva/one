@@ -1,0 +1,44 @@
+id: blocks.children.append
+description: Append blocks as children of a page or block. Max 100 blocks per call; nesting limited to 2 levels via the `children` field on each block.
+permission: blocks.write
+side_effects: write
+request:
+  method: PATCH
+  path: /v1/blocks/{block_id}/children
+  headers:
+    Notion-Version: "2025-09-03"
+  body: $inputs
+inputs:
+  - name: block_id
+    type: string
+    required: true
+    location: path
+    description: "Parent: page_id, or another block id (e.g. a toggle, callout, column)."
+  - name: children
+    type: array
+    required: true
+    location: body
+    description: |
+      Array of block objects. Max 100. Each block:
+        {object:"block", type:"paragraph", paragraph:{rich_text:[{type:"text", text:{content:"hi"}}]}}
+      Nest by adding `children:[...]` on a parent-capable type (toggle, callout, quote, list_item, column).
+      Cannot append to types that don't accept children (e.g. divider, image).
+  - name: after
+    type: string
+    location: body
+    description: "Existing child block id; insert new blocks immediately after it. Default: append at the end."
+errors:
+  "400":
+    code: validation_failed
+    hint: "Common: >100 blocks, nesting >2 levels, appending children to a non-container type, malformed rich_text."
+  "401":
+    code: auth_failed
+  "403":
+    code: forbidden
+  "404":
+    code: not_found
+  "409":
+    code: conflict
+  "429":
+    code: rate_limited
+    retry: backoff

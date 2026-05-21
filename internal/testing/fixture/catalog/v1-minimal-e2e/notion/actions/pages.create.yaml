@@ -1,0 +1,34 @@
+id: pages.create
+description: Create a Notion page under a parent (database or page)
+permission: pages.write
+side_effects: write
+request:
+  method: POST
+  path: /v1/pages
+  headers:
+    Notion-Version: "2022-06-28"
+  body: $inputs
+inputs:
+  - name: parent
+    type: object
+    required: true
+    location: body
+    description: "{database_id: '...'} or {page_id: '...'}"
+  - name: properties
+    type: object
+    required: true
+    location: body
+    description: "Notion property map keyed by property name"
+  - name: children
+    type: array
+    location: body
+    description: "Optional array of block children to append on creation"
+errors:
+  "400":
+    code: validation_failed
+    hint: "Check parent ID and property schema against Notion API docs."
+  "401":
+    code: auth_failed
+  "404":
+    code: not_found
+    hint: "Parent not found or integration lacks access."

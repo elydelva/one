@@ -1,0 +1,30 @@
+id: pages.append
+description: Append markdown content at the end of a Notion page
+permission: pages.write
+side_effects: write
+request:
+  method: PATCH
+  path: /v1/pages/{page_id}/markdown
+  headers:
+    Notion-Version: "2026-03-11"
+  body: '{"type":"insert_content","insert_content":{"position":{"type":"end"},"content":{content|json}}}'
+inputs:
+  - name: page_id
+    type: string
+    required: true
+    location: path
+  - name: content
+    type: string
+    required: true
+    location: body
+    description: "Markdown to append (newlines OK)"
+errors:
+  "400":
+    code: validation_failed
+    hint: "Check the markdown payload."
+  "401":
+    code: auth_failed
+  "403":
+    code: forbidden
+  "404":
+    code: not_found

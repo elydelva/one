@@ -123,6 +123,57 @@ func TestExecute_NotAuthenticated(t *testing.T) {
 	}
 }
 
+func TestExecute_NotInEnv(t *testing.T) {
+	dir := t.TempDir() // no .onerc.yaml written
+	uc := NewExecuteAction(
+		fake.NewCatalog([]core.Service{fixtureService()}),
+		fake.NewVault(),
+		fake.NewRuntime(),
+		scopestore.NewFileScopeStore(), nil, fake.NewLogger(), fake.NewClock(), crypto.NewStdCrypto(),
+	)
+	_, err := uc.Run(context.Background(), ExecuteInput{
+		Service: "github", Action: "issues.read",
+		Inputs: map[string]any{"owner": "x", "repo": "y", "n": 1},
+		ProjectDir: dir,
+	})
+	var nie core.ErrNotInEnv
+	if !errors.As(err, &nie) {
+		t.Fatalf("got %T: %v", err, err)
+	}
+	if nie.Dir != dir {
+		t.Errorf("dir = %q want %q", nie.Dir, dir)
+	}
+}
+
+func TestExecute_BypassPermissionsSkipsScopeCheck(t *testing.T) {
+	dir := t.TempDir() // no .onerc.yaml, no scope grant
+	t.Setenv("ONECLI_BYPASS_PERMISSION", "1")
+
+	vlt := fake.NewVault()
+	_ = vlt.Store(context.Background(), core.AccountRef{Service: "github", Alias: "default"}, core.Credential{
+		Provider: core.ProviderPAT, Service: "github", Account: "default", AccessToken: core.NewSecret("t"),
+	})
+	rt := fake.NewRuntime()
+	rt.SetResponse("github", "issues.read", json.RawMessage(`{"number":1}`))
+
+	uc := NewExecuteAction(
+		fake.NewCatalog([]core.Service{fixtureService()}),
+		vlt, rt,
+		scopestore.NewFileScopeStore(), nil, fake.NewLogger(), fake.NewClock(), crypto.NewStdCrypto(),
+	)
+	out, err := uc.Run(context.Background(), ExecuteInput{
+		Service: "github", Action: "issues.read",
+		Inputs: map[string]any{"owner": "x", "repo": "y", "n": 1},
+		ProjectDir: dir,
+	})
+	if err != nil {
+		t.Fatalf("bypass should succeed: %v", err)
+	}
+	if string(out.Result) != `{"number":1}` {
+		t.Errorf("output = %s", out.Result)
+	}
+}
+
 func TestExecute_InvalidInput(t *testing.T) {
 	uc, vlt, _, dir := newExec(t)
 	_ = vlt.Store(context.Background(), core.AccountRef{Service: "github", Alias: "default"}, core.Credential{

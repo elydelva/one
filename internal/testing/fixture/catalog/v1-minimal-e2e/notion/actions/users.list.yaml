@@ -1,0 +1,32 @@
+id: users.list
+description: List all users (people + bots) in the workspace. Only workspaces with the integration installed. Paginated → `.data` is a flat array (no `.results` wrapper).
+permission: users.read
+side_effects: read
+request:
+  method: GET
+  path: /v1/users
+  headers:
+    Notion-Version: "2025-09-03"
+inputs:
+  - name: page_size
+    type: integer
+    location: query
+    default: 100
+    min: 1
+    max: 100
+pagination:
+  style: cursor
+  request_param: start_cursor
+  request_location: query
+  response_token: next_cursor
+  response_items: results
+  max_pages: 10
+errors:
+  "401":
+    code: auth_failed
+  "403":
+    code: forbidden
+    hint: "Integration needs 'Read user information' capability (and 'with email' to get emails)."
+  "429":
+    code: rate_limited
+    retry: backoff

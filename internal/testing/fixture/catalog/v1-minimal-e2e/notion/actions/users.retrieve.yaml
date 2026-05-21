@@ -1,0 +1,24 @@
+id: users.retrieve
+description: Retrieve a single user by id (person or bot).
+permission: users.read
+side_effects: read
+request:
+  method: GET
+  path: /v1/users/{user_id}
+  headers:
+    Notion-Version: "2025-09-03"
+inputs:
+  - name: user_id
+    type: string
+    required: true
+    location: path
+errors:
+  "401":
+    code: auth_failed
+  "403":
+    code: forbidden
+  "404":
+    code: not_found
+  "429":
+    code: rate_limited
+    retry: backoff

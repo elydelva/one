@@ -1,0 +1,26 @@
+id: blocks.retrieve
+description: Retrieve a single block. Returns the block's `type` and the type-specific payload (e.g. paragraph, heading_1, to_do, child_page, child_database).
+permission: blocks.read
+side_effects: read
+request:
+  method: GET
+  path: /v1/blocks/{block_id}
+  headers:
+    Notion-Version: "2025-09-03"
+inputs:
+  - name: block_id
+    type: string
+    required: true
+    location: path
+    description: "A page is also a block — passing a page_id works and returns a child_page block."
+errors:
+  "401":
+    code: auth_failed
+  "403":
+    code: forbidden
+  "404":
+    code: not_found
+    hint: "Block id wrong OR its containing page not shared with the integration."
+  "429":
+    code: rate_limited
+    retry: backoff

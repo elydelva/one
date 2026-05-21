@@ -1,0 +1,24 @@
+id: pages.meta
+description: Retrieve a Notion page's metadata + properties (JSON)
+permission: pages.read
+side_effects: read
+request:
+  method: GET
+  path: /v1/pages/{page_id}
+  headers:
+    Notion-Version: "2022-06-28"
+inputs:
+  - name: page_id
+    type: string
+    required: true
+    location: path
+errors:
+  "401":
+    code: auth_failed
+    hint: "Token invalid; regenerate the integration token in Notion settings."
+  "403":
+    code: forbidden
+    hint: "Share the page with the integration first."
+  "404":
+    code: not_found
+    hint: "Page not found or integration lacks access."
