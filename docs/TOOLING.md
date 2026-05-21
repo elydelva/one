@@ -1,12 +1,12 @@
 # TOOLING.md
 
-> Stack d'outils du projet One CLI : build, test, qualité de code, CI/CD, et contribution. À lire avant de toucher à la configuration.
+> Tool stack for the One CLI project: build, test, code quality, CI/CD, and contribution. Read before touching any configuration.
 
-## Vue d'ensemble
+## Overview
 
 ```
 ┌─────────────────────────────────────────────────────┐
-│  Dev local                                          │
+│  Local dev                                          │
 │  Go 1.23+ · Make · golangci-lint · lefthook        │
 ├─────────────────────────────────────────────────────┤
 │  Tests                                              │
@@ -29,27 +29,27 @@
 
 ### Go
 
-Version minimale : **1.23**. Vérifier : `go version`.
+Minimum version: **1.23**. Check: `go version`.
 
-Raison : support des `range` sur les entiers (Go 1.22+), améliorations des toolchain directives (Go 1.21+), et `slices`/`maps` stdlib (Go 1.21+).
+Reason: support for `range` over integers (Go 1.22+), improvements to toolchain directives (Go 1.21+), and `slices`/`maps` stdlib (Go 1.21+).
 
 ### Make
 
-Toutes les commandes publiques passent par le `Makefile`. Ne jamais mémoriser les flags Go à la main.
+All public commands go through the `Makefile`. Never memorize Go flags by hand.
 
-| Commande | Action |
+| Command | Action |
 |---|---|
-| `make build` | Compile `./bin/one` |
-| `make install` | Build + installe dans `$GOBIN` |
+| `make build` | Compiles `./bin/one` |
+| `make install` | Build + installs into `$GOBIN` |
 | `make test` | Unit + integration + contract tests |
-| `make test-security` | Suite sécurité (tags `security`) |
-| `make test-e2e` | Suite E2E (tags `e2e`, ~2 min) |
-| `make bench` | Benchmarks + compare aux budgets `.benchmarks.json` |
+| `make test-security` | Security suite (tags `security`) |
+| `make test-e2e` | E2E suite (tags `e2e`, ~2 min) |
+| `make bench` | Benchmarks + compare against `.benchmarks.json` budgets |
 | `make lint` | golangci-lint run |
-| `make clean` | Supprime `./bin/` et les artefacts de build |
-| `make release` | Build cross-platform + tag SemVer (CI fait la release) |
+| `make clean` | Removes `./bin/` and build artifacts |
+| `make release` | Cross-platform build + SemVer tag (CI does the actual release) |
 
-Installation Make : préinstallé sur macOS/Linux. Windows : `choco install make` ou WSL.
+Installing Make: pre-installed on macOS/Linux. Windows: `choco install make` or WSL.
 
 ---
 
@@ -57,23 +57,23 @@ Installation Make : préinstallé sur macOS/Linux. Windows : `choco install make
 
 ### Framework
 
-Go stdlib `testing` uniquement. Pas de framework externe de tests (pas de Ginkgo, pas de testify/suite).
+Go stdlib `testing` only. No external test framework (no Ginkgo, no testify/suite).
 
-Exception : helpers d'assertion via **testify** (`github.com/stretchr/testify`) pour `assert.Equal`, `require.NoError`. Pas le runner, juste les assertions.
+Exception: assertion helpers via **testify** (`github.com/stretchr/testify`) for `assert.Equal`, `require.NoError`. Not the runner, just the assertions.
 
-### Property-based : gopter
+### Property-based: gopter
 
-`github.com/leanovate/gopter` pour les parsers et les structures complexes (scope YAML, glob patterns). Utilisé dans `internal/core/` pour tester les roundtrips et les cas non évidents.
+`github.com/leanovate/gopter` for parsers and complex structures (scope YAML, glob patterns). Used in `internal/core/` to test roundtrips and non-obvious cases.
 
 ```bash
 go get github.com/leanovate/gopter
 ```
 
-### Snapshots : go-snaps
+### Snapshots: go-snaps
 
-`github.com/gkampitakis/go-snaps` pour les sorties structurées (JSON capabilities, markdown info, ANSI TTY).
+`github.com/gkampitakis/go-snaps` for structured outputs (JSON capabilities, markdown info, ANSI TTY).
 
-Premier run crée le snapshot. Runs suivants comparent. Mise à jour : `go test ./... -update`.
+First run creates the snapshot. Subsequent runs compare. Update: `go test ./... -update`.
 
 ```bash
 go get github.com/gkampitakis/go-snaps
@@ -81,9 +81,9 @@ go get github.com/gkampitakis/go-snaps
 
 ### Coverage
 
-Objectifs par package :
+Targets per package:
 
-| Package | Seuil |
+| Package | Threshold |
 |---|---|
 | `internal/core/` | >85% |
 | `internal/app/` | >75% |
@@ -91,58 +91,58 @@ Objectifs par package :
 | `internal/cli/` | >60% |
 | Global | >70% |
 
-En dessous des seuils : CI warning, pas fail. Voir `codecov.yml` pour la config.
+Below thresholds: CI warning, not fail. See `codecov.yml` for configuration.
 
 ```bash
 go test -coverprofile=coverage.out ./...
 go tool cover -html=coverage.out
 ```
 
-### Exécution rapide
+### Quick execution
 
 ```bash
-go test ./...                                    # tout sauf security/e2e
-go test -tags=security ./tests/security/...     # suite sécurité
-go test -tags=e2e ./tests/e2e/...               # suite E2E
+go test ./...                                    # everything except security/e2e
+go test -tags=security ./tests/security/...     # security suite
+go test -tags=e2e ./tests/e2e/...               # E2E suite
 go test -bench=. -benchmem ./internal/cli/...   # benchmarks
-go test -run TestMyFunc ./internal/core/...     # un test précis
+go test -run TestMyFunc ./internal/core/...     # a specific test
 go test -v -count=1 ./...                       # verbose, no cache
 ```
 
 ---
 
-## Qualité de code
+## Code quality
 
 ### golangci-lint
 
-Version : dernière stable. Installation : `brew install golangci-lint`.
+Version: latest stable. Install: `brew install golangci-lint`.
 
-Config dans `.golangci.yml`. Linters actifs :
+Config in `.golangci.yml`. Active linters:
 
-| Linter | Rôle |
+| Linter | Role |
 |---|---|
-| `staticcheck` | Analyse statique Go (SA*, S*, QF*) |
-| `errcheck` | Toutes les erreurs doivent être vérifiées |
-| `govet` | `go vet` standard |
-| `unused` | Symboles non utilisés |
-| `goimports` | Import order (stdlib / externe / local) |
-| `gocritic` | Suggestions idiomatiques |
-| `gosec` | Vulnérabilités sécurité (G*) |
-| `revive` | Style et conventions |
-| `exhaustive` | Exhaustivité des switch sur types enum |
-| `bodyclose` | `resp.Body.Close()` obligatoire |
-| `contextcheck` | `context.Context` bien propagé |
-| `noctx` | Pas de `http.Get` sans context |
+| `staticcheck` | Go static analysis (SA*, S*, QF*) |
+| `errcheck` | All errors must be checked |
+| `govet` | Standard `go vet` |
+| `unused` | Unused symbols |
+| `goimports` | Import order (stdlib / external / local) |
+| `gocritic` | Idiomatic suggestions |
+| `gosec` | Security vulnerabilities (G*) |
+| `revive` | Style and conventions |
+| `exhaustive` | Switch exhaustiveness on enum types |
+| `bodyclose` | `resp.Body.Close()` required |
+| `contextcheck` | `context.Context` properly propagated |
+| `noctx` | No `http.Get` without context |
 
 ```bash
-golangci-lint run                           # lint tout
-golangci-lint run ./internal/core/...      # lint un package
-golangci-lint run --fix                    # auto-fix ce qui peut l'être
+golangci-lint run                           # lint everything
+golangci-lint run ./internal/core/...      # lint a package
+golangci-lint run --fix                    # auto-fix what can be fixed
 ```
 
 ### govulncheck
 
-Scan des vulnérabilités dans les dépendances. En CI sur chaque push main et PR.
+Vulnerability scan in dependencies. Run in CI on every push to main and on PRs.
 
 ```bash
 go install golang.org/x/vuln/cmd/govulncheck@latest
@@ -151,182 +151,182 @@ govulncheck ./...
 
 ### gofmt / goimports
 
-Le code doit être formatté. `goimports` est le superset (format + import order).
+Code must be formatted. `goimports` is the superset (format + import order).
 
 ```bash
 goimports -w ./...
 ```
 
-Vérification CI : `goimports -l .` — fail si output non vide.
+CI check: `goimports -l .` — fails if output is non-empty.
 
 ---
 
-## Git hooks : lefthook
+## Git hooks: lefthook
 
-`lefthook.yml` à la racine. Installation :
+`lefthook.yml` at the root. Install:
 
 ```bash
 brew install lefthook
 lefthook install
 ```
 
-Hooks configurés :
+Configured hooks:
 
-- **pre-commit** : `golangci-lint run --fast` + `goimports -l .`
-- **commit-msg** : validation conventional commits (format `type(scope): message`)
-- **pre-push** : `make test` (unit + integration, pas E2E)
+- **pre-commit**: `golangci-lint run --fast` + `goimports -l .`
+- **commit-msg**: conventional commits validation (format `type(scope): message`)
+- **pre-push**: `make test` (unit + integration, not E2E)
 
-Pour bypasser exceptionnellement (ne pas abuser) : `git commit --no-verify`.
+To bypass exceptionally (do not abuse): `git commit --no-verify`.
 
 ---
 
 ## WASM
 
-### Runtime : wazero
+### Runtime: wazero
 
-`github.com/tetratelabs/wazero` est le runtime WASM embarqué dans le binaire. Pas de dépendance système, sandbox WASI minimal. Voir HANDLERS.md.
+`github.com/tetratelabs/wazero` is the WASM runtime embedded in the binary. No system dependency, minimal WASI sandbox. See HANDLERS.md.
 
-### Compilation handlers Go : tinygo
+### Compiling Go handlers: tinygo
 
-Pour compiler des handlers Go → WASM :
+To compile Go handlers → WASM:
 
 ```bash
 brew install tinygo
 tinygo build -o handler.wasm -target=wasi ./handler/
 ```
 
-Version minimum : `0.31+`. Vérifier : `tinygo version`.
+Minimum version: `0.31+`. Check: `tinygo version`.
 
-### Compilation handlers TypeScript : bun
+### Compiling TypeScript handlers: bun
 
-Pour compiler des handlers TypeScript → WASM :
+To compile TypeScript handlers → WASM:
 
 ```bash
 brew install bun
 bun build handler.ts --outfile handler.wasm
 ```
 
-Alternative : `node` + `@extism/js-pdk`.
+Alternative: `node` + `@extism/js-pdk`.
 
-### Debug WASM
+### WASM debug
 
-Pour inspecter un module WASM hors du runtime One :
+To inspect a WASM module outside the One runtime:
 
 ```bash
 brew install wasmtime
 wasmtime --dir=. handler.wasm
 ```
 
-Ou `wasmer` selon préférence. Pas requis pour contribuer au binaire.
+Or `wasmer` depending on preference. Not required to contribute to the binary.
 
-Variable d'environnement debug : `ONE_DEBUG=1 one <service> <action>`.
+Debug environment variable: `ONE_DEBUG=1 one <service> <action>`.
 
 ---
 
-## Dépendances Go
+## Go dependencies
 
-Liste des dépendances externes actuellement en place :
+Currently active external dependencies:
 
 | Package | Usage |
 |---|---|
 | `github.com/spf13/cobra` | CLI (commands, flags, help) |
-| `github.com/spf13/viper` | Config (env, fichiers, defaults) |
-| `github.com/zalando/go-keyring` | Keychain natif (macOS/Linux/Windows) |
-| `github.com/tetratelabs/wazero` | Runtime WASM |
-| `filippo.io/age` | Vault chiffré (fichiers) |
-| `github.com/goccy/go-yaml` | Parser YAML |
-| `github.com/santhosh-tekuri/jsonschema/v6` | Validation JSON Schema |
+| `github.com/spf13/viper` | Config (env, files, defaults) |
+| `github.com/zalando/go-keyring` | Native keychain (macOS/Linux/Windows) |
+| `github.com/tetratelabs/wazero` | WASM runtime |
+| `filippo.io/age` | Encrypted vault (files) |
+| `github.com/goccy/go-yaml` | YAML parser |
+| `github.com/santhosh-tekuri/jsonschema/v6` | JSON Schema validation |
 | `golang.org/x/oauth2` | OAuth 2.0 helpers |
-| `github.com/charmbracelet/lipgloss` | Styling TTY |
-| `github.com/charmbracelet/bubbletea` | TUI flows interactifs |
-| `github.com/stretchr/testify` | Assertions de tests (assert/require) |
+| `github.com/charmbracelet/lipgloss` | TTY styling |
+| `github.com/charmbracelet/bubbletea` | Interactive TUI flows |
+| `github.com/stretchr/testify` | Test assertions (assert/require) |
 | `github.com/leanovate/gopter` | Property-based testing |
 | `github.com/gkampitakis/go-snaps` | Snapshot testing |
 
-Critères pour ajouter une dépendance : voir CONTRIBUTING.md > "Ajouter une nouvelle dépendance externe".
+Criteria for adding a dependency: see CONTRIBUTING.md > "Adding a new external dependency".
 
-Gestion des mises à jour : **Renovate** (voir `renovate.json`). PRs automatiques sur minor/patch, review manuelle sur major.
+Dependency updates managed by **Renovate** (see `renovate.json`). Automatic PRs on minor/patch, manual review on major.
 
 ---
 
-## CI/CD : GitHub Actions
+## CI/CD: GitHub Actions
 
-Workflows dans `.github/workflows/` :
+Workflows in `.github/workflows/`:
 
-| Fichier | Déclencheur | Contenu |
+| File | Trigger | Content |
 |---|---|---|
-| `ci.yml` | PR + push main | lint, test (matrix 3 OS), security scan |
-| `e2e.yml` | push main + schedule | suite E2E |
-| `bench.yml` | push main | benchmarks + comparaison budgets |
+| `ci.yml` | PR + push main | lint, test (3-OS matrix), security scan |
+| `e2e.yml` | push main + schedule | E2E suite |
+| `bench.yml` | push main | benchmarks + budget comparison |
 | `release.yml` | push tag `v*` | goreleaser cross-platform |
-| `vulncheck.yml` | schedule hebdo | govulncheck |
+| `vulncheck.yml` | weekly schedule | govulncheck |
 
-Matrix OS : `ubuntu-latest`, `macos-latest`, `windows-latest`. Go : `1.23`.
+OS matrix: `ubuntu-latest`, `macos-latest`, `windows-latest`. Go: `1.23`.
 
 ---
 
-## Release : goreleaser
+## Release: goreleaser
 
-`goreleaser` gère les builds cross-platform et les assets de release GitHub.
+`goreleaser` manages cross-platform builds and GitHub release assets.
 
-Config dans `.goreleaser.yml`. Targets : `linux/amd64`, `linux/arm64`, `darwin/amd64`, `darwin/arm64`, `windows/amd64`.
+Config in `.goreleaser.yml`. Targets: `linux/amd64`, `linux/arm64`, `darwin/amd64`, `darwin/arm64`, `windows/amd64`.
 
 ```bash
 brew install goreleaser
-goreleaser build --snapshot --clean    # build local sans push
-make release                           # via CI, tag SemVer d'abord
+goreleaser build --snapshot --clean    # local build without push
+make release                           # via CI, tag SemVer first
 ```
 
 ---
 
-## Mises à jour de dépendances : Renovate
+## Dependency updates: Renovate
 
-`renovate.json` à la racine. Renovate ouvre des PRs automatiques pour :
+`renovate.json` at the root. Renovate opens automatic PRs for:
 
-- Dépendances Go (`go.mod`)
-- GitHub Actions (versions des actions)
-- Outils CLI (golangci-lint, goreleaser, tinygo)
+- Go dependencies (`go.mod`)
+- GitHub Actions (action versions)
+- CLI tools (golangci-lint, goreleaser, tinygo)
 
-Stratégie : automerge sur patch, review manuelle sur minor/major.
-
----
-
-## Coverage : Codecov
-
-`codecov.yml` à la racine. Coverage uploadé après chaque run CI (`ubuntu-latest`). Seuils configurés en miroir de TESTING.md :
-
-- Patch coverage : >70% requis (sinon fail PR)
-- Project coverage : warning si régression >2%
-
-Badge dans README.md.
+Strategy: automerge on patch, manual review on minor/major.
 
 ---
 
-## Variables d'environnement dev
+## Coverage: Codecov
+
+`codecov.yml` at the root. Coverage uploaded after each CI run (`ubuntu-latest`). Thresholds configured to mirror TESTING.md:
+
+- Patch coverage: >70% required (otherwise PR fails)
+- Project coverage: warning if regression >2%
+
+Badge in README.md.
+
+---
+
+## Dev environment variables
 
 | Variable | Usage |
 |---|---|
-| `ONE_DEBUG=1` | Logs verbeux + trace WASM |
-| `ONE_CATALOG_DIR=<path>` | Override le répertoire catalog |
-| `ONE_GITHUB_API_BASE=<url>` | Override l'URL GitHub (tests E2E) |
-| `ONE_CREDS_<SVC>_<ACCOUNT>=<json>` | Inject credentials sans keychain |
-| `ONE_VAULT_KEY=<hex>` | Override clé vault pour les tests |
+| `ONE_DEBUG=1` | Verbose logs + WASM trace |
+| `ONE_CATALOG_DIR=<path>` | Override the catalog directory |
+| `ONE_GITHUB_API_BASE=<url>` | Override the GitHub URL (E2E tests) |
+| `ONE_CREDS_<SVC>_<ACCOUNT>=<json>` | Inject credentials without keychain |
+| `ONE_VAULT_KEY=<hex>` | Override vault key for tests |
 
 ---
 
-## Fichiers de configuration à la racine
+## Root configuration files
 
-| Fichier | Outil | Rôle |
+| File | Tool | Role |
 |---|---|---|
-| `Makefile` | Make | Toutes les commandes de build/test |
-| `.golangci.yml` | golangci-lint | Linters et règles |
+| `Makefile` | Make | All build/test commands |
+| `.golangci.yml` | golangci-lint | Linters and rules |
 | `lefthook.yml` | lefthook | Git hooks |
-| `renovate.json` | Renovate | Mises à jour de dépendances |
-| `codecov.yml` | Codecov | Seuils de coverage |
-| `.goreleaser.yml` | goreleaser | Build cross-platform |
-| `.benchmarks.json` | CI bench | Budgets de performance |
-| `schemas/` | jsonschema | Schémas JSON output publics |
+| `renovate.json` | Renovate | Dependency updates |
+| `codecov.yml` | Codecov | Coverage thresholds |
+| `.goreleaser.yml` | goreleaser | Cross-platform build |
+| `.benchmarks.json` | CI bench | Performance budgets |
+| `schemas/` | jsonschema | Public JSON output schemas |
 
 ---
 
-*Document à maintenir en sync avec les fichiers config. Si tu ajoutes un outil, documente-le ici.*
+*Keep this document in sync with the config files. If you add a tool, document it here.*

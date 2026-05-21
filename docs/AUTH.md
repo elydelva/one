@@ -1,30 +1,30 @@
 # AUTH.md
 
-> Référence complète de l'authentification et de la gestion des credentials dans One CLI. Pour le format de déclaration auth dans un service, voir [CATALOG.md](./CATALOG.md). Pour la sécurité globale, voir [SECURITY.md](./SECURITY.md).
+> Complete reference for authentication and credential management in One CLI. For the auth declaration format in a service, see [CATALOG.md](./CATALOG.md). For global security, see [SECURITY.md](./SECURITY.md).
 
-## Vue d'ensemble
+## Overview
 
-L'auth dans One CLI ne signifie pas "une seule chose". Six modèles d'authentification sont supportés, parce qu'ils existent tous dans la nature et qu'aucun ne peut être substitué proprement par un autre.
+Auth in One CLI does not mean "one single thing". Six authentication models are supported, because they all exist in the wild and none can be cleanly substituted by another.
 
-| Schéma | Exemples | Renouvellement | Setup utilisateur |
+| Scheme | Examples | Renewal | User setup |
 |---|---|---|---|
-| OAuth 2.0 user-flow | Notion, Linear, Google, Slack | refresh token | callback browser |
-| OAuth 2.0 device flow | GitHub, Microsoft, Google (CLI) | refresh token | code + URL manuel |
+| OAuth 2.0 user-flow | Notion, Linear, Google, Slack | refresh token | browser callback |
+| OAuth 2.0 device flow | GitHub, Microsoft, Google (CLI) | refresh token | code + manual URL |
 | OAuth 2.0 client credentials | Twitch app, Reddit script | re-fetch | client_id + secret |
-| API key statique | Stripe, OpenAI, Anthropic, Resend | jamais | copier-coller |
-| Personal Access Token | GitHub, GitLab, Notion (legacy) | jamais ou manuel | génération web + copier |
-| AWS-style signature | AWS, Cloudflare R2, MinIO | jamais | access + secret + region |
-| Mutual TLS / certificat | services privés, registries | jamais | fichier de clé |
+| Static API key | Stripe, OpenAI, Anthropic, Resend | never | copy-paste |
+| Personal Access Token | GitHub, GitLab, Notion (legacy) | never or manual | web generation + copy |
+| AWS-style signature | AWS, Cloudflare R2, MinIO | never | access + secret + region |
+| Mutual TLS / certificate | private services, registries | never | key file |
 
-## Le piège classique : tout OAuth
+## The classic trap: OAuth for everything
 
-Beaucoup de systèmes tentent de tout faire passer par OAuth. Mauvaise idée. Stripe **ne veut pas** d'OAuth pour les outils internes, leur DX c'est "copie ta clé". GitHub a un OAuth mais les devs préfèrent souvent un PAT scopé.
+Many systems try to route everything through OAuth. Bad idea. Stripe **does not want** OAuth for internal tools, their DX is "copy your key". GitHub has an OAuth but developers often prefer a scoped PAT.
 
-**Le système doit suivre la nature de chaque service**, pas la forcer dans un modèle unique.
+**The system must follow the nature of each service**, not force it into a single model.
 
-## Le modèle générique : `auth.providers`
+## The generic model: `auth.providers`
 
-Un service déclare **un ou plusieurs providers d'auth** dans son `service.yaml`. L'utilisateur choisit au login.
+A service declares **one or more auth providers** in its `service.yaml`. The user chooses at login.
 
 ```yaml
 auth:
@@ -38,7 +38,7 @@ auth:
       # ...
 ```
 
-Au login :
+At login:
 
 ```
 $ one login github
@@ -50,13 +50,13 @@ GitHub supports two authentication methods:
 Choose [1]: _
 ```
 
-Avec `--provider` pour scripter : `one login github --provider pat`.
+With `--provider` for scripting: `one login github --provider pat`.
 
-## Les types de providers
+## Provider types
 
 ### `oauth2_user`
 
-Flow OAuth 2.0 standard avec PKCE + local server pour le callback.
+Standard OAuth 2.0 flow with PKCE + local server for the callback.
 
 ```yaml
 oauth:
@@ -64,44 +64,44 @@ oauth:
   authorize_url: https://api.notion.com/v1/oauth/authorize
   token_url: https://api.notion.com/v1/oauth/token
   client_id: "{env.ONE_NOTION_CLIENT_ID}"
-  scopes: [read, write]              # optionnel, dépend du service
-  pkce: true                          # recommandé
+  scopes: [read, write]              # optional, depends on the service
+  pkce: true                          # recommended
   callback:
     mode: local_server
     path: /callback
-    port: ephemeral                  # ou explicit: 54287
+    port: ephemeral                  # or explicit: 54287
   refresh:
     supported: true
-    rotation: true                   # si le service rotate le refresh token
+    rotation: true                   # if the service rotates the refresh token
   injection:
     header: Authorization
     format: "Bearer {access_token}"
-    inject: auto                     # le binaire injecte, le handler n'y touche pas
+    inject: auto                     # the binary injects, the handler does not touch it
   validate:
     method: GET
     url: "{api.base_url}/me"
     expect_status: 200
 ```
 
-#### Flow en détail
+#### Flow in detail
 
-1. **Resolve config.** Charge `service.yaml`, sélectionne le provider, lit `client_id`. Si manquant : erreur claire.
+1. **Resolve config.** Load `service.yaml`, select the provider, read `client_id`. If missing: clear error.
 
-2. **Generate PKCE.** `code_verifier` (43-128 chars random) et `code_challenge` (SHA256 du verifier, base64url).
+2. **Generate PKCE.** `code_verifier` (43-128 chars random) and `code_challenge` (SHA256 of verifier, base64url).
 
-3. **Bind local server.** `net.Listen("tcp", "127.0.0.1:0")` → port éphémère. Sert un handler unique sur `/callback`.
+3. **Bind local server.** `net.Listen("tcp", "127.0.0.1:0")` → ephemeral port. Serves a unique handler on `/callback`.
 
-4. **Build authorize URL.** Avec `state` (CSRF protection), `code_challenge`, `redirect_uri`, scopes.
+4. **Build authorize URL.** With `state` (CSRF protection), `code_challenge`, `redirect_uri`, scopes.
 
-5. **Open browser.** Via `open` (macOS), `xdg-open` (Linux), `start` (Windows). Fallback : afficher l'URL.
+5. **Open browser.** Via `open` (macOS), `xdg-open` (Linux), `start` (Windows). Fallback: display the URL.
 
 6. **Wait callback.** Timeout 5 minutes.
 
-7. **Handle callback.** Vérifie `state`, extrait `code`. POST sur `token_url` avec `code` + `code_verifier`. Reçoit `access_token`, `refresh_token`, `expires_in`, `scope`.
+7. **Handle callback.** Verify `state`, extract `code`. POST to `token_url` with `code` + `code_verifier`. Receives `access_token`, `refresh_token`, `expires_in`, `scope`.
 
-8. **Render success page.** Texte brut "Login complete. You can close this window."
+8. **Render success page.** Plain text "Login complete. You can close this window."
 
-9. **Store.** `vault.Store({service, alias}, credential)`. L'alias vient du flag `--as` (défaut `default`). Pas de prompt interactif pour l'alias.
+9. **Store.** `vault.Store({service, alias}, credential)`. The alias comes from the `--as` flag (default `default`). No interactive prompt for the alias.
 
 ```
 $ one login notion --as kaampus
@@ -109,11 +109,11 @@ Open this URL to continue:
   https://api.notion.com/v1/oauth/authorize?...
 ```
 
-(Validation post-login via `validate_url`: réservée aux providers `token_paste` / `api_key` / `aws_keys`; pas appliquée à `oauth2_user` actuellement.)
+(Post-login validation via `validate_url`: reserved for `token_paste` / `api_key` / `aws_keys` providers; not applied to `oauth2_user` currently.)
 
 ### `oauth2_device`
 
-Pour les contextes sans browser (SSH headless, terminaux distants). RFC 8628.
+For contexts without a browser (headless SSH, remote terminals). RFC 8628.
 
 ```yaml
 oauth:
@@ -124,7 +124,7 @@ oauth:
   scopes: [repo, read:org]
 ```
 
-Flow :
+Flow:
 
 ```
 $ one login github --device
@@ -137,11 +137,11 @@ And enter the code:
 Waiting for authorization... (5 minutes)
 ```
 
-Le binaire poll le `token_url` à l'intervalle annoncé par le serveur (`interval`, défaut 5s, augmenté de 5s sur `slow_down`) jusqu'à approbation ou expiration du `device_code`.
+The binary polls the `token_url` at the interval announced by the server (`interval`, default 5s, increased by 5s on `slow_down`) until approval or expiration of the `device_code`.
 
 ### `oauth2_client`
 
-Client credentials, machine-to-machine. Pas d'utilisateur, juste une app.
+Client credentials, machine-to-machine. No user, just an app.
 
 ```yaml
 m2m:
@@ -153,11 +153,11 @@ m2m:
     format: "Bearer {access_token}"
 ```
 
-L'utilisateur fournit `client_id` et `client_secret` une fois, le binaire les utilise pour obtenir un access token. Renouvellement automatique.
+The user provides `client_id` and `client_secret` once, the binary uses them to obtain an access token. Automatic renewal.
 
 ### `token_paste`
 
-L'utilisateur copie-colle un token statique.
+The user copies and pastes a static token.
 
 ```yaml
 pat:
@@ -174,7 +174,7 @@ pat:
     format: "Bearer {token}"
 ```
 
-Flow :
+Flow:
 
 ```
 $ one login github --provider pat
@@ -190,11 +190,11 @@ Save this account as [default]: work
 ✓ Stored github:work in keychain
 ```
 
-L'input est masqué (no-echo, comme `sudo` password).
+Input is masked (no-echo, like `sudo` password).
 
 ### `api_key`
 
-Variante de `token_paste` pour les API keys statiques (Stripe, OpenAI, etc.).
+Variant of `token_paste` for static API keys (Stripe, OpenAI, etc.).
 
 ```yaml
 api_key:
@@ -211,13 +211,13 @@ api_key:
     format: "Bearer {key}"
 ```
 
-Identique à `token_paste` côté UX, mais sémantiquement différent (pas un PAT user-scoped, c'est une clé d'app).
+Identical to `token_paste` from a UX standpoint, but semantically different (not a user-scoped PAT, it is an app key).
 
 ### `aws_keys`
 
-Access key ID + secret + session token optionnel. Trois prompts no-echo.
+Access key ID + secret + optional session token. Three no-echo prompts.
 
-Flow :
+Flow:
 
 ```
 $ one login aws --as default
@@ -226,56 +226,56 @@ AWS secret access key (input hidden): ●●●●●●●●●●
 AWS session token (optional; press enter to skip): _
 ```
 
-Validation : signature SigV4 maison (sans `aws-sdk-go`) sur `sts.amazonaws.com` (region `us-east-1`) → `GetCallerIdentity`. Échec HTTP ≥ 300 → erreur.
+Validation: custom SigV4 signature (without `aws-sdk-go`) on `sts.amazonaws.com` (region `us-east-1`) → `GetCallerIdentity`. HTTP failure ≥ 300 → error.
 
-Stockage : `AccessToken = access_key_id`, `RefreshToken = JSON{secret, session_token}`. Pas de champ region: si une région est requise par le service, elle vient du `service.yaml`.
+Storage: `AccessToken = access_key_id`, `RefreshToken = JSON{secret, session_token}`. No region field: if a region is required by the service, it comes from the `service.yaml`.
 
 ### `certificate`
 
-mTLS. Pas de prompt (les PEMs sont trop lourds à coller). Le binaire lit deux fichiers via des variables d'environnement :
+mTLS. No prompt (PEMs are too large to paste). The binary reads two files via environment variables:
 
 ```
 ONE_CERT_<SERVICE>_<ACCOUNT>_CERT=/path/to/cert.pem
 ONE_CERT_<SERVICE>_<ACCOUNT>_KEY=/path/to/key.pem
 ```
 
-(`<SERVICE>` et `<ACCOUNT>` upper-cased, caractères non `[A-Z0-9]` remplacés par `_`.)
+(`<SERVICE>` and `<ACCOUNT>` upper-cased, characters not matching `[A-Z0-9]` replaced by `_`.)
 
-Validation : `tls.X509KeyPair` au login. Stockage : `AccessToken = cert PEM`, `RefreshToken = key PEM`. `Refresh` est un no-op (re-login pour rotater).
+Validation: `tls.X509KeyPair` at login. Storage: `AccessToken = cert PEM`, `RefreshToken = key PEM`. `Refresh` is a no-op (re-login to rotate).
 
-## Le type `Credential`
+## The `Credential` type
 
 ```go
 // core/credential.go
 type Credential struct {
     Service      ServiceID
     Account      AccountAlias    // "work", "perso", "default"
-    Provider     ProviderKind    // typé: ProviderOAuthUser, ProviderPAT, ...
+    Provider     ProviderKind    // typed: ProviderOAuthUser, ProviderPAT, ...
     AccessToken  Secret
-    RefreshToken Secret          // optionnel (ou champ secondaire selon le provider)
-    ExpiresAt    *time.Time      // nil = pas d'expiration
+    RefreshToken Secret          // optional (or secondary field depending on provider)
+    ExpiresAt    *time.Time      // nil = no expiration
     Scopes       []string
 }
 ```
 
-Pas de `Extras`, `CreatedAt`, `LastUsedAt` dans la v0.4: les providers qui ont besoin d'un second secret (AWS session token, mTLS key, OAuth client secret) le stockent dans `RefreshToken` au format adapté.
+No `Extras`, `CreatedAt`, `LastUsedAt` in v0.4: providers that need a second secret (AWS session token, mTLS key, OAuth client secret) store it in `RefreshToken` in the appropriate format.
 
-Le type `Secret` masque la valeur dans tous les logs/erreurs. Pour révéler : `secret.Reveal()`. À n'appeler qu'au moment d'injecter dans un header HTTP.
+The `Secret` type masks the value in all logs/errors. To reveal it: `secret.Reveal()`. Only call this at the point of injection into an HTTP header.
 
-## Multi-comptes
+## Multi-account
 
-Un service peut avoir N accounts. Le vault est indexé par `(service, alias)`.
+A service can have N accounts. The vault is indexed by `(service, alias)`.
 
-### Créer un nouveau compte
+### Creating a new account
 
-L'alias se passe au flag `--as` (défaut `default`). Pas de prompt.
+The alias is passed via the `--as` flag (default `default`). No prompt.
 
 ```bash
 $ one login github --as work
 $ one login github --as perso
 ```
 
-### Lister les comptes d'un service
+### Listing accounts for a service
 
 ```bash
 $ one accounts github
@@ -283,74 +283,74 @@ work    elydelva@protonmail.com     authenticated   refresh in 1h2m
 perso   ely.delvallee@gmail.com     authenticated   refresh in 23m
 ```
 
-### Sélectionner un compte
+### Selecting an account
 
-`--as <alias>` (ou `--account <alias>`) sur la commande d'exécution. Si absent, l'alias `default` est utilisé.
+`--as <alias>` (or `--account <alias>`) on the execution command. If absent, the `default` alias is used.
 
 ```bash
 one github issues.list --as perso
 ```
 
-### Supprimer un compte
+### Deleting an account
 
 ```bash
 $ one logout github --as perso
 ```
 
-## Le vault
+## The vault
 
-Stockage local sécurisé des credentials. Trois sources possibles, chaînées par priorité.
+Local secure storage for credentials. Three possible sources, chained by priority.
 
-### Source 1 : variables d'environnement
+### Source 1: environment variables
 
 ```bash
 ONE_CREDS_GITHUB_DEFAULT='{"access_token":"...","provider":"pat"}'
 ```
 
-Override total du vault, utile en CI. Format JSON sérialisé de `Credential`.
+Total vault override, useful in CI. Serialized JSON format of `Credential`.
 
-### Source 2 : keychain natif de l'OS
+### Source 2: OS native keychain
 
-Implémenté via [`zalando/go-keyring`](https://github.com/zalando/go-keyring) qui abstrait :
+Implemented via [`zalando/go-keyring`](https://github.com/zalando/go-keyring) which abstracts:
 
-- **macOS** : Keychain via Security framework
-- **Linux** : Secret Service via libsecret (GNOME Keyring, KWallet)
-- **Windows** : Credential Manager via wincred
+- **macOS**: Keychain via Security framework
+- **Linux**: Secret Service via libsecret (GNOME Keyring, KWallet)
+- **Windows**: Credential Manager via wincred
 
-Structure dans le keychain :
+Structure in the keychain:
 
-- **Service name** (keychain field) : `one`
-- **Account name** (keychain field) : `<service>:<account_alias>` (ex: `github:work`)
-- **Password** : JSON sérialisé de `Credential`
+- **Service name** (keychain field): `one`
+- **Account name** (keychain field): `<service>:<account_alias>` (e.g. `github:work`)
+- **Password**: serialized JSON of `Credential`
 
-### Source 3 : fichier chiffré age
+### Source 3: age-encrypted file
 
-Pour les contextes headless sans keychain (CI runners, conteneurs Docker, SSH headless).
+For headless contexts without a keychain (CI runners, Docker containers, headless SSH).
 
 ```bash
-ONE_AGE_VAULT_PATH=/path/to/vault.age    # défaut: $HOME/.one/vault.age
-ONE_AGE_PASSPHRASE=...                   # requis (pas de prompt en v0.4)
+ONE_AGE_VAULT_PATH=/path/to/vault.age    # default: $HOME/.one/vault.age
+ONE_AGE_PASSPHRASE=...                   # required (no prompt in v0.4)
 ```
 
-Chiffré avec [age](https://age-encryption.org/) en mode scrypt (passphrase). La couche age est wired uniquement si `ONE_AGE_PASSPHRASE` ou `ONE_AGE_VAULT_PATH` est défini (sinon vault = env + keyring seulement).
+Encrypted with [age](https://age-encryption.org/) in scrypt mode (passphrase). The age layer is wired only if `ONE_AGE_PASSPHRASE` or `ONE_AGE_VAULT_PATH` is defined (otherwise vault = env + keyring only).
 
-### Chaînage
+### Chaining
 
-Implémenté en `adapters/vault/chain.go` :
+Implemented in `adapters/vault/chain.go`:
 
 ```go
 vlt := vault.NewChain(
-    vault.NewEnvVar(),            // 1. env vars d'abord
-    vault.NewKeyring(clock),      // 2. keychain ensuite
-    vault.NewAge(path, passphrase), // 3. fallback age
+    vault.NewEnvVar(),            // 1. env vars first
+    vault.NewKeyring(clock),      // 2. keychain next
+    vault.NewAge(path, passphrase), // 3. age fallback
 )
 ```
 
-Le premier qui répond gagne. Un `Fetch` qui retourne `ErrNotAuthenticated` fait passer à la source suivante. Toute autre erreur propage.
+The first one to respond wins. A `Fetch` that returns `ErrNotAuthenticated` passes to the next source. Any other error propagates.
 
-## Refresh des tokens
+## Token refresh
 
-Refresh **lazy**, déclenché au moment de l'utilisation, pas en background.
+**Lazy** refresh, triggered at the moment of use, not in the background.
 
 ```go
 func (uc *ExecuteAction) resolveCredentials(...) (Credential, error) {
@@ -370,36 +370,36 @@ func (uc *ExecuteAction) resolveCredentials(...) (Credential, error) {
 }
 ```
 
-### Race sur le refresh
+### Refresh race condition
 
-Deux invocations concurrentes peuvent tenter de refresh en même temps. Certains services rotent le refresh token, donc le premier qui réussit révoque l'autre.
+Two concurrent invocations may attempt to refresh at the same time. Some services rotate the refresh token, so the first to succeed revokes the other.
 
-Solution : **file lock** dans `~/.one/locks/<service>:<account>.lock`. Première instance acquiert le lock et refresh. Les autres attendent, puis relisent le vault et utilisent le nouveau token.
+Solution: **file lock** in `~/.one/locks/<service>:<account>.lock`. The first instance acquires the lock and refreshes. Others wait, then re-read the vault and use the new token.
 
-Timeout d'acquisition : 10s. Au-delà, erreur "concurrent refresh timeout".
+Acquisition timeout: 10s. Beyond that, error "concurrent refresh timeout".
 
-### Refresh avec rotation
+### Refresh with rotation
 
-Pour les services qui rotent le refresh token (GitHub, Google) : le nouveau refresh remplace l'ancien. Le vault est écrit **avant** que la requête API n'utilise le nouvel access token.
+For services that rotate the refresh token (GitHub, Google): the new refresh replaces the old one. The vault is written **before** the API request uses the new access token.
 
-Si l'écriture vault fail (keychain unreachable, etc.) : la credential refreshée n'est pas retournée; `ErrReAuthRequired` remonte. L'ancienne credential reste intacte côté vault.
+If the vault write fails (keychain unreachable, etc.): the refreshed credential is not returned; `ErrReAuthRequired` bubbles up. The old credential remains intact in the vault.
 
-### Refresh échoue
+### Refresh fails
 
-Si le refresh fail (refresh token révoqué, expirée définitivement) : retour de l'erreur `ErrReAuthRequired`. La couche CLI mappe sur exit code 2 avec hint :
+If the refresh fails (refresh token revoked, permanently expired): returns `ErrReAuthRequired`. The CLI layer maps to exit code 2 with a hint:
 
 ```
 Error: re-authentication required for service 'github'
 Hint: run `one login github --account work` to re-authenticate.
 ```
 
-## Auth dans les contextes headless
+## Auth in headless contexts
 
-CI, conteneurs Docker, sessions SSH : pas de browser, pas toujours de keychain.
+CI, Docker containers, SSH sessions: no browser, no keychain always available.
 
-### Mécanisme 1 : pre-populated vault
+### Mechanism 1: pre-populated vault
 
-Le développeur copie le fichier `vault.age` chiffré depuis sa machine vers le runner CI. Fournit la passphrase via secret env var.
+The developer copies the encrypted `vault.age` file from their machine to the CI runner. Provides the passphrase via a secret env var.
 
 ```yaml
 # .github/workflows/agent.yml
@@ -414,148 +414,148 @@ steps:
     run: ./run-agent.sh
 ```
 
-Bien pour les déploiements contrôlés, moins bien pour le grand nombre de devs (lourdeur du process).
+Good for controlled deployments, less so for large numbers of developers (process overhead).
 
-### Mécanisme 2 : service account files
+### Mechanism 2: service account files
 
-Reporté à v0.5.
+Deferred to v0.5.
 
-### Mécanisme 3 : env var injection
+### Mechanism 3: env var injection
 
 ```bash
 ONE_CREDS_GITHUB_DEFAULT='{"access_token":"...","provider":"pat","service":"github","account":"default"}'
 ```
 
-Override total du vault. À utiliser uniquement en CI.
+Total vault override. Use only in CI.
 
-### Mécanisme 4 : device flow
+### Mechanism 4: device flow
 
-Pour les humains sur des terminaux headless mais qui ont accès à un browser ailleurs (téléphone). Sélection via le provider, pas un flag dédié :
+For humans on headless terminals who have access to a browser elsewhere (phone). Selected via the provider, not a dedicated flag:
 
 ```bash
 one login github --provider oauth2_device
 ```
 
-Affiche un code et une URL, l'utilisateur valide sur son téléphone.
+Displays a code and a URL, the user validates on their phone.
 
-## Le `client_id`, question politique
+## The `client_id`, a policy question
 
-OAuth nécessite un `client_id` enregistré chez chaque service. Deux options possibles :
+OAuth requires a `client_id` registered with each service. Two possible options:
 
-### Option A : client_id officiels One CLI
+### Option A: official One CLI client_ids
 
-Le binaire ships avec un `client_id` hardcodé par service. L'app OAuth s'appelle "One CLI". Simple pour l'utilisateur, mais :
+The binary ships with a hardcoded `client_id` per service. The OAuth app is called "One CLI". Simple for the user, but:
 
-- Tu deviens responsable des limites de rate
-- Tu deviens responsable des conditions d'usage chez chaque service
-- Tu dois maintenir l'app enregistrée chez chaque service
+- You become responsible for rate limits
+- You become responsible for the terms of use at each service
+- You must maintain the registered app at each service
 
-### Option B : BYOC (Bring Your Own client_id)
+### Option B: BYOC (Bring Your Own client_id)
 
-L'utilisateur enregistre sa propre app. Le `service.yaml` documente comment. L'utilisateur set un env var (`ONE_GITHUB_CLIENT_ID`) ou passe `--client-id`.
+The user registers their own app. The `service.yaml` documents how. The user sets an env var (`ONE_GITHUB_CLIENT_ID`) or passes `--client-id`.
 
-Plus de friction, mais aucune dépendance à toi.
+More friction, but no dependency on you.
 
-### Hybride recommandé
+### Recommended hybrid
 
-Pour la v0 :
+For v0:
 
-- **Apps officielles** pour : GitHub, Notion, Linear, Slack (services majeurs, peu de risque)
-- **BYOC obligatoire** pour : Google, Microsoft (vérifications longues, friction à publier une app)
-- **Pas concerné** pour : Stripe, OpenAI, AWS (pas d'OAuth)
+- **Official apps** for: GitHub, Notion, Linear, Slack (major services, low risk)
+- **BYOC required** for: Google, Microsoft (long verification processes, friction to publish an app)
+- **Not applicable** for: Stripe, OpenAI, AWS (no OAuth)
 
-Documenter sur le site :
+Document on the site:
 
-- Liste des apps officielles
-- Disclaimer "vos données ne transitent jamais par les serveurs One CLI"
-- Comment révoquer en cas de besoin
-- Comment migrer vers BYOC
+- List of official apps
+- Disclaimer "your data never transits through One CLI servers"
+- How to revoke if needed
+- How to migrate to BYOC
 
-## Sécurité
+## Security
 
-### Le type `Secret`
+### The `Secret` type
 
-Tout token, refresh token, secret, password est typé `core.Secret`. Ce type implémente `String()`, `GoString()`, `MarshalJSON()` pour retourner `[REDACTED]`. Ne révèle la valeur que via `Reveal()`, appelable uniquement au point d'injection.
+Every token, refresh token, secret, password is typed `core.Secret`. This type implements `String()`, `GoString()`, `MarshalJSON()` to return `[REDACTED]`. The value is only revealed via `Reveal()`, callable only at the injection point.
 
-Test continu : un test de sécurité qui injecte un token de valeur reconnaissable, capture toutes les sorties (logs, stderr, audit), grep pour la valeur. Si trouvée → CI fail.
+Continuous test: a security test that injects a token with a recognizable value, captures all outputs (logs, stderr, audit), greps for the value. If found → CI fails.
 
-### Audit log d'auth
+### Auth audit log
 
-Reporté à v0.5. `one trace` est câblé côté CLI mais retourne "not implemented".
+Deferred to v0.5. `one trace` is wired on the CLI side but returns "not implemented".
 
-### Détection d'anomalies
+### Anomaly detection
 
-Reporté à v0.5.
+Deferred to v0.5.
 
-### Disclosure de credentials
+### Credential disclosure
 
-`one rotate <service> <account>` re-run le login flow et écrase la credential dans le vault. La révocation de l'ancien token via l'endpoint OAuth est reportée à v0.5.
+`one rotate <service> <account>` re-runs the login flow and overwrites the credential in the vault. Revocation of the old token via the OAuth endpoint is deferred to v0.5.
 
-## Commandes récapitulatives
+## Command summary
 
 ```bash
-one login <service>                       # provider défaut: pat
+one login <service>                       # default provider: pat
 one login <service> --provider <kind>     # pat, api_key, oauth2_user, oauth2_device, oauth2_client, aws_keys, certificate
-one login <service> --as <alias>          # alias (défaut: default)
+one login <service> --as <alias>          # alias (default: default)
 
-one logout <service> [--as <alias>]       # supprime un compte du vault
+one logout <service> [--as <alias>]       # removes an account from the vault
 
-one accounts <service>                    # liste les comptes d'un service
+one accounts <service>                    # lists accounts for a service
 
 one rotate <service> <account>            # re-run login flow
-one refresh <service> <account>           # force refresh (ignore le margin)
+one refresh <service> <account>           # force refresh (ignores margin)
 
-one vault status                          # JSON: comptes par service en scope
-one vault export                          # JSON plaintext sur stdout (pipe à `age -p`)
-one vault import                          # restore depuis JSON sur stdin
+one vault status                          # JSON: accounts by service in scope
+one vault export                          # JSON plaintext on stdout (pipe to `age -p`)
+one vault import                          # restore from JSON on stdin
 ```
 
-Pas de `--device` / `--client-id` / `--all` / `one accounts` global / `one vault export --to` en v0.4.
+No `--device` / `--client-id` / `--all` / global `one accounts` / `one vault export --to` in v0.4.
 
 ## Anti-patterns
 
-### Stocker des credentials dans `.onerc.yaml`
+### Storing credentials in `.onerc.yaml`
 
 ```yaml
-# JAMAIS
+# NEVER
 services:
   github:
-    token: "ghp_xxxxx"           # le scope file est public/committable
+    token: "ghp_xxxxx"           # the scope file is public/committable
 ```
 
-Le scope file ne contient **jamais** de credentials. Refusé par le validateur si détecté.
+The scope file **never** contains credentials. Rejected by the validator if detected.
 
-### Hardcoder client_id dans service.yaml
+### Hardcoding client_id in service.yaml
 
 ```yaml
-# JAMAIS
+# NEVER
 client_id: "ABCDEF1234567890"
 ```
 
-Toujours `{env.ONE_<SERVICE>_CLIENT_ID}`. Permet aux utilisateurs d'utiliser leur propre app et au projet de changer le client_id officiel sans repush du catalogue.
+Always `{env.ONE_<SERVICE>_CLIENT_ID}`. Allows users to use their own app and lets the project change the official client_id without repushing the catalog.
 
-### Logger les tokens
+### Logging tokens
 
 ```go
-// JAMAIS
+// NEVER
 log.Info("token", token.Reveal())
 ```
 
-Si tu as besoin du token pour debug, utilise `token.String()` qui retourne `[REDACTED]`.
+If you need the token for debugging, use `token.String()` which returns `[REDACTED]`.
 
-### Réutiliser un access token expiré
+### Reusing an expired access token
 
-Le runtime check `NeedsRefresh` avant chaque action. Si tu construis du code custom qui utilise une `Credential` directement, fais le check toi-même.
+The runtime checks `NeedsRefresh` before each action. If you build custom code that uses a `Credential` directly, perform the check yourself.
 
-### Sauvegarder le refresh token dans des logs custom
+### Saving the refresh token in custom logs
 
 ```ts
-// MAUVAIS dans un handler
+// BAD in a handler
 host.log.info('Got refresh', { token: refresh_token });
 ```
 
-Les host.log côté handler ne sont pas redactés automatiquement. Ne log jamais ce qui vient de `host.creds.get`.
+`host.log` on the handler side is not automatically redacted. Never log anything that comes from `host.creds.get`.
 
 ---
 
-*Pour proposer un nouveau type de provider d'auth, ouvrir un RFC dans `one-cli/rfcs`. Un nouveau type implique un nouvel adapter, donc validation soigneuse de la sécurité et de la compatibilité cross-platform.*
+*To propose a new auth provider type, open an RFC in `one-cli/rfcs`. A new type implies a new adapter, so careful validation of security and cross-platform compatibility is required.*

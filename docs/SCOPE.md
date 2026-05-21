@@ -1,28 +1,28 @@
 # SCOPE.md
 
-> Référence complète du scope file (`.onerc.yaml`) : grammaire, layering, lock file, commandes. Pour les permissions disponibles par service, voir le catalogue ou `one info <service>`.
+> Complete reference for the scope file (`.onerc.yaml`): grammar, layering, lock file, commands. For available permissions per service, see the catalog or `one info <service>`.
 
-## Vue d'ensemble
+## Overview
 
-Le scope file est un fichier YAML versionné à la racine du projet qui déclare **ce qu'un agent (ou un dev) a le droit de faire sur ce projet via One CLI**. C'est l'unité centrale de gouvernance.
+The scope file is a versioned YAML file at the root of the project that declares **what an agent (or a developer) is allowed to do on this project via One CLI**. It is the central governance unit.
 
-Trois propriétés non-négociables :
+Three non-negotiable properties:
 
-1. **Default deny strict.** Tout ce qui n'est pas explicitement autorisé est refusé.
-2. **Lisible sans documentation.** Un dev qui ouvre le fichier doit comprendre ce qui est autorisé en 30 secondes.
-3. **Versionné dans la repo.** Reviewable en PR, partagé par l'équipe, reproductible entre machines.
+1. **Strict default deny.** Everything not explicitly allowed is denied.
+2. **Readable without documentation.** A developer opening the file must understand what is allowed within 30 seconds.
+3. **Versioned in the repo.** Reviewable in PRs, shared by the team, reproducible across machines.
 
-## Les trois fichiers
+## The three files
 
-| Fichier | Rôle | Statut Git |
+| File | Role | Git status |
 |---|---|---|
-| `.onerc.yaml` | Source de vérité du projet | commité |
-| `.onerc.local.yaml` | Overrides personnels | gitignored |
-| `.onerc.lock` | Résolution catalogue figée | commité |
+| `.onerc.yaml` | Project source of truth | committed |
+| `.onerc.local.yaml` | Personal overrides | gitignored |
+| `.onerc.lock` | Frozen catalog resolution | committed |
 
-## Grammaire complète
+## Full grammar
 
-### Squelette minimal
+### Minimal skeleton
 
 ```yaml
 version: 1
@@ -37,9 +37,9 @@ services:
       - pages.*
 ```
 
-C'est suffisant pour la majorité des projets.
+This is sufficient for the majority of projects.
 
-### Grammaire complète
+### Full grammar
 
 ```yaml
 version: 1
@@ -53,7 +53,7 @@ defaults:
   notion: kaampus
   stripe: test
 
-profile: default                    # profile actif (si profiles définis)
+profile: default                    # active profile (if profiles are defined)
 
 profiles:
   default:
@@ -73,7 +73,7 @@ profiles:
 
 services:
   github:
-    account: work                   # surcharge defaults.github
+    account: work                   # overrides defaults.github
     allow:
       - issues.*
       - pulls.read
@@ -96,15 +96,15 @@ services:
       - subscriptions.read
 ```
 
-### Champs détaillés
+### Detailed fields
 
-#### `version` (obligatoire)
+#### `version` (required)
 
-Version du format. Toujours `1` actuellement. Permet d'évoluer le format dans le futur sans casser les projets existants.
+Format version. Always `1` currently. Allows the format to evolve in the future without breaking existing projects.
 
-#### `project` (optionnel)
+#### `project` (optional)
 
-Métadonnées humaines. Affichées dans `one info` quand on est dans ce projet. Utile pour distinguer plusieurs projets sur la même machine.
+Human metadata. Displayed in `one info` when inside this project. Useful for distinguishing multiple projects on the same machine.
 
 ```yaml
 project:
@@ -112,9 +112,9 @@ project:
   description: Backend API for the Kaampus marketplace
 ```
 
-#### `defaults` (optionnel)
+#### `defaults` (optional)
 
-Compte par défaut par service. Si non spécifié, l'alias `default` est utilisé.
+Default account per service. If not specified, the alias `default` is used.
 
 ```yaml
 defaults:
@@ -123,23 +123,23 @@ defaults:
   stripe: test
 ```
 
-Surchargeable par service (`services.<name>.account`) ou ad-hoc (`one --as perso github ...`).
+Overridable per service (`services.<name>.account`) or ad-hoc (`one --as perso github ...`).
 
-#### `services` (obligatoire si on veut autoriser quoi que ce soit)
+#### `services` (required if you want to allow anything)
 
-Permissions par service.
+Permissions per service.
 
 ```yaml
 services:
   github:
-    account: work              # optionnel, sinon hérite de defaults.github
-    allow: [...]               # liste de patterns autorisés
-    deny: [...]                # liste de patterns refusés (override allow)
+    account: work              # optional, otherwise inherits from defaults.github
+    allow: [...]               # list of allowed patterns
+    deny: [...]                # list of denied patterns (overrides allow)
 ```
 
-#### `profiles` (optionnel, v1.1+)
+#### `profiles` (optional, v1.1+)
 
-Profils nommés pour gérer plusieurs environnements (dev, staging, prod).
+Named profiles for managing multiple environments (dev, staging, prod).
 
 ```yaml
 profiles:
@@ -159,86 +159,86 @@ profiles:
         deny: [customers.delete]
 ```
 
-Sélection :
+Selection:
 
-- Par défaut : profil `default`
-- Via env var : `ONE_PROFILE=production one ...`
-- Via local : `profile: production` dans `.onerc.local.yaml`
+- By default: `default` profile
+- Via env var: `ONE_PROFILE=production one ...`
+- Via local: `profile: production` in `.onerc.local.yaml`
 
-L'héritage (`extends`) merge récursivement les champs du parent, le child surchargeant les conflits.
+Inheritance (`extends`) recursively merges parent fields, with the child overriding conflicts.
 
-## Les globs
+## Globs
 
-Une seule règle, minimaliste :
+A single, minimalist rule:
 
 | Pattern | Match |
 |---|---|
-| `pages.read` | exactement cette permission |
-| `pages.*` | tout ce qui commence par `pages.` (un seul niveau) |
-| `*` | toutes les permissions du service |
+| `pages.read` | exactly this permission |
+| `pages.*` | everything starting with `pages.` (single level) |
+| `*` | all permissions for the service |
 
-**Interdit** :
+**Not allowed**:
 
-- `**` (rejeté à la validation, trop ambigu)
-- `pages.{read,write}` (pas d'expansion brace)
-- `!pages.delete` (pas d'anti-pattern, utiliser `deny`)
-- `pages.?` (pas de wildcard char)
+- `**` (rejected at validation, too ambiguous)
+- `pages.{read,write}` (no brace expansion)
+- `!pages.delete` (no anti-pattern, use `deny`)
+- `pages.?` (no wildcard char)
 
-Si tu veux exclure une permission précise, utilise `deny`. La grammaire reste lisible et prévisible.
+To exclude a specific permission, use `deny`. The grammar remains readable and predictable.
 
-### Précédence d'évaluation
+### Evaluation precedence
 
-L'ordre est figé et documenté :
+The order is fixed and documented:
 
 ```
 1. deny exact         (deny: [pages.delete] vs perm pages.delete)
 2. deny glob          (deny: [pages.*] vs perm pages.delete)
 3. allow exact        (allow: [pages.read] vs perm pages.read)
 4. allow glob         (allow: [pages.*] vs perm pages.read)
-5. default deny       (rien ne match)
+5. default deny       (nothing matches)
 ```
 
-**Exemples** :
+**Examples**:
 
 ```yaml
 allow: [pages.*]
 deny: [pages.delete]
-# → tout pages.X autorisé sauf pages.delete
+# → all pages.X allowed except pages.delete
 ```
 
 ```yaml
 allow: [*]
 deny: [databases.write]
-# → tout autorisé sauf databases.write
+# → everything allowed except databases.write
 ```
 
 ```yaml
 allow: [pages.delete]
 deny: [pages.*]
-# → pages.delete autorisé (deny glob bat allow exact ? NON, deny glob = 2, allow exact = 3)
-# wait, refaisons: deny glob (pages.*) match pages.delete → DENY (étape 2 termine)
-# → pages.delete REFUSÉ
+# → pages.delete allowed (does deny glob beat allow exact? NO, deny glob = 2, allow exact = 3)
+# wait, let's redo: deny glob (pages.*) matches pages.delete → DENY (step 2 terminates)
+# → pages.delete DENIED
 ```
 
-L'exemple ci-dessus montre qu'**il faut comprendre la précédence**. La commande `one scope explain` (voir plus bas) trace l'évaluation pour débogger.
+The example above shows that **understanding precedence is required**. The `one scope explain` command (see below) traces the evaluation to help debug.
 
-## Le layering : `.onerc.local.yaml`
+## Layering: `.onerc.local.yaml`
 
-Le `.onerc.local.yaml` est gitignored et permet à chaque dev d'ajuster pour sa machine. **Règle stricte** : il ne peut qu'**enlever ou changer de compte**, jamais ajouter une permission qui n'est pas dans le base.
+The `.onerc.local.yaml` is gitignored and allows each developer to adjust settings for their machine. **Strict rule**: it can only **remove or change accounts**, never add a permission that is not in the base.
 
-### Ce qui est autorisé dans `.local`
+### What is allowed in `.local`
 
 ```yaml
 version: 1
 
-# Changer de profil
+# Change profile
 profile: development
 
-# Changer de compte par défaut
+# Change default account
 defaults:
   github: perso
 
-# Restreindre encore
+# Restrict further
 services:
   github:
     deny:
@@ -246,40 +246,40 @@ services:
       - pulls.merge
 ```
 
-### Ce qui est interdit dans `.local`
+### What is forbidden in `.local`
 
 ```yaml
-# INTERDIT : ajouter une permission absente du base
+# FORBIDDEN: adding a permission absent from the base
 services:
   github:
     allow:
-      - repos.delete           # pas dans .onerc.yaml → ignoré + warning
-  newservice:                  # service absent du base → ignoré + warning
+      - repos.delete           # not in .onerc.yaml → ignored + warning
+  newservice:                  # service absent from base → ignored + warning
     allow: [*]
 ```
 
-### Algorithme de merge
+### Merge algorithm
 
 ```
 result.profile = local.profile ?? base.profile
 
 result.defaults = merge(base.defaults, local.defaults)
-  # local override base par service
+  # local overrides base per service
 
-Pour chaque service présent dans base.services :
-  result.allow = base.allow                              # local NE PEUT PAS étendre
-  result.deny = base.deny ∪ local.deny                   # local PEUT restreindre
-  result.account = local.account ?? base.account         # local PEUT changer
+For each service present in base.services:
+  result.allow = base.allow                              # local CANNOT extend
+  result.deny = base.deny ∪ local.deny                   # local CAN restrict
+  result.account = local.account ?? base.account         # local CAN change
 
-Pour chaque service présent uniquement dans local.services :
+For each service present only in local.services:
   → warning "service X in .onerc.local.yaml not in .onerc.yaml, ignored"
 ```
 
-**Justification de la règle anti-extension** : si le local pouvait étendre, le scope file commité ne serait plus la source de vérité. Quelqu'un qui ouvre le repo ne verrait pas ce qui est *réellement* autorisé sur la machine du dev. Mauvais pour l'audit et la reproductibilité.
+**Rationale for the no-extension rule**: if local could extend, the committed scope file would no longer be the source of truth. Someone opening the repo would not see what is *actually* allowed on the developer's machine. Bad for audit and reproducibility.
 
-## Le lock file `.onerc.lock`
+## The lock file `.onerc.lock`
 
-Fige les versions résolues du catalogue. Comme un `package-lock.json`.
+Freezes the resolved catalog versions. Like a `package-lock.json`.
 
 ### Format
 
@@ -303,9 +303,9 @@ services:
     tarball_sha256: 5c4b3a...
 ```
 
-### Comportement strict
+### Strict behavior
 
-Si une version installée localement ne matche pas le lock, le binaire **refuse** d'exécuter l'action :
+If a locally installed version does not match the lock, the binary **refuses** to execute the action:
 
 ```
 $ one notion pages.read --page_id ...
@@ -319,35 +319,35 @@ Run `one catalog update` to fetch the locked version, or
 Exit 1
 ```
 
-Garantit la reproductibilité entre machines : tous les devs et CI utilisent les mêmes versions du catalogue.
+Guarantees reproducibility across machines: all developers and CI use the same catalog versions.
 
-### Commandes
+### Commands
 
 ```bash
-one lock                              # génère le lock depuis les versions actuelles
-one lock --update notion              # met à jour un service spécifique
-one lock --update-all                 # met à jour tous les services
-one lock --check                      # vérifie que le local matche (exit 0/1)
+one lock                              # generates the lock from current versions
+one lock --update notion              # updates a specific service
+one lock --update-all                 # updates all services
+one lock --check                      # verifies that local matches (exit 0/1)
 ```
 
-## Les commandes pour modifier le scope
+## Commands to modify the scope
 
-L'agent et l'humain ne touchent **jamais** le fichier à la main, sauf en review de PR. La CLI propose les commandes :
+Agents and humans should **never** edit the file directly, except during a PR review. The CLI provides these commands:
 
 ```bash
-one scope show                        # affiche le scope effectif (merge inclus) en JSON
-one scope add <service> <perm>        # ajoute une permission à allow
-one scope add <service> <perm> --deny # ajoute à deny
-one scope remove <service> <perm>     # retire une permission
-one scope remove <service> <perm> --deny  # retire de deny
-one scope use <service> --as <alias>  # change le compte par défaut
-one scope check                       # valide la cohérence (schéma + catalogue)
-one scope explain <service> <perm>    # trace l'évaluation, montre pourquoi un perm est autorisé/refusé
+one scope show                        # displays the effective scope (including merge) as JSON
+one scope add <service> <perm>        # adds a permission to allow
+one scope add <service> <perm> --deny # adds to deny
+one scope remove <service> <perm>     # removes a permission
+one scope remove <service> <perm> --deny  # removes from deny
+one scope use <service> --as <alias>  # changes the default account
+one scope check                       # validates consistency (schema + catalog)
+one scope explain <service> <perm>    # traces evaluation, shows why a permission is allowed/denied
 ```
 
 ### `one scope show`
 
-Affiche le scope effectif après merge base + local + profile :
+Displays the effective scope after merging base + local + profile:
 
 ```json
 {
@@ -368,11 +368,11 @@ Affiche le scope effectif après merge base + local + profile :
 }
 ```
 
-Utile pour les agents qui veulent introspecter avant d'agir.
+Useful for agents that want to introspect before acting.
 
 ### `one scope check`
 
-Validation exhaustive du fichier :
+Exhaustive validation of the file:
 
 ```
 $ one scope check
@@ -390,17 +390,17 @@ $ one scope check
 Errors: 1   Warnings: 1
 ```
 
-Exit codes :
+Exit codes:
 
-- 0 : aucun erreur ni warning
-- 1 : warnings uniquement
-- 2 : erreurs présentes
+- 0: no errors or warnings
+- 1: warnings only
+- 2: errors present
 
-Idéal en pre-commit hook ou CI.
+Ideal as a pre-commit hook or in CI.
 
 ### `one scope explain`
 
-Trace l'évaluation, ligne par ligne :
+Traces the evaluation, line by line:
 
 ```
 $ one scope explain github issues.delete
@@ -419,32 +419,32 @@ To allow:
     one scope remove github issues.delete --deny --local
 ```
 
-C'est ce qui rend la grammaire utilisable au-delà du trivial. Quand un agent dit "j'ai pas la permission", le dev fait `one scope explain` et voit exactement pourquoi en 5 secondes.
+This is what makes the grammar usable beyond trivial cases. When an agent says "I don't have permission", the developer runs `one scope explain` and sees exactly why in 5 seconds.
 
-## Exemple : workflow type sur un nouveau projet
+## Example: typical workflow on a new project
 
-### Première installation
+### First installation
 
 ```bash
-cd mon-projet
-one init                              # crée .onerc.yaml vide
+cd my-project
+one init                              # creates an empty .onerc.yaml
 ```
 
-`.onerc.yaml` est créé minimal :
+`.onerc.yaml` is created minimal:
 
 ```yaml
 version: 1
 services: {}
 ```
 
-### Login aux services nécessaires
+### Login to required services
 
 ```bash
 one login github                      # OAuth, alias "default"
 one login notion                      # OAuth, alias prompted
 ```
 
-### Définir le scope
+### Define the scope
 
 ```bash
 one scope add github issues.*
@@ -453,7 +453,7 @@ one scope add notion pages.*
 one scope add notion blocks.*
 ```
 
-`.onerc.yaml` devient :
+`.onerc.yaml` becomes:
 
 ```yaml
 version: 1
@@ -468,7 +468,7 @@ services:
       - blocks.*
 ```
 
-### Verrouiller
+### Lock
 
 ```bash
 one lock
@@ -476,20 +476,20 @@ git add .onerc.yaml .onerc.lock
 git commit -m "init: add One CLI scope"
 ```
 
-### Le collègue clone
+### A colleague clones
 
 ```bash
 git clone ...
-cd mon-projet
-one catalog update                    # fetch les versions lockées
-one login github                      # crée son propre compte
+cd my-project
+one catalog update                    # fetch the locked versions
+one login github                      # creates their own account
 one login notion
-# Le scope est déjà défini, pas besoin de le redéfinir
+# The scope is already defined, no need to redefine it
 ```
 
-## JSON Schema (extrait formel)
+## JSON Schema (formal excerpt)
 
-Référence pour la validation. Le schéma complet est dans `pkg/catalog/schema/onerc-v1.json`.
+Reference for validation. The full schema is in `pkg/catalog/schema/onerc-v1.json`.
 
 ```yaml
 $schema: https://json-schema.org/draft/2020-12/schema
@@ -547,12 +547,12 @@ $defs:
 
   permPattern:
     type: string
-    pattern: "^[a-z][a-z0-9_]*(\\.[a-z0-9_*]+)*$"   # interdit `**` et `?`
+    pattern: "^[a-z][a-z0-9_]*(\\.[a-z0-9_*]+)*$"   # disallows `**` and `?`
 ```
 
-## Recettes courantes
+## Common recipes
 
-### Agent en read-only
+### Read-only agent
 
 ```yaml
 version: 1
@@ -565,7 +565,7 @@ services:
       - search
 ```
 
-### Limiter destructif sur tous les services
+### Restrict destructive operations on all services
 
 ```yaml
 version: 1
@@ -582,7 +582,7 @@ services:
       - databases.delete
 ```
 
-### Compte de test en dev, prod en CI
+### Test account in dev, prod in CI
 
 ```yaml
 # .onerc.yaml
@@ -602,17 +602,17 @@ services:
 ```
 
 ```yaml
-# .onerc.local.yaml (chez chaque dev)
-# Rien, le défaut "test" est OK
+# .onerc.local.yaml (for each developer)
+# Nothing, the "test" default is fine
 ```
 
 ```yaml
-# Sur la CI prod : env var ONE_PROFILE=production
+# On prod CI: env var ONE_PROFILE=production
 ```
 
-### Limiter agent IA strictement
+### Strictly limiting an AI agent
 
-Cas d'usage : un projet où un agent IA tourne en autonomie sur du code de production. On veut être très strict.
+Use case: a project where an AI agent runs autonomously on production code. We want to be very strict.
 
 ```yaml
 version: 1
@@ -623,45 +623,45 @@ services:
       - issues.create
       - issues.comment
       - pulls.read
-      - pulls.review            # autorisé à reviewer mais pas merger
+      - pulls.review            # allowed to review but not merge
     deny:
-      - "*"                     # explicite, en bottom
-  # pas de notion, pas de stripe, pas d'autre service
+      - "*"                     # explicit, at the bottom
+  # no notion, no stripe, no other service
 ```
 
-Le `deny: ["*"]` en bas est redondant à cause du default deny, mais rend explicite l'intent.
+The `deny: ["*"]` at the bottom is redundant due to default deny, but makes the intent explicit.
 
-## Anti-patterns à refuser en code review
+## Anti-patterns to reject in code review
 
-### Allow `["*"]` sans deny
+### Allow `["*"]` without deny
 
 ```yaml
-# DANGEREUX
+# DANGEROUS
 services:
   github:
     allow: ["*"]
 ```
 
-Tout est autorisé. C'est rarement ce qu'on veut. Soit on liste les permissions explicitement, soit on `allow: ["*"]` + `deny:` des destructeurs.
+Everything is allowed. This is rarely what you want. Either list permissions explicitly, or use `allow: ["*"]` + `deny:` for destructive actions.
 
-### Permissions sans namespace
+### Permissions without namespace
 
 ```yaml
-# MAUVAIS
+# BAD
 services:
   github:
     allow:
-      - "read"                  # de quoi ?
-      - "*"                     # trop large
-      - "issue.delete"          # singulier au lieu de pluriel
+      - "read"                  # read what?
+      - "*"                     # too broad
+      - "issue.delete"          # singular instead of plural
 ```
 
-Respecter la convention `<resource>.<verb>` exactement comme déclaré par le service.
+Respect the `<resource>.<verb>` convention exactly as declared by the service.
 
-### Conflits non résolus
+### Unresolved conflicts
 
 ```yaml
-# CONFUS
+# CONFUSING
 services:
   github:
     allow:
@@ -671,24 +671,24 @@ services:
       - issues.delete
 ```
 
-`issues.*` couvre déjà `issues.delete`, ajouter `issues.delete` en allow est redondant. Avec le deny qui suit, c'est ambigu pour le lecteur. `one scope check` warn dans ce cas.
+`issues.*` already covers `issues.delete`, adding `issues.delete` to allow is redundant. With the deny that follows, it is ambiguous for the reader. `one scope check` warns in this case.
 
-### Mélanger profiles et top-level
+### Mixing profiles and top-level
 
 ```yaml
-# CONFUS
-services:                       # définit au top-level
+# CONFUSING
+services:                       # defined at top-level
   github:
     allow: [issues.read]
 profiles:
   default:
-    services:                   # ET dans le profile default
+    services:                   # AND in the default profile
       github:
         allow: [issues.write]
 ```
 
-Choisis l'un ou l'autre. Soit pas de profile, soit tout dans des profiles.
+Choose one or the other. Either no profiles, or everything inside profiles.
 
 ---
 
-*Pour proposer une évolution de la grammaire du scope file, ouvrir un RFC dans `one-cli/rfcs`. Changement majeur = bump `version`. Le binaire doit supporter les versions précédentes pendant au moins 12 mois.*
+*To propose a grammar change for the scope file, open an RFC in `one-cli/rfcs`. Major change = `version` bump. The binary must support previous versions for at least 12 months.*

@@ -1,41 +1,41 @@
 # CATALOG.md
 
-> Référence complète pour ajouter ou modifier un service dans le catalogue One CLI. Pour contributeurs externes au repo `one-cli/catalog`. Pour le contrat WASM, voir [HANDLERS.md](./HANDLERS.md).
+> Complete reference for adding or modifying a service in the One CLI catalog. For external contributors to the `one-cli/catalog` repo. For the WASM contract, see [HANDLERS.md](./HANDLERS.md).
 
-## Vue d'ensemble
+## Overview
 
-Le catalogue est un repo Git public (`one-cli/catalog`) qui contient la définition de chaque service supporté. Sa CI publie un index JSON statique sur CDN, qu'un binaire `one` fetch pour résoudre les services.
+The catalog is a public Git repo (`one-cli/catalog`) that contains the definition of each supported service. Its CI publishes a static JSON index on CDN, which a `one` binary fetches to resolve services.
 
-**Ajouter un service = ouvrir une PR.** Le repo a une CI stricte qui valide le format, lance les tests, vérifie les contraintes de sécurité. Une fois mergée, la PR déclenche la publication automatique sur l'index.
+**Adding a service = opening a PR.** The repo has strict CI that validates the format, runs tests, and checks security constraints. Once merged, the PR triggers automatic publication to the index.
 
-### Distribution HTTP
+### HTTP Distribution
 
-Le binaire résout le catalogue dans cet ordre :
+The binary resolves the catalog in this order:
 
-1. Layer FS local (`$HOME/.one/catalog` ou `ONE_CATALOG_ROOT`)
-2. Si `ONE_CATALOG_URL` est défini : layer HTTP en fallback, wrappé par un cache TTL de 15 minutes (clock-driven, `ports.Clock`).
+1. Local FS layer (`$HOME/.one/catalog` or `ONE_CATALOG_ROOT`)
+2. If `ONE_CATALOG_URL` is set: HTTP layer as fallback, wrapped by a 15-minute TTL cache (clock-driven, `ports.Clock`).
 
-Layout côté CDN :
+CDN layout:
 
 ```
 <baseURL>/index.json
 <baseURL>/services/<id>.tar.gz
 ```
 
-`index.json` (`version: 1`) liste pour chaque service son `version` et son `tarball_sha256`. Chaque tarball gz est récupéré et **vérifié SHA256** contre l'index avant parsing (`ErrIntegrityCheckFailed` sinon). Contenu attendu dans le tar : `service.yaml`, `actions/*.yaml`, `SKILL.md`, `guides/*.md` (avec un wrapper optionnel `<id>/` toléré).
+`index.json` (`version: 1`) lists for each service its `version` and `tarball_sha256`. Each gz tarball is fetched and **SHA256-verified** against the index before parsing (`ErrIntegrityCheckFailed` otherwise). Expected contents in the tar: `service.yaml`, `actions/*.yaml`, `SKILL.md`, `guides/*.md` (with an optional `<id>/` wrapper tolerated).
 
-La chaîne `FS → HTTP` fallthrough sur `ErrUnknownService` / `ErrUnknownAction` / `ErrNotSupported`; toute autre erreur court-circuite.
+The `FS → HTTP` chain falls through on `ErrUnknownService` / `ErrUnknownAction` / `ErrNotSupported`; any other error short-circuits.
 
-## Structure d'un service
+## Service Structure
 
 ```
 services/
 └── notion/
-    ├── service.yaml             # métadonnées + déclaration auth + permissions
-    ├── SKILL.md                 # markdown pour `one info notion`
+    ├── service.yaml             # metadata + auth declaration + permissions
+    ├── SKILL.md                 # markdown for `one info notion`
     ├── actions/
     │   ├── pages.read.yaml
-    │   ├── pages.read.md        # optionnel, sinon généré depuis YAML
+    │   ├── pages.read.md        # optional, otherwise generated from YAML
     │   ├── pages.create.yaml
     │   ├── pages.update.yaml
     │   ├── databases.query.yaml
@@ -44,25 +44,25 @@ services/
     ├── guides/
     │   ├── initial-setup.md
     │   └── share-page.md
-    └── handlers/                # uniquement si WASM requis
+    └── handlers/                # only if WASM is required
         ├── main.ts              # source
-        ├── main.wasm            # compilé par CI, pas commité
+        ├── main.wasm            # compiled by CI, not committed
         ├── package.json
         └── tests/
             └── main.test.ts
 ```
 
-**Convention** :
+**Convention**:
 
-- Le **nom du dossier** est l'identifiant du service utilisé dans les commandes (`one notion ...`).
-- Les **noms d'actions** suivent `<resource>.<verb>` (ex: `pages.create`, pas `createPage` ou `create_page`).
-- Les **noms de guides** sont des slugs kebab-case (`share-page`, `iam-setup`).
+- The **folder name** is the service identifier used in commands (`one notion ...`).
+- **Action names** follow `<resource>.<verb>` (e.g. `pages.create`, not `createPage` or `create_page`).
+- **Guide names** are kebab-case slugs (`share-page`, `iam-setup`).
 
-## Le fichier `service.yaml`
+## The `service.yaml` File
 
-C'est le manifeste du service. Référence complète des champs.
+This is the service manifest. Complete field reference.
 
-### Squelette minimal
+### Minimal skeleton
 
 ```yaml
 version: 1
@@ -77,7 +77,7 @@ maintainers:
 
 api:
   base_url: https://api.notion.com/v1
-  version: "2025-09-03"            # version d'API à passer
+  version: "2025-09-03"            # API version to pass
   headers:
     Notion-Version: "{api.version}"
 
@@ -118,28 +118,28 @@ permissions:
     kind: query
 ```
 
-### Sections en détail
+### Sections in detail
 
-#### `version` (obligatoire)
+#### `version` (required)
 
-Version du format du service.yaml. Toujours `1` actuellement. Permet l'évolution du format dans le futur sans casser les services existants.
+Version of the service.yaml format. Always `1` currently. Allows the format to evolve in the future without breaking existing services.
 
-#### Identité
+#### Identity
 
-| Champ | Type | Obligatoire | Description |
+| Field | Type | Required | Description |
 |---|---|:---:|---|
-| `name` | string | oui | identifiant du service, doit matcher le nom du dossier |
-| `display_name` | string | oui | nom humain pour l'affichage |
-| `description` | string | oui | 1-2 phrases, affiché dans `one info` |
-| `homepage` | URL | oui | site officiel du service |
-| `docs_url` | URL | oui | doc API officielle (utile pour les agents) |
-| `license` | string | non | license du service.yaml et handlers, défaut MIT |
-| `maintainers` | array | non | liste des contributeurs principaux |
-| `tags` | array | non | catégories (productivity, payment, dev, etc.) |
+| `name` | string | yes | service identifier, must match the folder name |
+| `display_name` | string | yes | human-readable name for display |
+| `description` | string | yes | 1-2 sentences, shown in `one info` |
+| `homepage` | URL | yes | service's official website |
+| `docs_url` | URL | yes | official API documentation (useful for agents) |
+| `license` | string | no | license of service.yaml and handlers, defaults to MIT |
+| `maintainers` | array | no | list of main contributors |
+| `tags` | array | no | categories (productivity, payment, dev, etc.) |
 
 #### `api`
 
-Configuration HTTP commune à toutes les actions du service.
+HTTP configuration common to all service actions.
 
 ```yaml
 api:
@@ -154,15 +154,15 @@ api:
     burst: 10
 ```
 
-- `base_url` est préfixé devant chaque `request.url` relative des actions.
-- `version` est référencée via `{api.version}` dans les headers ou les paths.
-- `headers` sont injectés sur chaque requête.
-- `timeout_ms` est le timeout par défaut, surchargeable par action.
-- `rate_limit` est purement informatif au début (utilisé pour les hints), pas appliqué.
+- `base_url` is prefixed before each relative `request.url` in actions.
+- `version` is referenced via `{api.version}` in headers or paths.
+- `headers` are injected on every request.
+- `timeout_ms` is the default timeout, overridable per action.
+- `rate_limit` is purely informational for now (used for hints), not enforced.
 
 #### `auth`
 
-Liste des providers d'auth supportés. Voir [AUTH.md](./AUTH.md) pour la sémantique de chaque type.
+List of supported auth providers. See [AUTH.md](./AUTH.md) for the semantics of each type.
 
 ```yaml
 auth:
@@ -184,11 +184,11 @@ auth:
         format: "Bearer {token}"
 ```
 
-Au login, l'utilisateur choisit parmi les providers. Le `default_provider` est sélectionné si l'utilisateur ne précise pas avec `--provider`.
+At login, the user chooses among providers. The `default_provider` is selected if the user does not specify one with `--provider`.
 
 #### `permissions`
 
-La liste exhaustive des permissions exposées par le service. **C'est l'unité de granularité du scope file.**
+The exhaustive list of permissions exposed by the service. **This is the unit of granularity for the scope file.**
 
 ```yaml
 permissions:
@@ -198,24 +198,24 @@ permissions:
   pages.write:
     kind: mutation
     description: Create and update pages
-    side_effects: write      # write | read (défaut: déduit de kind)
+    side_effects: write      # write | read (default: inferred from kind)
   pages.archive:
     kind: mutation
     side_effects: destructive
 ```
 
-- `kind` (`query` ou `mutation`) classe l'action. Affichée dans `one capabilities`. Important pour les agents qui veulent filtrer.
-- `side_effects` précise pour les mutations : `write` (création/update), `destructive` (delete, archive). Permet aux scope files de bloquer les opérations destructives même si les autres mutations sont autorisées.
+- `kind` (`query` or `mutation`) classifies the action. Shown in `one capabilities`. Important for agents that want to filter.
+- `side_effects` clarifies for mutations: `write` (create/update), `destructive` (delete, archive). Allows scope files to block destructive operations even when other mutations are allowed.
 
-**Convention de nommage** :
+**Naming convention**:
 
-- Toujours en minuscules.
-- Path dot-separated : `resource.verb` (ex: `pages.read`).
-- Verbes standards : `read`, `write`, `delete`, `archive`, `query`, `list`, `search`, `subscribe`.
+- Always lowercase.
+- Dot-separated path: `resource.verb` (e.g. `pages.read`).
+- Standard verbs: `read`, `write`, `delete`, `archive`, `query`, `list`, `search`, `subscribe`.
 
 #### `credentials`
 
-Déclare les credentials que les actions/handlers peuvent demander via `host.creds.get`.
+Declares the credentials that actions/handlers can request via `host.creds.get`.
 
 ```yaml
 credentials:
@@ -233,16 +233,16 @@ credentials:
     description: AWS region
 ```
 
-- `type` : `secret` (redacté dans les logs) ou `string` (config visible).
-- `source` : d'où vient la valeur. Trois sources :
-  - `oauth.<field>` : du flow OAuth (access_token, refresh_token, extras.*)
-  - `config.<field>` : config additionnelle saisie par l'utilisateur au login
-  - `static.<value>` : valeur fixe (rare)
-- `optional` : si false (défaut), l'action échoue si la cred est manquante.
+- `type`: `secret` (redacted in logs) or `string` (visible config).
+- `source`: where the value comes from. Three sources:
+  - `oauth.<field>`: from the OAuth flow (access_token, refresh_token, extras.*)
+  - `config.<field>`: additional config entered by the user at login
+  - `static.<value>`: fixed value (rare)
+- `optional`: if false (default), the action fails if the credential is missing.
 
 #### `required_setup`
 
-Liste les guides d'install qui peuvent être requis pour utiliser le service.
+Lists the install guides that may be required to use the service.
 
 ```yaml
 required_setup:
@@ -259,17 +259,17 @@ required_setup:
     auto_detect_on_error: object_not_found
 ```
 
-- `id` : matche un fichier `guides/<id>.md`.
-- `blocks` : sur quelles permissions ce setup est requis (globs).
-- `optional` : si true, le setup est suggéré mais pas obligatoire pour utiliser ces permissions.
-- `detection` : description humaine de comment détecter qu'il faut faire ce setup.
-- `auto_detect_on_error` : code d'erreur déclenchant la suggestion du guide. Reporté à v0.5 (champ accepté à la lecture mais non câblé au pipeline d'exécution).
+- `id`: matches a `guides/<id>.md` file.
+- `blocks`: which permissions this setup is required for (globs).
+- `optional`: if true, the setup is suggested but not mandatory to use these permissions.
+- `detection`: human-readable description of how to detect that this setup is needed.
+- `auto_detect_on_error`: error code that triggers the guide suggestion. Deferred to v0.5 (field accepted on read but not wired into the execution pipeline).
 
-## Le fichier `actions/<id>.yaml`
+## The `actions/<id>.yaml` File
 
-Une action = un fichier. Référence complète.
+One action = one file. Complete reference.
 
-### Squelette d'une action déclarative (REST simple)
+### Skeleton of a declarative action (simple REST)
 
 ```yaml
 id: pages.read
@@ -297,7 +297,7 @@ inputs:
 
 output:
   type: object
-  passthrough: true          # renvoie le JSON tel quel
+  passthrough: true          # returns the JSON as-is
 
 errors:
   404:
@@ -310,84 +310,84 @@ errors:
     max_attempts: 3
 ```
 
-### Champs détaillés
+### Detailed fields
 
-#### `id` (obligatoire)
+#### `id` (required)
 
-Identifiant de l'action. Doit matcher le nom du fichier (sans `.yaml`).
+Action identifier. Must match the filename (without `.yaml`).
 
-#### `permission` (obligatoire)
+#### `permission` (required)
 
-Référence à une permission déclarée dans `service.yaml > permissions`. Une action = une permission. Si l'action requiert plusieurs permissions logiques, c'est probablement qu'il faut deux actions.
+Reference to a permission declared in `service.yaml > permissions`. One action = one permission. If the action logically requires multiple permissions, it probably needs to be split into two actions.
 
-#### `summary` et `docs_url`
+#### `summary` and `docs_url`
 
-Description humaine et lien vers la doc officielle de l'endpoint.
+Human-readable description and link to the official endpoint documentation.
 
-#### `request` (pour les actions déclaratives)
+#### `request` (for declarative actions)
 
 ```yaml
 request:
   method: GET                            # GET | POST | PUT | PATCH | DELETE | HEAD
-  path: /pages/{page_id}                 # relatif à api.base_url
-  body: $inputs                          # ou objet template
+  path: /pages/{page_id}                 # relative to api.base_url
+  body: $inputs                          # or template object
   headers:
-    Content-Type: application/json       # surcharge les headers globaux
+    Content-Type: application/json       # overrides global headers
   query:
     page_size: "{inputs.limit}"
 ```
 
-- `path` peut contenir des placeholders `{input_name}` qui sont substitués.
-- `body: $inputs` sérialise les inputs en JSON dans le body.
-- `body` peut aussi être un objet template (ex: `{ data: "{inputs.payload}", meta: { source: "one" } }`).
-- `headers` complète/surcharge les headers globaux de l'API.
+- `path` can contain `{input_name}` placeholders that are substituted.
+- `body: $inputs` serializes the inputs as JSON in the body.
+- `body` can also be a template object (e.g. `{ data: "{inputs.payload}", meta: { source: "one" } }`).
+- `headers` adds to/overrides the API's global headers.
 
 #### `inputs`
 
-Schéma typé des arguments de l'action. Validé avant l'invocation du runtime.
+Typed schema for the action's arguments. Validated before runtime invocation.
 
 ```yaml
 inputs:
   page_id:
     type: string                         # string | integer | number | boolean | array | object | file_ref
-    required: true                       # défaut: false
+    required: true                       # default: false
     description: ...
-    pattern: "^[0-9a-f-]{36}$"           # regex pour string
-    enum: [low, medium, high]            # valeurs possibles
-    default: "medium"                    # valeur si non fournie
-    min: 0                               # pour number/integer
+    pattern: "^[0-9a-f-]{36}$"           # regex for string
+    enum: [low, medium, high]            # allowed values
+    default: "medium"                    # value if not provided
+    min: 0                               # for number/integer
     max: 100
-    min_length: 1                        # pour string
+    min_length: 1                        # for string
     max_length: 255
     location: path                       # path | query | body | header
 
   properties:
     type: object
     required: true
-    schema:                              # sous-schéma libre
+    schema:                              # free sub-schema
       type: object
       properties:
         title: { type: array }
         Status: { type: object }
 
   body:
-    type: file_ref                       # référence à un fichier local
+    type: file_ref                       # reference to a local file
     description: Path to upload
 ```
 
-**Le type `file_ref`** est spécial : le user passe `--body @path/to/file.pdf`, le binaire lit le fichier et le passe au runtime comme `Uint8Array`.
+**The `file_ref` type** is special: the user passes `--body @path/to/file.pdf`, the binary reads the file and passes it to the runtime as a `Uint8Array`.
 
 #### `output`
 
-Schéma de la sortie. Validé après l'invocation. Si non valide, c'est un bug du handler/runtime, pas une erreur user.
+Output schema. Validated after invocation. If invalid, it is a handler/runtime bug, not a user error.
 
 ```yaml
 output:
   type: object
-  passthrough: true                      # accepte n'importe quel JSON
+  passthrough: true                      # accepts any JSON
 ```
 
-Ou plus strict :
+Or more strict:
 
 ```yaml
 output:
@@ -401,7 +401,7 @@ output:
       url: { type: string, format: uri }
 ```
 
-Ou un array (genre `search`) :
+Or an array (e.g. `search`):
 
 ```yaml
 output:
@@ -413,39 +413,39 @@ output:
 
 #### `errors`
 
-Mapping entre codes HTTP/erreurs natives du service et un code stable côté One CLI + un hint.
+Mapping between HTTP codes/native service errors and a stable One CLI code + a hint.
 
 ```yaml
 errors:
   404:
     code: not_found
-    install_guide: share-page            # ref à un guide
+    install_guide: share-page            # ref to a guide
     hint: "Page does not exist or integration lacks access."
   401:
     code: not_authenticated
     hint: "Run `one login notion` to authenticate."
   429:
     code: rate_limited
-    retry: backoff                       # auto-retry avec backoff exponentiel
+    retry: backoff                       # auto-retry with exponential backoff
     max_attempts: 3
     backoff_initial_ms: 1000
-  validation_failed:                     # code d'erreur du service (genre Stripe)
+  validation_failed:                     # service error code (e.g. Stripe)
     code: invalid_input
     hint: "Check the inputs match the schema."
 ```
 
-Les `code:` sont les codes stables que l'agent voit dans l'output JSON. Doivent être documentés. Stables entre versions.
+The `code:` values are the stable codes the agent sees in the JSON output. Must be documented. Stable across versions.
 
 #### `side_effects`, `idempotency`, `dry_run`
 
-Pour les mutations :
+For mutations:
 
 ```yaml
 side_effects: write                      # read | write | destructive
 idempotency:
-  supported: true                        # true si l'API supporte l'idempotence native
-  key: header.Idempotency-Key            # où passer la clé
-  required: false                        # si true, l'input idempotency_key est obligatoire
+  supported: true                        # true if the API natively supports idempotency
+  key: header.Idempotency-Key            # where to pass the key
+  required: false                        # if true, the idempotency_key input is required
 
 dry_run:
   supported: true
@@ -453,21 +453,21 @@ dry_run:
     Validates the request without sending. Returns what would have been sent.
 ```
 
-#### `handler` (pour les actions WASM)
+#### `handler` (for WASM actions)
 
 ```yaml
 handler: ./handlers/main.wasm
 handler_entry: pages_create
 host_api_version: 1
 
-calls:                                   # URLs allowlistées
+calls:                                   # allowlisted URLs
   - method: POST
     url: "https://api.notion.com/v1/pages"
   - method: POST
     url_pattern: "^https://api\\.notion\\.com/v1/pages/[a-f0-9-]+$"
 ```
 
-Voir [HANDLERS.md](./HANDLERS.md) pour le détail du contrat WASM.
+See [HANDLERS.md](./HANDLERS.md) for the full WASM contract details.
 
 #### Streaming
 
@@ -475,27 +475,27 @@ Voir [HANDLERS.md](./HANDLERS.md) pour le détail du contrat WASM.
 streaming: true
 ```
 
-Signale que l'action retourne un flux d'objets (NDJSON) plutôt qu'un seul objet. Utile pour les listes paginées agrégées. Le skill du service doit le documenter.
+Signals that the action returns a stream of objects (NDJSON) rather than a single object. Useful for aggregated paginated lists. The service skill must document this.
 
-#### Pagination automatique (action déclarative)
+#### Automatic pagination (declarative action)
 
 ```yaml
 pagination:
   style: cursor                          # cursor | page | offset
-  request_param: cursor                  # nom du param qu'on passe à la requête
+  request_param: cursor                  # name of the param passed in the request
   request_location: query
-  response_token: next_cursor            # field dans la réponse
+  response_token: next_cursor            # field in the response
   response_has_more: has_more
   max_pages: 50                          # safety cap
 ```
 
-Le runtime déclaratif gère la boucle automatiquement, agrège les résultats. L'agent appelle l'action sans se soucier de la pagination.
+The declarative runtime handles the loop automatically and aggregates results. The agent calls the action without worrying about pagination.
 
-## Le fichier `SKILL.md` du service
+## The Service `SKILL.md` File
 
-Markdown destiné aux agents IA. Lu via `one info <service>`.
+Markdown intended for AI agents. Read via `one info <service>`.
 
-**Frontmatter obligatoire** :
+**Required frontmatter**:
 
 ```markdown
 ---
@@ -510,18 +510,18 @@ avoid_when:
 ---
 ```
 
-**Structure recommandée** :
+**Recommended structure**:
 
-1. **Mental model** (3-5 phrases) : les concepts uniques à ce service.
-2. **Required setup** : ce qui doit être fait avant la première utilisation.
-3. **Typical workflow** : 2-3 patterns courants avec exemples de commandes.
-4. **Gotchas** : 3-5 pièges spécifiques à ce service.
-5. **Common chains** : recettes pour les usages composites.
-6. **Permissions** : liste des perms typiques avec lien vers `one scope add`.
+1. **Mental model** (3-5 sentences): the concepts unique to this service.
+2. **Required setup**: what must be done before first use.
+3. **Typical workflow**: 2-3 common patterns with command examples.
+4. **Gotchas**: 3-5 pitfalls specific to this service.
+5. **Common chains**: recipes for composite use cases.
+6. **Permissions**: list of typical permissions with a link to `one scope add`.
 
-**Longueur cible** : 100-200 lignes. Pas plus, le skill doit rester scannable.
+**Target length**: 100-200 lines. No more — the skill must remain scannable.
 
-Exemple minimal :
+Minimal example:
 
 ```markdown
 ---
@@ -580,9 +580,9 @@ https://dashboard.stripe.com/apikeys. Test mode keys start with
 Add via `one scope add stripe <permission>`.
 ```
 
-## Les guides d'install (`guides/<id>.md`)
+## Install Guides (`guides/<id>.md`)
 
-Markdown avec frontmatter pour les setups requérant un humain.
+Markdown with frontmatter for setups requiring a human.
 
 ```markdown
 ---
@@ -628,26 +628,26 @@ Check that the integration has the required capabilities at
 https://www.notion.so/profile/integrations.
 ```
 
-**Champs du frontmatter** :
+**Frontmatter fields**:
 
-| Champ | Type | Description |
+| Field | Type | Description |
 |---|---|---|
-| `id` | string | identifiant du guide, matche le nom de fichier |
-| `title` | string | titre humain |
+| `id` | string | guide identifier, matches the filename |
+| `title` | string | human-readable title |
 | `estimated_time` | string | "30s", "2m", "10m" |
-| `requires_human` | bool | true si humain requis, false si automatisable |
-| `requires` | object | pré-conditions (authenticated, capabilities) |
-| `verify` | object | comment vérifier que le setup a fonctionné |
-| `related_errors` | array | codes d'erreur que ce guide résout |
-| `applies_to` | object | sur quelles permissions ce guide s'applique |
-| `open_url` | URL | URL à ouvrir quand l'utilisateur tape `[o]` |
-| `auto_install` | object | pour les guides non-humains, l'action à exécuter |
+| `requires_human` | bool | true if a human is required, false if automatable |
+| `requires` | object | preconditions (authenticated, capabilities) |
+| `verify` | object | how to verify that the setup worked |
+| `related_errors` | array | error codes this guide resolves |
+| `applies_to` | object | which permissions this guide applies to |
+| `open_url` | URL | URL to open when the user presses `[o]` |
+| `auto_install` | object | for non-human guides, the action to execute |
 
-**Guides automatisables** : `auto_install` reporté à v0.5. En v0.4, `one install <service> <guide>` affiche le markdown et imprime la commande de `verify` si elle est définie.
+**Automatable guides**: `auto_install` deferred to v0.5. In v0.4, `one install <service> <guide>` displays the markdown and prints the `verify` command if defined.
 
-## Process de contribution au catalogue
+## Catalog Contribution Process
 
-### 1. Fork le repo
+### 1. Fork the repo
 
 ```
 git clone https://github.com/one-cli/catalog
@@ -657,60 +657,60 @@ git clone https://github.com/one-cli/catalog
 
 ```bash
 one catalog scaffold my-service --lang ts
-# crée services/my-service/{service.yaml, handlers/main.ts, package.json, tests/}
+# creates services/my-service/{service.yaml, handlers/main.ts, package.json, tests/}
 ```
 
-Ou manuellement, en copiant `services/_template/`.
+Or manually, by copying `services/_template/`.
 
-### 3. Implémenter
+### 3. Implement
 
-- Remplir `service.yaml`
-- Écrire les actions YAML (et handler WASM si nécessaire)
-- Écrire `SKILL.md`
-- Écrire les guides nécessaires
+- Fill in `service.yaml`
+- Write the YAML actions (and WASM handler if needed)
+- Write `SKILL.md`
+- Write the necessary guides
 
-### 4. Tester localement
+### 4. Test locally
 
 ```bash
 # Lint
 one catalog lint my-service
 
-# Build WASM si applicable
+# Build WASM if applicable
 cd services/my-service && bun run build
 
-# Tests handler
+# Handler tests
 bun test
 
 # Integration test
-one catalog test my-service          # invoque le binaire one en mode local
+one catalog test my-service          # invokes the one binary in local mode
 ```
 
-### 5. Ouvrir une PR
+### 5. Open a PR
 
-Template de PR pré-rempli. Checklist :
+Pre-filled PR template. Checklist:
 
-- [ ] `service.yaml` passe le lint
-- [ ] Toutes les actions ont un schéma d'inputs valide
-- [ ] SKILL.md respecte la structure recommandée
-- [ ] Au moins un guide d'install (même `initial-setup`)
-- [ ] Tests des handlers passent
-- [ ] Allowlist URLs cohérente avec ce que le handler fait
-- [ ] Permissions déclarées matchent les credentials utilisées
+- [ ] `service.yaml` passes lint
+- [ ] All actions have a valid inputs schema
+- [ ] SKILL.md follows the recommended structure
+- [ ] At least one install guide (even just `initial-setup`)
+- [ ] Handler tests pass
+- [ ] URL allowlist is consistent with what the handler actually does
+- [ ] Declared permissions match the credentials used
 
-### 6. Review et merge
+### 6. Review and merge
 
-Les maintainers du catalog reviewent. Critères :
+Catalog maintainers review. Criteria:
 
-- **Sécurité** : pas de credentials hardcodées, allowlist URL strict, pas d'écritures destructives sans warning
-- **Qualité du skill** : compréhensible par un agent qui ne connaît pas le service
-- **Robustesse** : gestion des erreurs courantes, hints actionnables
-- **Cohérence** : naming des permissions, structure des inputs
+- **Security**: no hardcoded credentials, strict URL allowlist, no destructive writes without warning
+- **Skill quality**: understandable by an agent unfamiliar with the service
+- **Robustness**: handling of common errors, actionable hints
+- **Consistency**: permission naming, input structure
 
-Une fois mergée, la CI publie automatiquement la nouvelle version sur l'index.
+Once merged, CI automatically publishes the new version to the index.
 
-## Versioning des services
+## Service Versioning
 
-Chaque service a un `version` SemVer dans son `service.yaml` (en plus de `version: 1` du format).
+Each service has a SemVer `version` in its `service.yaml` (in addition to `version: 1` for the format).
 
 ```yaml
 version: 1
@@ -718,50 +718,50 @@ name: notion
 service_version: 1.4.0
 ```
 
-Versions :
+Versions:
 
-- **Patch** (1.4.0 → 1.4.1) : fix de bug dans un handler, clarification de doc, hint ajusté
-- **Minor** (1.4.0 → 1.5.0) : nouvelle action ajoutée, nouvelle permission, nouveau provider d'auth
-- **Major** (1.4.0 → 2.0.0) : breaking change (action renommée, signature d'input changée, code d'erreur renommé)
+- **Patch** (1.4.0 → 1.4.1): bug fix in a handler, doc clarification, adjusted hint
+- **Minor** (1.4.0 → 1.5.0): new action added, new permission, new auth provider
+- **Major** (1.4.0 → 2.0.0): breaking change (renamed action, changed input signature, renamed error code)
 
-Les utilisateurs pinnent la version dans `.onerc.lock`. Une major bump requiert une action manuelle (`one lock --update notion`).
+Users pin the version in `.onerc.lock`. A major bump requires a manual action (`one lock --update notion`).
 
-## Sécurité et review
+## Security and Review
 
-### Ce qui est interdit dans un service.yaml
+### What is forbidden in a service.yaml
 
-- URLs `http://` (sauf localhost pour les tests)
-- Credentials hardcodées (`access_token: "sk_..."`)
-- Headers contenant des références à `${env.SECRET_*}` (utiliser le mécanisme de credentials)
-- Permissions sans `description`
-- Actions sans `errors` mapping (au minimum pour 401/403/404/429)
+- `http://` URLs (except localhost for tests)
+- Hardcoded credentials (`access_token: "sk_..."`)
+- Headers containing references to `${env.SECRET_*}` (use the credentials mechanism)
+- Permissions without a `description`
+- Actions without an `errors` mapping (at minimum for 401/403/404/429)
 
-### Ce qui est vérifié automatiquement
+### What is verified automatically
 
-- Schéma JSON Schema sur le YAML
-- Chaque action référence une permission déclarée
-- Chaque guide référencé dans `required_setup` existe
-- Chaque code d'erreur référencé dans les guides existe dans une action
-- Pour les WASM : URLs hit ⊆ `calls:` déclarées
-- Pour les WASM : credentials lues ⊆ `credentials:` déclarées
-- Pour les WASM : codes d'erreur retournés ⊆ `errors:` déclarés
+- JSON Schema validation on the YAML
+- Each action references a declared permission
+- Each guide referenced in `required_setup` exists
+- Each error code referenced in guides exists in an action
+- For WASM: URLs hit ⊆ declared `calls:`
+- For WASM: credentials read ⊆ declared `credentials:`
+- For WASM: error codes returned ⊆ declared `errors:`
 
 ### Reviewers
 
-Pour les services à fort impact (auth complexe, secteurs sensibles, gros catalogues) : double review. Pour les services simples : single review suffit.
+For high-impact services (complex auth, sensitive sectors, large catalogs): double review. For simple services: single review is sufficient.
 
-## Exemples complets
+## Complete Examples
 
-Voir le repo `one-cli/catalog/examples/` pour :
+See the `one-cli/catalog/examples/` repo for:
 
-- `simple-rest/` : service trivial avec API key + GET/POST
-- `oauth-paginated/` : OAuth + pagination cursor
-- `wasm-graphql/` : GraphQL via WASM
-- `wasm-sigv4/` : signature de requête AWS via WASM
-- `multi-account/` : service avec multi-accounts complexes
+- `simple-rest/`: trivial service with API key + GET/POST
+- `oauth-paginated/`: OAuth + cursor pagination
+- `wasm-graphql/`: GraphQL via WASM
+- `wasm-sigv4/`: AWS request signing via WASM
+- `multi-account/`: service with complex multi-accounts
 
-Chaque exemple est commenté pour servir de référence.
+Each example is commented to serve as a reference.
 
 ---
 
-*Pour proposer une évolution du format `service.yaml`, ouvrir un RFC dans `one-cli/rfcs` plutôt qu'une PR directe sur le catalog.*
+*To propose an evolution of the `service.yaml` format, open an RFC in `one-cli/rfcs` rather than a direct PR on the catalog.*

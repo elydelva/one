@@ -1,10 +1,10 @@
 # ARCHITECTURE.md
 
-> Description technique de l'architecture interne du binaire `one`. Pour tout contributeur qui touche au code Go. Pour le format des services du catalogue, voir [CATALOG.md](./CATALOG.md). Pour le contrat WASM, voir [HANDLERS.md](./HANDLERS.md).
+> Technical description of the internal architecture of the `one` binary. For any contributor touching the Go code. For the catalog service format, see [CATALOG.md](./CATALOG.md). For the WASM contract, see [HANDLERS.md](./HANDLERS.md).
 
-## Vue d'ensemble : architecture hexagonale (ports & adapters)
+## Overview: hexagonal architecture (ports & adapters)
 
-One CLI suit une architecture hexagonale stricte. Trois couches concentriques avec une règle de dépendance **non négociable** : les flèches pointent toujours vers le centre.
+One CLI follows a strict hexagonal architecture. Three concentric layers with a **non-negotiable** dependency rule: arrows always point toward the center.
 
 ```
 ┌────────────────────────────────────────────────────────────────┐
@@ -41,9 +41,9 @@ One CLI suit une architecture hexagonale stricte. Trois couches concentriques av
 └──────────────────────┘  └──────────────┘  └───────────────────┘
 ```
 
-**La règle absolue** : `internal/core/` n'importe que la stdlib Go. Pas de YAML parser, pas de HTTP client, pas de crypto lib externe, pas de logger. Si un fichier de `core/` a une dépendance autre que stdlib, c'est un bug d'architecture, refuse en code review.
+**The absolute rule**: `internal/core/` only imports the Go stdlib. No YAML parser, no HTTP client, no external crypto lib, no logger. If a file in `core/` has any dependency other than stdlib, it is an architecture bug — reject it in code review.
 
-## Layout du repo
+## Repo layout
 
 ```
 one/
@@ -172,20 +172,20 @@ one/
 └── LICENSE
 ```
 
-Le `internal/` est crucial : Go empêche tout autre module d'importer ces packages. Tu protèges le contrat de ton binaire.
+`internal/` is crucial: Go prevents any other module from importing these packages. It protects the contract of your binary.
 
-`pkg/` n'expose **que** ce dont un contributeur externe a besoin (format catalog, SDK handlers).
+`pkg/` exposes **only** what an external contributor needs (catalog format, handler SDK).
 
-## Le domaine (internal/core/)
+## The domain (internal/core/)
 
-### Principes
+### Principles
 
-- **Pas d'I/O.** Aucun `os.*`, `http.*`, `time.Now()` direct (passer par `ports.Clock`).
-- **Pas d'erreurs sentinelles globales.** Les erreurs sont des types nommés, taggés par contexte.
-- **Immutabilité par défaut.** Les structures du domaine sont des value objects : pas de méthodes qui mutent, on retourne une nouvelle instance.
-- **Validation à la création.** Si un `Permission` peut être construit, alors il est valide. Pas de "validation au runtime plus tard".
+- **No I/O.** No `os.*`, `http.*`, or direct `time.Now()` calls (use `ports.Clock` instead).
+- **No global sentinel errors.** Errors are named types, tagged by context.
+- **Immutability by default.** Domain structs are value objects: no mutating methods — return a new instance instead.
+- **Validation at construction time.** If a `Permission` can be constructed, it is valid. No "validate at runtime later".
 
-### Exemples
+### Examples
 
 ```go
 // core/permission.go
@@ -252,9 +252,9 @@ func (s Scope) Allows(p Permission) bool {
 func (s Scope) MergedWith(other Scope) Scope { ... }
 ```
 
-### Erreurs typées
+### Typed errors
 
-Les erreurs métier sont des types qui implémentent `error`. Pas de `errors.New("foo")` dispersé.
+Business errors are types that implement `error`. No scattered `errors.New("foo")`.
 
 ```go
 // core/errors.go
@@ -292,7 +292,7 @@ type ErrReAuthRequired struct {
 }
 ```
 
-Le mapping vers exit codes se fait à la couche `cli/exit.go` :
+The mapping to exit codes happens at the `cli/exit.go` layer:
 
 ```go
 // internal/cli/exit.go
@@ -312,11 +312,11 @@ func ExitCodeFor(err error) int {
 }
 ```
 
-Le domaine ignore complètement les exit codes. C'est une concern de l'interface.
+The domain is completely unaware of exit codes. That is an interface-layer concern.
 
-### Le type `Secret`
+### The `Secret` type
 
-Critique pour la sécurité. Un type custom qui mask la valeur dans tous les contextes de logging.
+Critical for security. A custom type that masks the value in all logging contexts.
 
 ```go
 // core/secret.go
@@ -337,13 +337,13 @@ func (s Secret) MarshalJSON() ([]byte, error) {
 func (s Secret) Reveal() string { return string(s) }
 ```
 
-Tous les tokens, refresh tokens, secrets, passwords passent par ce type. Audit : `grep -r "string" core/credential.go` doit retourner zéro champ secret typé en plain string.
+All tokens, refresh tokens, secrets, and passwords go through this type. Audit: `grep -r "string" core/credential.go` must return zero secret fields typed as plain string.
 
-## Les ports (internal/ports/)
+## Ports (internal/ports/)
 
-Interfaces que le domaine *attend* et que les adapters *implémentent*. Définies en termes du domaine, jamais en termes de libs externes.
+Interfaces that the domain *expects* and that adapters *implement*. Defined in domain terms, never in terms of external libraries.
 
-### Exemple : Catalog
+### Example: Catalog
 
 ```go
 // internal/ports/catalog.go
@@ -364,11 +364,11 @@ type Catalog interface {
 }
 ```
 
-**Une seule méthode = une seule responsabilité.** Si tu veux ajouter `GetSkillFor()` et `GetSkillBytes()`, c'est probablement que tu mélanges deux préoccupations.
+**One method = one responsibility.** If you want to add `GetSkillFor()` and `GetSkillBytes()`, you are probably mixing two concerns.
 
-**Toujours `context.Context` en premier argument.** Permet l'annulation, le timeout, la propagation de trace ID.
+**Always `context.Context` as the first argument.** Enables cancellation, timeout, and trace ID propagation.
 
-### Exemple : Vault
+### Example: Vault
 
 ```go
 // internal/ports/vault.go
@@ -382,7 +382,7 @@ type Vault interface {
 }
 ```
 
-### Exemple : Runtime
+### Example: Runtime
 
 ```go
 // internal/ports/runtime.go
@@ -406,13 +406,13 @@ type ExecuteResult struct {
 }
 ```
 
-## Les adapters (internal/adapters/)
+## Adapters (internal/adapters/)
 
-Implémentations concrètes des ports. Chaque adapter est un package qui dépend de libs externes (`go-keyring`, `wazero`, `net/http`, etc.).
+Concrete implementations of the ports. Each adapter is a package that depends on external libraries (`go-keyring`, `wazero`, `net/http`, etc.).
 
-### Patterns récurrents
+### Recurring patterns
 
-**Decorator** pour ajouter du comportement sans changer l'interface :
+**Decorator** to add behavior without changing the interface:
 
 ```go
 // adapters/catalog/cached.go
@@ -441,9 +441,9 @@ func (c *CachedCatalog) GetService(ctx context.Context, id core.ServiceID) (*cor
 }
 ```
 
-`CachedCatalog` est *un* `Catalog` et *contient* un `Catalog`. Composition pure.
+`CachedCatalog` *is* a `Catalog` and *contains* a `Catalog`. Pure composition.
 
-**Chain of Responsibility** pour les fallbacks :
+**Chain of Responsibility** for fallbacks:
 
 ```go
 // adapters/vault/chain.go
@@ -470,9 +470,9 @@ func (c *ChainVault) Fetch(ctx context.Context, acc core.AccountRef) (core.Crede
 }
 ```
 
-Composition à la wire : `NewChain(NewEnvVar(), NewKeyring(clock), NewAge(path))`.
+Wired at composition time: `NewChain(NewEnvVar(), NewKeyring(clock), NewAge(path))`.
 
-**Strategy** pour le runtime, voir router.go :
+**Strategy** for the runtime, see router.go:
 
 ```go
 // adapters/runtime/router.go
@@ -491,11 +491,11 @@ func (r *RoutingRuntime) Execute(ctx context.Context, req ports.ExecuteRequest) 
 }
 ```
 
-## La couche application (internal/app/)
+## Application layer (internal/app/)
 
-Use cases. **Un fichier par use case**. Ils orchestrent le domaine et les ports, mais ne contiennent **pas de logique métier** : la logique est dans le domaine.
+Use cases. **One file per use case.** They orchestrate the domain and ports, but contain **no business logic**: logic lives in the domain.
 
-### Structure standard d'un use case
+### Standard use case structure
 
 ```go
 // internal/app/execute.go
@@ -616,11 +616,11 @@ func (uc *ExecuteAction) refresh(ctx context.Context, cred core.Credential) (cor
 }
 ```
 
-**Note importante** : ce code est **l'orchestration métier complète d'une exécution**. Aucune mention de YAML, WASM, HTTP, keychain. C'est la vertu de l'hexagonal.
+**Important note**: this code is **the complete business orchestration of an execution**. No mention of YAML, WASM, HTTP, or keychain. That is the virtue of hexagonal architecture.
 
-## La composition root (cmd/one/main.go)
+## Composition root (cmd/one/main.go)
 
-Le seul endroit où tout est câblé ensemble. **Pas de framework DI** (wire, fx, dig). Composition explicite à la main.
+The only place where everything is wired together. **No DI framework** (wire, fx, dig). Explicit manual composition.
 
 ```go
 // cmd/one/main.go
@@ -731,53 +731,53 @@ func pickRenderer() ports.Renderer {
 }
 ```
 
-**Critère** : ce fichier doit faire moins de 100 lignes. Si tu approches, c'est qu'il manque un constructeur intermédiaire.
+**Criterion**: this file must stay under 100 lines. If you are approaching that, it means an intermediate constructor is missing.
 
-## Patterns récapitulatifs
+## Pattern summary
 
-| Pattern | Où l'utiliser | Pourquoi |
+| Pattern | Where to use it | Why |
 |---|---|---|
-| **Hexagonal / Ports & Adapters** | Globalement | Cœur métier isolé, adapters interchangeables, testabilité maximale |
-| **Strategy** | RoutingRuntime (déclaratif vs WASM), AuthProvider | Plusieurs façons de réaliser une même opération |
-| **Decorator** | CachedCatalog, AuditLogVault | Ajouter du comportement sans changer l'interface |
-| **Chain of Responsibility** | ChainVault, ChainCatalog | Fallback ordonné entre sources |
-| **Composition root** | main.go | DI explicite, aucune magie, lisible |
-| **Value object** | Permission, Scope, Account, ServiceID | Immutable, comparable, validation à la création |
-| **Specification** | Scope.Allows | Encapsule une règle de décision complexe |
-| **Typed errors** | core/errors.go | Mapping propre vers exit codes, pas de string-matching |
-| **Functional options** | Constructeurs publics | Idiomatique Go, extensibilité sans casser l'API |
+| **Hexagonal / Ports & Adapters** | Globally | Isolated business core, swappable adapters, maximum testability |
+| **Strategy** | RoutingRuntime (declarative vs WASM), AuthProvider | Multiple ways to perform the same operation |
+| **Decorator** | CachedCatalog, AuditLogVault | Add behavior without changing the interface |
+| **Chain of Responsibility** | ChainVault, ChainCatalog | Ordered fallback between sources |
+| **Composition root** | main.go | Explicit DI, no magic, readable |
+| **Value object** | Permission, Scope, Account, ServiceID | Immutable, comparable, validated at construction |
+| **Specification** | Scope.Allows | Encapsulates a complex decision rule |
+| **Typed errors** | core/errors.go | Clean mapping to exit codes, no string-matching |
+| **Functional options** | Public constructors | Idiomatic Go, extensibility without breaking the API |
 
-## Anti-patterns à refuser en code review
+## Anti-patterns to reject in code review
 
-### "Juste pour ce cas-là, on met du HTTP dans le domaine"
+### "Just for this case, we put HTTP in the domain"
 
-**Non.** Le moment où le domaine fait un syscall, l'architecture commence à pourrir. Reformule en port + adapter, même si ça prend 30 minutes de plus.
+**No.** The moment the domain makes a syscall, the architecture starts to rot. Refactor into port + adapter, even if it takes 30 extra minutes.
 
-### Mocks à la place de fakes
+### Mocks instead of fakes
 
-**Préfère les fakes.** Un fake `InMemoryVault` qui stocke dans une map est plus utile que 50 mock expectations qui cassent à chaque refactor. Voir [TESTING.md](./TESTING.md).
+**Prefer fakes.** An `InMemoryVault` fake that stores in a map is more useful than 50 mock expectations that break on every refactor. See [TESTING.md](./TESTING.md).
 
-### Génération de code custom
+### Custom code generation
 
-**Refuse.** `go generate` pour des structs depuis JSON Schema est ok si c'est documenté et reproductible. Génération de code Go par templates qu'un humain ne pourrait pas raisonnablement écrire à la main est une dette technique masquée.
+**Reject.** `go generate` for structs from JSON Schema is fine if it is documented and reproducible. Generating Go code via templates that a human could not reasonably write by hand is hidden technical debt.
 
-### Réflection abusive
+### Excessive reflection
 
-**Pas de `reflect.*` dans le code applicatif.** Toléré dans les utilitaires de sérialisation (parser de YAML, JSON Schema), interdit ailleurs. Si tu as besoin de réflection, c'est probablement que ton design type est faible.
+**No `reflect.*` in application code.** Tolerated in serialization utilities (YAML parser, JSON Schema); forbidden elsewhere. If you need reflection, your type design is probably weak.
 
-### Interfaces "fat"
+### Fat interfaces
 
-Une interface avec 10+ méthodes est suspecte. Découpe en interfaces plus petites. `ports.Catalog` a 6 méthodes, c'est déjà le maximum acceptable.
+An interface with 10+ methods is suspicious. Split into smaller interfaces. `ports.Catalog` has 6 methods — that is already the acceptable maximum.
 
-### Globals mutables
+### Mutable globals
 
-**Aucun.** Pas de `var defaultClient = http.Client{}` modifié à l'initialisation. Toute config passe par les constructeurs.
+**None.** No `var defaultClient = http.Client{}` modified at initialization. All configuration passes through constructors.
 
-### `panic()` ailleurs qu'au démarrage
+### `panic()` anywhere outside startup
 
-Le binaire ne `panic` jamais sur du code utilisateur. Il retourne une erreur typée. Les panics ne sont acceptables que dans `main.go` au moment du wiring (genre "client_id env var manquante").
+The binary never `panic`s on user-facing code. It returns a typed error. Panics are only acceptable in `main.go` during wiring (e.g., "client_id env var missing").
 
-### Mélange config et runtime dans une struct
+### Mixing config and runtime state in a struct
 
 ```go
 // MAUVAIS
@@ -794,21 +794,21 @@ type Vault struct {
 }
 ```
 
-## Concurrence
+## Concurrency
 
-Le binaire est globalement **séquentiel par invocation**. Une exécution = un thread principal. Mais quelques points de concurrence à gérer :
+The binary is globally **sequential per invocation**. One execution = one main thread. But a few concurrency points to handle:
 
-- **Refresh tokens concurrents** : si deux invocations simultanées refresh le même token, race possible. Solution : file lock dans `~/.one/locks/<service>:<account>.lock`.
-- **Cache catalog partagé entre invocations** : pas concerné, chaque invocation a son propre process avec son propre cache.
-- **HTTP requests dans un handler WASM** : le handler est synchrone, mais l'host peut gérer plusieurs requêtes parallèles si l'API le supporte. Garde le simple pour v0.
+- **Concurrent token refresh**: if two simultaneous invocations refresh the same token, a race is possible. Solution: file lock in `~/.one/locks/<service>:<account>.lock`.
+- **Shared catalog cache across invocations**: not a concern, each invocation has its own process with its own cache.
+- **HTTP requests inside a WASM handler**: the handler is synchronous, but the host may handle multiple parallel requests if the API supports it. Keep it simple for v0.
 
-Pattern : **acquisition explicite de lock** via `flock(2)` sur Linux/macOS, `LockFileEx` sur Windows. Abstraction dans `internal/adapters/fslock/`.
+Pattern: **explicit lock acquisition** via `flock(2)` on Linux/macOS, `LockFileEx` on Windows. Abstracted in `internal/adapters/fslock/`.
 
 ## Logging
 
-**slog** (Go stdlib `log/slog`) pour tout. JSON sur stderr en mode normal, plus verbose si `--debug`.
+**slog** (Go stdlib `log/slog`) for everything. JSON on stderr in normal mode, more verbose with `--debug`.
 
-Le `ports.Logger` interface :
+The `ports.Logger` interface:
 
 ```go
 type Logger interface {
@@ -820,45 +820,45 @@ type Logger interface {
 }
 ```
 
-**Pas de logging dans le domaine.** Le domaine retourne des erreurs, c'est l'application qui décide de logger ou non.
+**No logging in the domain.** The domain returns errors; it is the application layer that decides whether to log.
 
-**Pas de logs sensibles.** Les `Secret` sont redactés automatiquement, mais ne logge jamais des inputs utilisateurs bruts.
+**No sensitive logs.** `Secret` values are automatically redacted, but never log raw user inputs.
 
-## Cycle de vie du binaire
+## Binary lifecycle
 
-Une invocation de `one` suit toujours ce cycle :
+An invocation of `one` always follows this cycle:
 
-1. **main.go : composition root.** Wire tout, ~50ms.
-2. **cobra : parse args.** Identifier la commande, les flags, ~5ms.
-3. **Use case correspondant.** Orchestrer. Latence variable (0ms si pas d'I/O réseau, 100-2000ms si requête API).
-4. **Renderer : print output.** JSON ou TTY, ~5ms.
-5. **Exit avec code approprié.**
+1. **main.go: composition root.** Wire everything, ~50ms.
+2. **cobra: parse args.** Identify the command and flags, ~5ms.
+3. **Corresponding use case.** Orchestrate. Variable latency (0ms if no network I/O, 100-2000ms for an API request).
+4. **Renderer: print output.** JSON or TTY, ~5ms.
+5. **Exit with appropriate code.**
 
-**Pas de daemon, pas de session persistante.** Chaque invocation est complètement indépendante. C'est ce qui rend le binaire trivial à raisonner et reproductible.
+**No daemon, no persistent session.** Each invocation is completely independent. That is what makes the binary trivial to reason about and reproducible.
 
-## Versioning du code et des contrats
+## Code and contract versioning
 
-- **Le binaire** est versionné selon SemVer. Une release `vX.Y.Z`.
-- **Le format `service.yaml`** est versionné par un champ `version: 1` à la racine. Une nouvelle version majeure du format requiert une migration explicite.
-- **Le contrat des host functions WASM** est versionné via `host_api_version: 1` dans le service.yaml. Le binaire vérifie la compat au load.
-- **Le format `.onerc.yaml`** est versionné aussi (`version: 1`).
+- **The binary** is versioned with SemVer. One release `vX.Y.Z`.
+- **The `service.yaml` format** is versioned via a `version: 1` field at the root. A new major version of the format requires an explicit migration.
+- **The WASM host function contract** is versioned via `host_api_version: 1` in service.yaml. The binary checks compatibility at load time.
+- **The `.onerc.yaml` format** is also versioned (`version: 1`).
 
-Les trois versions sont **indépendantes**. Le binaire `v0.7.3` peut très bien supporter `service.yaml v1`, `host_api v1`, et `onerc v1`, et plus tard `v0.8.0` supportera `host_api v1 et v2` en transition.
+The three versions are **independent**. Binary `v0.7.3` may support `service.yaml v1`, `host_api v1`, and `onerc v1`, and later `v0.8.0` may support `host_api v1 and v2` in transition.
 
-## Performance : budgets et profiling
+## Performance: budgets and profiling
 
-Trois métriques à protéger :
+Three metrics to protect:
 
-| Métrique | Budget | Outil |
+| Metric | Budget | Tool |
 |---|---|---|
-| Cold start (jusqu'à output de `--version`) | <30ms p99 | benchmark Go |
-| Mémoire au démarrage | <30 MB RSS | `runtime.MemStats` |
-| Cold start jusqu'à exécution d'une action déclarative | <50ms p99 | benchmark Go |
+| Cold start (until `--version` output) | <30ms p99 | Go benchmark |
+| Memory at startup | <30 MB RSS | `runtime.MemStats` |
+| Cold start until execution of a declarative action | <50ms p99 | Go benchmark |
 
-Si une PR dégrade au-delà du seuil, CI fail. Détails dans [TESTING.md](./TESTING.md#performance).
+If a PR degrades beyond a threshold, CI fails. Details in [TESTING.md](./TESTING.md#performance).
 
-Profiling : `pprof` activable en dev via `ONE_PPROF=:6060` qui ouvre un serveur pprof. Désactivé en release builds par build tag.
+Profiling: `pprof` can be enabled in dev via `ONE_PPROF=:6060`, which opens a pprof server. Disabled in release builds via build tag.
 
 ---
 
-*Cette architecture est conçue pour durer plusieurs années sans réécriture. Les évolutions se font par ajout d'adapters (nouveau type d'auth, nouveau runtime), pas par modification du domaine. Si une évolution requiert de toucher au domaine, c'est qu'on découvre un concept métier nouveau : ça mérite réflexion et probablement un mini-RFC.*
+*This architecture is designed to last several years without a rewrite. Evolution happens by adding adapters (new auth type, new runtime), not by modifying the domain. If an evolution requires touching the domain, it means a new business concept has been discovered: that warrants reflection and probably a mini-RFC.*

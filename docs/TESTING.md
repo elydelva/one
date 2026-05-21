@@ -1,38 +1,38 @@
 # TESTING.md
 
-> Stratégie de test du binaire `one`. Pour les tests des handlers WASM contribués au catalogue, voir [HANDLERS.md](./HANDLERS.md#tests). Pour les tests sécurité spécifiques, voir [SECURITY.md](./SECURITY.md#tests-de-sécurité).
+> Testing strategy for the `one` binary. For tests of WASM handlers contributed to the catalog, see [HANDLERS.md](./HANDLERS.md#tests). For specific security tests, see [SECURITY.md](./SECURITY.md#tests-de-sécurité).
 
-## Vue d'ensemble
+## Overview
 
-Quatre niveaux de tests, en pyramide :
+Four levels of tests, in a pyramid:
 
 ```
             ┌─────────────────┐
-            │   E2E (~5%)     │   le binaire compilé + un catalog réel
+            │   E2E (~5%)     │   compiled binary + a real catalog
             ├─────────────────┤
             │ Integration     │
-            │    (~10%)       │   plusieurs adapters câblés ensemble
+            │    (~10%)       │   multiple adapters wired together
             ├─────────────────┤
             │  Contract       │
-            │    (~15%)       │   un adapter contre les contrats des ports
+            │    (~15%)       │   one adapter against port contracts
             ├─────────────────┤
             │                 │
-            │  Unit (~70%)    │   domaine et logique pure
+            │  Unit (~70%)    │   domain and pure logic
             │                 │
             └─────────────────┘
 ```
 
-**Objectif chiffré** : 80%+ de coverage sur `internal/core/`, 70%+ sur `internal/app/`, suffisant pour ne pas perdre la confiance ailleurs.
+**Numeric target**: 80%+ coverage on `internal/core/`, 70%+ on `internal/app/`, sufficient to maintain confidence elsewhere.
 
-**Principe directeur** : pour chaque ligne de code, demande-toi "à quel niveau cette ligne devrait être testée". La majorité doit l'être au niveau le plus bas possible.
+**Guiding principle**: for each line of code, ask yourself "at what level should this line be tested". The majority should be tested at the lowest possible level.
 
-## Niveau 1 : tests unitaires
+## Level 1: unit tests
 
-Tests purs du domaine et de la logique applicative. Pas d'I/O, pas de network, pas de filesystem.
+Pure tests of domain and application logic. No I/O, no network, no filesystem.
 
-### Pattern : table-driven
+### Pattern: table-driven
 
-Go a une convention forte pour les tests de fonctions pures. Toujours table-driven, jamais une assertion par fonction.
+Go has a strong convention for testing pure functions. Always table-driven, never one assertion per function.
 
 ```go
 // internal/core/scope_test.go
@@ -76,7 +76,7 @@ func TestScope_Allows(t *testing.T) {
             perm:      mustPerm(t, "github", "issues.read"),
             wantAllow: false,
         },
-        // ... 20+ cas
+        // ... 20+ cases
     }
 
     for _, tt := range tests {
@@ -90,11 +90,11 @@ func TestScope_Allows(t *testing.T) {
 }
 ```
 
-**Règle** : si une logique a 5+ branches, table-driven. Si 1-2 branches, fonctions séparées simples ok.
+**Rule**: if logic has 5+ branches, use table-driven. If 1-2 branches, separate simple functions are fine.
 
-### Helpers de construction
+### Construction helpers
 
-Pour réduire le bruit :
+To reduce noise:
 
 ```go
 func mustPerm(t *testing.T, svc, path string) Permission {
@@ -105,11 +105,11 @@ func mustPerm(t *testing.T, svc, path string) Permission {
 }
 ```
 
-`t.Helper()` indique au framework que les erreurs viennent du caller. Confortable.
+`t.Helper()` tells the framework that errors come from the caller. Comfortable.
 
-### Property-based tests pour les parsers
+### Property-based tests for parsers
 
-Pour les parsers (YAML scope, glob patterns) : property-based avec [gopter](https://github.com/leanovate/gopter).
+For parsers (YAML scope, glob patterns): property-based with [gopter](https://github.com/leanovate/gopter).
 
 ```go
 func TestScopeRoundtrip(t *testing.T) {
@@ -126,9 +126,9 @@ func TestScopeRoundtrip(t *testing.T) {
 }
 ```
 
-Coverage indirecte de cas que tu n'aurais pas pensé à écrire à la main.
+Indirect coverage of cases you would not have thought to write by hand.
 
-### Test des erreurs typées
+### Testing typed errors
 
 ```go
 func TestExecute_NotInScope_ReturnsTypedError(t *testing.T) {
@@ -145,24 +145,24 @@ func TestExecute_NotInScope_ReturnsTypedError(t *testing.T) {
 }
 ```
 
-Vérifier le **type** d'erreur, pas le message. Le message peut changer, le type est l'API.
+Verify the **type** of error, not the message. The message can change; the type is the API.
 
-## Niveau 2 : contract tests
+## Level 2: contract tests
 
-Pattern critique en architecture hexagonale : un même paquet de tests qu'on exécute contre **chaque implémentation d'un port**.
+A critical pattern in hexagonal architecture: a single test package executed against **each implementation of a port**.
 
 ### Structure
 
 ```
 internal/testing/portstest/
-├── catalog.go            # définit RunCatalogTests(t, factory func() ports.Catalog)
-├── vault.go              # définit RunVaultTests(t, factory func() ports.Vault)
+├── catalog.go            # defines RunCatalogTests(t, factory func() ports.Catalog)
+├── vault.go              # defines RunVaultTests(t, factory func() ports.Vault)
 ├── runtime.go
 ├── scopestore.go
 └── ...
 ```
 
-### Exemple : contract tests pour Catalog
+### Example: contract tests for Catalog
 
 ```go
 // internal/testing/portstest/catalog.go
@@ -206,14 +206,14 @@ func RunCatalogTests(t *testing.T, name string, factory func(t *testing.T) ports
             assert.Contains(t, names, "github")
         })
 
-        // ... 15-20 cas de contrat
+        // ... 15-20 contract cases
     })
 }
 ```
 
 ### Application
 
-Chaque adapter du port `Catalog` fait tourner ces tests :
+Each adapter for the `Catalog` port runs these tests:
 
 ```go
 // internal/adapters/catalog/fs_test.go
@@ -241,11 +241,11 @@ func TestCatalogCached_Contract(t *testing.T) {
 }
 ```
 
-**Bénéfice** : tu peux ajouter un nouvel adapter Catalog (genre `CatalogGitTagged` qui fetch depuis Git tags), tu fais tourner les contract tests, tu sais que tout le reste du système marchera avec.
+**Benefit**: you can add a new Catalog adapter (e.g. `CatalogGitTagged` that fetches from Git tags), run the contract tests, and know that the rest of the system will work with it.
 
-### Fakes contre mocks : règle stricte
+### Fakes vs mocks: strict rule
 
-**Préférence forte aux fakes** sur les mocks. Un fake est une implémentation in-memory du port. Un mock vérifie des appels.
+**Strong preference for fakes** over mocks. A fake is an in-memory implementation of a port. A mock verifies calls.
 
 ```go
 // internal/testing/fake/vault.go
@@ -273,25 +273,25 @@ func (v *Vault) Fetch(_ context.Context, ref core.AccountRef) (core.Credential, 
 }
 ```
 
-**Pourquoi** :
+**Why**:
 
-- Le fake fait tourner les contract tests, donc son comportement est garanti correct.
-- Pas de mock framework qui casse à chaque refactor de signature.
-- Lisible, debuggable.
-- Réutilisable entre tests.
+- The fake runs contract tests, so its behavior is guaranteed correct.
+- No mock framework breaking at every signature refactor.
+- Readable, debuggable.
+- Reusable across tests.
 
-Les mocks ne sont acceptables que pour vérifier des side effects difficilement observables (genre "ce port a-t-il bien été appelé avec ces arguments précis ?"). Et même là, préférer un fake qui enregistre les appels via `RecordedCalls()`.
+Mocks are only acceptable to verify side effects that are hard to observe directly (e.g. "was this port called with exactly these arguments?"). Even then, prefer a fake that records calls via `RecordedCalls()`.
 
-## Niveau 3 : tests d'intégration
+## Level 3: integration tests
 
-Plusieurs adapters câblés ensemble, mais sans réseau réel. Tests dans `internal/app/*_test.go`.
+Multiple adapters wired together, but without real network. Tests in `internal/app/*_test.go`.
 
-### Exemple : test du use case Execute
+### Example: test for the Execute use case
 
 ```go
 // internal/app/execute_test.go
 func TestExecuteAction_HappyPath(t *testing.T) {
-    // Câblage
+    // Wiring
     catalog := fake.NewCatalog(fixtures.MinimalCatalog())
     vlt := fake.NewVault()
     rt := fake.NewRuntime()
@@ -299,7 +299,7 @@ func TestExecuteAction_HappyPath(t *testing.T) {
     clk := fake.NewClock(time.Date(2026, 1, 1, 12, 0, 0, 0, time.UTC))
     log := slog.New(slog.NewTextHandler(io.Discard, nil))
 
-    // État
+    // State
     vlt.Store(ctx, core.AccountRef{Service: "github", Alias: "default"}, core.Credential{
         AccessToken: "valid-token",
         ExpiresAt:   ptr(clk.Now().Add(1 * time.Hour)),
@@ -311,7 +311,7 @@ services:
     rt.SetResponse("github.issues.read", core.Inputs{"issue_number": 42},
         json.RawMessage(`{"id":42,"title":"Test issue"}`))
 
-    // Exécution
+    // Execution
     uc := app.NewExecuteAction(catalog, vlt, rt, scope, fakeAuthProviders(), log, clk)
     out, err := uc.Run(ctx, app.ExecuteInput{
         Service: "github", Action: "issues.read",
@@ -325,7 +325,7 @@ services:
 }
 
 func TestExecuteAction_NotInScope_ReturnsError3(t *testing.T) {
-    // ... même setup mais scope vide
+    // ... same setup but empty scope
     _, err := uc.Run(ctx, app.ExecuteInput{...})
 
     var nsc core.ErrNotInScope
@@ -333,52 +333,52 @@ func TestExecuteAction_NotInScope_ReturnsError3(t *testing.T) {
 }
 ```
 
-### Tests des use cases : matrice de cas
+### Use case tests: case matrix
 
-Pour `ExecuteAction`, la matrice minimum :
+For `ExecuteAction`, the minimum matrix:
 
-| Cas | Attendu |
+| Case | Expected |
 |---|---|
-| Service inconnu | ErrUnknownService |
-| Action inconnue | ErrUnknownAction |
-| Pas authentifié | ErrNotAuthenticated |
-| Pas dans le scope | ErrNotInScope |
-| Inputs invalides | ErrInputValidation |
-| Token expiré, refresh OK | succès |
-| Token expiré, refresh KO | ErrReAuthRequired |
-| Action déclarative OK | succès |
-| Action WASM OK | succès |
-| Setup requis, action fail | ErrSetupRequired avec hint |
-| Action dry-run | succès, pas de side effect |
-| Trace ID propagé | TraceID dans output |
-| Audit log écrit | log contient l'event |
+| Unknown service | ErrUnknownService |
+| Unknown action | ErrUnknownAction |
+| Not authenticated | ErrNotAuthenticated |
+| Not in scope | ErrNotInScope |
+| Invalid inputs | ErrInputValidation |
+| Expired token, refresh OK | success |
+| Expired token, refresh KO | ErrReAuthRequired |
+| Declarative action OK | success |
+| WASM action OK | success |
+| Setup required, action fails | ErrSetupRequired with hint |
+| Dry-run action | success, no side effect |
+| Trace ID propagated | TraceID in output |
+| Audit log written | log contains the event |
 
-13 cas. Tous tests via fakes. <1s total.
+13 cases. All tested via fakes. <1s total.
 
-## Niveau 4 : tests E2E
+## Level 4: E2E tests
 
-Le binaire compilé contre un catalog réel. Mais **sans réseau** : on lance un serveur HTTP local qui mock les APIs.
+The compiled binary against a real catalog. But **without network**: a local HTTP server mocks the APIs.
 
 ### Structure
 
 ```
 tests/e2e/
-├── e2e_test.go            # tests Go qui invoquent le binaire
+├── e2e_test.go            # Go tests that invoke the binary
 ├── fixtures/
-│   ├── catalog/           # un catalog minimal complet
+│   ├── catalog/           # a complete minimal catalog
 │   │   └── services/
 │   │       └── ...
 │   └── projects/
 │       ├── ok/
 │       │   └── .onerc.yaml
 │       └── ...
-└── fake_api/              # serveur HTTP qui mime GitHub, Notion, etc.
+└── fake_api/              # HTTP server that mimics GitHub, Notion, etc.
     ├── server.go
     ├── github.go
     └── ...
 ```
 
-### Exemple
+### Example
 
 ```go
 // tests/e2e/e2e_test.go
@@ -417,23 +417,23 @@ services:
 }
 ```
 
-### Cas couverts
+### Cases covered
 
-5-10 tests E2E maximum, focalisés sur :
+5-10 E2E tests maximum, focused on:
 
-- Happy path d'une commande critique (`one <service> <action>`)
-- Exit codes attendus (0, 1, 2, 3, 4, 5)
-- Output JSON parseable
-- Output TTY lisible (snapshot)
-- `one capabilities` retourne du JSON valide
-- `one info` retourne du markdown valide
-- Workflow complet : init → login → scope add → exec
+- Happy path for a critical command (`one <service> <action>`)
+- Expected exit codes (0, 1, 2, 3, 4, 5)
+- Parseable JSON output
+- Readable TTY output (snapshot)
+- `one capabilities` returns valid JSON
+- `one info` returns valid markdown
+- Complete workflow: init → login → scope add → exec
 
-Pas plus. Les E2E sont lents et fragiles, on les garde minimaux.
+No more than that. E2E tests are slow and brittle; keep them minimal.
 
-## Tests cross-platform
+## Cross-platform tests
 
-Matrice CI sur trois plateformes : Linux, macOS, Windows.
+CI matrix on three platforms: Linux, macOS, Windows.
 
 ```yaml
 # .github/workflows/test.yml
@@ -443,22 +443,22 @@ strategy:
     go: ['1.23']
 ```
 
-**Cas spécifiques par OS** :
+**OS-specific cases**:
 
-| Test | Pourquoi |
+| Test | Why |
 |---|---|
-| Keychain store/fetch | API différente par OS (Keychain/Secret Service/CredMgr) |
+| Keychain store/fetch | Different API per OS (Keychain/Secret Service/CredMgr) |
 | File locks | `flock` Linux/macOS vs `LockFileEx` Windows |
 | Path resolution | `/` vs `\`, home dir, XDG |
-| TTY detection | comportement `isatty` |
+| TTY detection | `isatty` behavior |
 | Exec browser | `open` vs `xdg-open` vs `start` |
-| Permissions fichiers | `0600` sous Unix, ACL Windows |
+| File permissions | `0600` on Unix, ACL on Windows |
 
-Le keychain Windows en CI est non trivial (besoin d'une session interactive). Solution : tests `--short` qui skippent les tests requérant un keychain réel, plus un test manuel hebdomadaire.
+Windows keychain in CI is non-trivial (requires an interactive session). Solution: `--short` tests that skip tests requiring a real keychain, plus a weekly manual test.
 
-## Tests de sécurité
+## Security tests
 
-Suite dédiée taggée `security`, à exécuter en CI sur chaque push :
+Dedicated suite tagged `security`, to be run in CI on every push:
 
 ```bash
 go test -tags=security ./tests/security/...
@@ -503,7 +503,7 @@ func TestSandbox_NoEnvAccess(t *testing.T) {
 }
 
 func TestSandbox_URLAllowlist(t *testing.T) {
-    // handler qui try `https://evil.com/exfil`
+    // handler that tries `https://evil.com/exfil`
     out := runHandler(t, "tests/security/handlers/try_external_call.wasm")
     assert.Contains(t, out.Error, "url_not_allowed")
 }
@@ -543,9 +543,9 @@ func TestRefresh_ConcurrentInvocations(t *testing.T) {
 }
 ```
 
-## Tests de performance
+## Performance tests
 
-Critique pour un CLI : la latence et la mémoire au démarrage. CI fail si dégradation.
+Critical for a CLI: startup latency and memory. CI fails on regression.
 
 ### Cold start benchmark
 
@@ -579,7 +579,7 @@ func BenchmarkColdStart_DeclarativeAction(b *testing.B) {
 
 ### Budgets
 
-Définis dans `.benchmarks.json` :
+Defined in `.benchmarks.json`:
 
 ```json
 {
@@ -589,7 +589,7 @@ Définis dans `.benchmarks.json` :
 }
 ```
 
-CI exécute les benchmarks, parse le JSON output, compare. Si dégradation >10% : warning. Si dépassement du max absolu : fail.
+CI runs benchmarks, parses the JSON output, and compares. If regression >10%: warning. If absolute max exceeded: fail.
 
 ### Memory footprint
 
@@ -599,7 +599,7 @@ func TestMemoryAtStartup(t *testing.T) {
     runtime.ReadMemStats(&m)
     initial := m.Alloc
 
-    // Setup standard
+    // Standard setup
     setupFullBinary(t)
 
     runtime.ReadMemStats(&m)
@@ -610,7 +610,7 @@ func TestMemoryAtStartup(t *testing.T) {
 
 ## Snapshot tests
 
-Pour les outputs structurés (capabilities JSON, info markdown), snapshot tests avec [go-snaps](https://github.com/gkampitakis/go-snaps).
+For structured outputs (capabilities JSON, info markdown), snapshot tests with [go-snaps](https://github.com/gkampitakis/go-snaps).
 
 ```go
 func TestCapabilities_Output_Snapshot(t *testing.T) {
@@ -620,23 +620,23 @@ func TestCapabilities_Output_Snapshot(t *testing.T) {
 }
 ```
 
-Premier run : sauvegarde le snapshot. Runs suivants : compare. Diff visible → update via flag `-update`.
+First run: saves the snapshot. Subsequent runs: compare. Visible diff → update via flag `-update`.
 
-Garde tes outputs stables sans écrire des assertions champ par champ. Idéal pour les sorties JSON qui changent peu mais où chaque champ compte.
+Keeps your outputs stable without writing field-by-field assertions. Ideal for JSON outputs that change rarely but where every field matters.
 
 ## Fixtures
 
-Centralisées dans `internal/testing/fixture/` :
+Centralized in `internal/testing/fixture/`:
 
 ```
 internal/testing/fixture/
 ├── catalog/
-│   ├── v1-minimal/          # 2-3 services basiques
+│   ├── v1-minimal/          # 2-3 basic services
 │   │   ├── github/
 │   │   ├── notion/
 │   │   └── _index.json
-│   ├── v1-full/             # tous les services + handlers WASM mock
-│   └── v1-broken/           # cas dégénérés pour tester le validateur
+│   ├── v1-full/             # all services + mock WASM handlers
+│   └── v1-broken/           # degenerate cases for testing the validator
 ├── scopes/
 │   ├── empty.yaml
 │   ├── readonly.yaml
@@ -648,7 +648,7 @@ internal/testing/fixture/
         └── .onerc.lock
 ```
 
-Chargement via helpers :
+Loading via helpers:
 
 ```go
 func FixtureCatalog(t *testing.T, name string) string {
@@ -661,9 +661,9 @@ func FixtureCatalog(t *testing.T, name string) string {
 }
 ```
 
-## Tests des install guides
+## Install guide tests
 
-Les guides sont des markdown avec frontmatter. Validation automatique en CI catalog :
+Guides are markdown files with frontmatter. Automatically validated in the catalog CI:
 
 ```go
 func TestGuide_FrontmatterValid(t *testing.T) {
@@ -683,9 +683,9 @@ func TestGuide_FrontmatterValid(t *testing.T) {
 }
 ```
 
-## Tests UI/UX (TTY)
+## UI/UX tests (TTY)
 
-Pour le renderer TTY, snapshot des outputs colorés (avec `lipgloss`) :
+For the TTY renderer, snapshot colored outputs (with `lipgloss`):
 
 ```go
 func TestRenderer_TTY_ExecuteSuccess(t *testing.T) {
@@ -699,9 +699,9 @@ func TestRenderer_TTY_ExecuteSuccess(t *testing.T) {
 }
 ```
 
-Capture l'ANSI escape codes. Diff visible si on change un emoji ou une couleur.
+Captures ANSI escape codes. Visible diff if you change an emoji or a color.
 
-## Tests des erreurs et hints
+## Error and hint tests
 
 ```go
 func TestSetupRequired_RendersHintWithGuide(t *testing.T) {
@@ -723,9 +723,9 @@ func TestSetupRequired_RendersHintWithGuide(t *testing.T) {
 }
 ```
 
-## Tests de la sortie JSON
+## JSON output tests
 
-Le format JSON émis par le binaire est une API publique pour les agents. Tout changement est breaking.
+The JSON format emitted by the binary is a public API for agents. Any change is breaking.
 
 ```go
 func TestJSONOutput_Schema(t *testing.T) {
@@ -737,26 +737,26 @@ func TestJSONOutput_Schema(t *testing.T) {
 }
 ```
 
-Schéma maintenu dans `schemas/`, versionné, jamais cassé entre minors.
+Schema maintained in `schemas/`, versioned, never broken between minors.
 
-## Tests des handlers WASM (côté binaire)
+## WASM handler tests (binary side)
 
-Pas les tests des handlers eux-mêmes (ça c'est côté catalogue), mais les tests du **runtime** qui les exécute.
+Not the tests of the handlers themselves (that's on the catalog side), but the tests of the **runtime** that executes them.
 
-### Fixtures de handlers
+### Handler fixtures
 
 ```
 internal/testing/fixture/handlers/
-├── echo.wasm                # retourne ses inputs
-├── http_get.wasm            # fait un GET sur une URL fixée
-├── http_evil.wasm           # tente un GET hors allowlist
-├── creds_get.wasm           # tente host.creds.get
-├── fail.wasm                # appelle host.fail.withCode
-├── timeout.wasm             # boucle infinie (test timeout)
-└── memory_hog.wasm          # alloue 200MB (test OOM)
+├── echo.wasm                # returns its inputs
+├── http_get.wasm            # makes a GET to a fixed URL
+├── http_evil.wasm           # attempts a GET outside the allowlist
+├── creds_get.wasm           # attempts host.creds.get
+├── fail.wasm                # calls host.fail.withCode
+├── timeout.wasm             # infinite loop (timeout test)
+└── memory_hog.wasm          # allocates 200MB (OOM test)
 ```
 
-Compilés en CI une fois, pas commités (build cache).
+Compiled in CI once, not committed (build cache).
 
 ```go
 func TestRuntime_WASM_Echo(t *testing.T) {
@@ -780,86 +780,86 @@ func TestRuntime_WASM_URLAllowlist(t *testing.T) {
 
 ## Coverage
 
-`go test -coverprofile=coverage.out ./...` en CI. Objectifs :
+`go test -coverprofile=coverage.out ./...` in CI. Targets:
 
-- `internal/core/` : >85%
-- `internal/app/` : >75%
-- `internal/adapters/` : >70%
-- `internal/cli/` : >60% (CLI a beaucoup de boilerplate, ok pour moins)
-- Global : >70%
+- `internal/core/`: >85%
+- `internal/app/`: >75%
+- `internal/adapters/`: >70%
+- `internal/cli/`: >60% (CLI has a lot of boilerplate, acceptable to be lower)
+- Global: >70%
 
-Coverage en dessous des objectifs : CI warning, pas fail. Le but est de garder la confiance, pas de jouer à un jeu de chiffres.
+Coverage below targets: CI warning, not fail. The goal is to maintain confidence, not to play a numbers game.
 
-## Organisation des tests
+## Test organization
 
-### Conventions de nommage
+### Naming conventions
 
-- `Test<Type>_<Method>_<Condition>` : `TestScope_Allows_ExactMatch`, `TestExecute_NotInScope`
-- `Benchmark<Operation>` : `BenchmarkColdStart_Version`
-- `TestE2E_<Scenario>` : `TestE2E_GitHub_IssuesList`
-- Helpers : `func helperName(t *testing.T, ...)` avec `t.Helper()`
+- `Test<Type>_<Method>_<Condition>`: `TestScope_Allows_ExactMatch`, `TestExecute_NotInScope`
+- `Benchmark<Operation>`: `BenchmarkColdStart_Version`
+- `TestE2E_<Scenario>`: `TestE2E_GitHub_IssuesList`
+- Helpers: `func helperName(t *testing.T, ...)` with `t.Helper()`
 
-### Setup et teardown
+### Setup and teardown
 
-Préférer `t.TempDir()` pour les fichiers temporaires (cleanup automatique). Préférer `t.Cleanup(func)` pour le teardown explicite (s'exécute même en cas de panic).
+Prefer `t.TempDir()` for temporary files (automatic cleanup). Prefer `t.Cleanup(func)` for explicit teardown (runs even on panic).
 
-### Pas de tests parallèles tant que pas nécessaire
+### No parallel tests unless necessary
 
-`t.Parallel()` est tentant mais ajoute de la complexité. Le binaire est assez rapide pour que la suite tourne en <30s même séquentielle. Activer `t.Parallel()` uniquement pour les tests E2E lents (>1s).
+`t.Parallel()` is tempting but adds complexity. The binary is fast enough for the suite to run in <30s even sequentially. Enable `t.Parallel()` only for slow E2E tests (>1s).
 
 ## Anti-patterns
 
-### Mocks à 50 expectations
+### Mocks with 50 expectations
 
 ```go
 mockVault.EXPECT().Fetch(gomock.Any(), gomock.Eq(ref1)).Return(cred1, nil)
 mockVault.EXPECT().Store(gomock.Any(), gomock.Eq(ref1), gomock.AssignableToTypeOf(core.Credential{})).Return(nil)
-// ... 48 lignes
+// ... 48 lines
 ```
 
-Casse à chaque refactor. Préfère un fake `Vault` in-memory réutilisable.
+Breaks at every refactor. Prefer a reusable in-memory `Vault` fake.
 
-### Sleeps pour synchroniser
+### Sleeps for synchronization
 
 ```go
 go startBackground()
-time.Sleep(100 * time.Millisecond)  // attend que ça démarre
+time.Sleep(100 * time.Millisecond)  // wait for it to start
 ```
 
-Flaky en CI. Utilise des channels ou des callbacks.
+Flaky in CI. Use channels or callbacks.
 
-### Tests qui n'assertent rien
+### Tests that assert nothing
 
 ```go
 func TestFooDoesNotPanic(t *testing.T) {
-    foo()  // si ça crash, le test fail
+    foo()  // if it crashes, the test fails
 }
 ```
 
-Acceptable si l'objectif est "le code compile et exécute", mais la plupart du temps tu veux assert l'output.
+Acceptable if the goal is "the code compiles and runs", but most of the time you want to assert the output.
 
-### Tests dépendants de l'ordre
+### Order-dependent tests
 
 ```go
 func TestStep1_CreatesFile(t *testing.T) { ... }
-func TestStep2_ReadsFile(t *testing.T) { ... }  // dépend que Step1 ait tourné
+func TestStep2_ReadsFile(t *testing.T) { ... }  // depends on Step1 having run
 ```
 
-Chaque test doit être indépendant. Setup ce dont tu as besoin, cleanup à la fin.
+Each test must be independent. Set up what you need, clean up at the end.
 
-### Tests qui vont sur Internet
+### Tests that go to the Internet
 
-Sauf E2E explicites, **aucun test ne doit faire d'appel réseau réel**. Toujours mocker via fakeAPI local. Sinon les tests fail offline et en CI sans accès Internet.
+Except for explicit E2E tests, **no test should make real network calls**. Always mock via a local fakeAPI. Otherwise tests fail offline and in CI without Internet access.
 
-### Tests avec dépendance de temps réel
+### Tests with real-time dependency
 
 ```go
 time.Sleep(1 * time.Second)
 assert.True(t, cred.NeedsRefresh(time.Now()))
 ```
 
-Utilise `fake.Clock` pour contrôler le temps déterministiquement.
+Use `fake.Clock` to control time deterministically.
 
 ---
 
-*Pour exécuter la suite complète : `go test ./...`. Pour les tests sécurité : `go test -tags=security ./tests/security/...`. Pour les benchmarks : `go test -bench=. ./internal/cli/`. CI fait tourner les trois sur chaque PR.*
+*To run the full suite: `go test ./...`. For security tests: `go test -tags=security ./tests/security/...`. For benchmarks: `go test -bench=. ./internal/cli/`. CI runs all three on every PR.*

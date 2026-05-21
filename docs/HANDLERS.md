@@ -1,44 +1,44 @@
 # HANDLERS.md
 
-> Référence complète pour écrire des handlers WASM utilisés par les services du catalogue One CLI. Pour le format `service.yaml`, voir [CATALOG.md](./CATALOG.md). Pour le threat model, voir [SECURITY.md](./SECURITY.md).
+> Complete reference for writing WASM handlers used by One CLI catalog services. For the `service.yaml` format, see [CATALOG.md](./CATALOG.md). For the threat model, see [SECURITY.md](./SECURITY.md).
 
-## Pourquoi des handlers WASM
+## Why WASM handlers
 
-Le YAML déclaratif couvre 95% des cas (REST simple, auth Bearer, passthrough du body). Les handlers WASM existent pour le 5% restant : signature de requête, plusieurs appels chaînés, GraphQL avec interpolation typée, transformation de réponse non triviale, pagination automatique complexe.
+Declarative YAML covers 95% of cases (simple REST, Bearer auth, body passthrough). WASM handlers exist for the remaining 5%: request signing, multiple chained calls, GraphQL with typed interpolation, non-trivial response transformation, complex automatic pagination.
 
-**Décider entre YAML et WASM** :
+**Choosing between YAML and WASM**:
 
-| Cas | YAML pur | WASM |
+| Case | Pure YAML | WASM |
 |---|:---:|:---:|
-| Un endpoint, body passthrough, headers fixes | ✓ | |
-| Auth Bearer, API key dans un header | ✓ | |
-| Pagination cursor simple (param + token) | ✓ | |
-| Headers calculés (hash, signature, JWT) | | ✓ |
-| ≥ 2 requêtes HTTP par action | | ✓ |
-| Transformation de la réponse au-delà du passthrough | | ✓ |
-| GraphQL avec interpolation des inputs dans la query | | ✓ |
-| Logique conditionnelle (if X then call Y else Z) | | ✓ |
-| Rollback en cas d'échec partiel | | ✓ |
+| One endpoint, body passthrough, fixed headers | ✓ | |
+| Bearer auth, API key in a header | ✓ | |
+| Simple cursor pagination (param + token) | ✓ | |
+| Computed headers (hash, signature, JWT) | | ✓ |
+| ≥ 2 HTTP requests per action | | ✓ |
+| Response transformation beyond passthrough | | ✓ |
+| GraphQL with input interpolation in the query | | ✓ |
+| Conditional logic (if X then call Y else Z) | | ✓ |
+| Rollback on partial failure | | ✓ |
 
-En cas de doute, **commencer par le YAML**. Migrer vers WASM uniquement si l'option déclarative n'est pas atteignable.
+When in doubt, **start with YAML**. Migrate to WASM only if the declarative option is not achievable.
 
-## Modèle d'isolation
+## Isolation model
 
-Un handler tourne dans un module WASM via [wazero](https://wazero.io/). WASI minimal, **rien n'est exposé par défaut** :
+A handler runs in a WASM module via [wazero](https://wazero.io/). Minimal WASI, **nothing is exposed by default**:
 
-- Pas de filesystem
-- Pas d'env vars
-- Pas de réseau direct
-- Pas d'horloge directe
-- Pas de random direct
-- Pas d'exec de process
-- Pas de stdin/stdout sauvages
+- No filesystem
+- No env vars
+- No direct network
+- No direct clock
+- No direct random
+- No process exec
+- No uncontrolled stdin/stdout
 
-Le handler ne peut interagir avec le monde que via les **host functions** exposées explicitement par le binaire One CLI.
+The handler can only interact with the outside world via **host functions** explicitly exposed by the One CLI binary.
 
-Cette isolation est ce qui rend le catalogue *communautaire-safe* : un handler `stripe.wasm` ne peut pas lire `~/.ssh/`, exfiltrer le vault, ou faire un appel HTTP arbitraire vers un serveur externe.
+This isolation is what makes the catalog *community-safe*: a `stripe.wasm` handler cannot read `~/.ssh/`, exfiltrate the vault, or make an arbitrary HTTP call to an external server.
 
-## Le flow d'invocation
+## The invocation flow
 
 ```
 ┌──────────────┐   1. invoke handler          ┌─────────────────┐
@@ -61,9 +61,9 @@ Cette isolation est ce qui rend le catalogue *communautaire-safe* : un handler `
 └──────────────┘                              └─────────────────┘
 ```
 
-## Le contrat I/O
+## The I/O contract
 
-### Ce que le handler reçoit (sur invocation)
+### What the handler receives (on invocation)
 
 ```json
 {
@@ -83,11 +83,11 @@ Cette isolation est ce qui rend le catalogue *communautaire-safe* : un handler `
 }
 ```
 
-**Les credentials ne sont pas dans ce payload.** Le handler les demande via `host.creds.get`.
+**Credentials are not in this payload.** The handler requests them via `host.creds.get`.
 
-### Ce que le handler renvoie
+### What the handler returns
 
-Soit un objet JSON arbitraire (validé contre `output:` du YAML si défini) :
+Either an arbitrary JSON object (validated against `output:` in the YAML if defined):
 
 ```json
 {
@@ -97,24 +97,24 @@ Soit un objet JSON arbitraire (validé contre `output:` du YAML si défini) :
 }
 ```
 
-Soit termine via `host.fail.withCode(...)` (équivalent à un throw structuré).
+Or terminates via `host.fail.withCode(...)` (equivalent to a structured throw).
 
-## Les host functions
+## Host functions
 
 ### `host.creds`
 
 ```ts
 namespace host.creds {
   /**
-   * Récupère une credential par son nom logique (déclaré dans service.yaml > credentials).
-   * Échoue si la clé n'est pas déclarée.
-   * La valeur retournée est marquée sensible et redactée dans les logs.
+   * Retrieves a credential by its logical name (declared in service.yaml > credentials).
+   * Fails if the key is not declared.
+   * The returned value is marked sensitive and redacted in logs.
    */
   function get(key: string): string;
 }
 ```
 
-**Exemple** :
+**Example**:
 
 ```ts
 const token = host.creds.get('access_token');
@@ -145,17 +145,17 @@ interface HttpResponse {
 }
 ```
 
-**Allowlist obligatoire**. Avant l'invocation, le host parse `service.yaml > actions > calls:` et construit une liste de patterns d'URL autorisés. Si le handler appelle `host.http.request` avec une URL qui ne matche aucun pattern, l'host échoue avec `url_not_allowed`.
+**Mandatory allowlist**. Before invocation, the host parses `service.yaml > actions > calls:` and builds a list of allowed URL patterns. If the handler calls `host.http.request` with a URL that does not match any pattern, the host fails with `url_not_allowed`.
 
-**Auto-injection des credentials standards**. Pour les schémas auth courants (Bearer, Basic), si le `service.yaml > auth.providers.X.injection` déclare `inject: auto`, l'host ajoute le header automatiquement. Le handler n'a pas besoin de toucher au token. Sécurité accrue.
+**Auto-injection of standard credentials**. For common auth schemes (Bearer, Basic), if `service.yaml > auth.providers.X.injection` declares `inject: auto`, the host adds the header automatically. The handler does not need to touch the token. Increased security.
 
-Pour les schémas custom (SigV4, JWT, signing), `inject: manual` et le handler forge lui-même via `host.creds.get` + `host.crypto.*`.
+For custom schemes (SigV4, JWT, signing), `inject: manual` and the handler forges the header itself via `host.creds.get` + `host.crypto.*`.
 
-**Audit log**. Chaque requête est loggée (méthode, host, path, status, durée). Pas le body. Visible via `one trace`.
+**Audit log**. Each request is logged (method, host, path, status, duration). Not the body. Visible via `one trace`.
 
 ### `host.crypto`
 
-Crypto **primitive uniquement**, pas de high-level "encrypt(data, password)".
+**Primitives only**, no high-level "encrypt(data, password)".
 
 ```ts
 namespace host.crypto {
@@ -172,18 +172,18 @@ namespace host.crypto {
 }
 ```
 
-Suffisant pour tous les schémas d'auth modernes (SigV4, JWT signing, webhook verification). Le reste de la logique se fait en pure code dans le handler.
+Sufficient for all modern auth schemes (SigV4, JWT signing, webhook verification). The rest of the logic is handled in pure code inside the handler.
 
 ### `host.time`
 
 ```ts
 namespace host.time {
   function now(): number;          // unix ms
-  function sleep(ms: number): void; // bloquant, capé à 30s par appel, 60s cumulés
+  function sleep(ms: number): void; // blocking, capped at 30s per call, 60s cumulative
 }
 ```
 
-Pas d'accès à un clock monotonic. Pas de timezone. Si le handler a besoin d'une string ISO 8601, il la construit lui-même depuis le timestamp.
+No monotonic clock access. No timezone. If the handler needs an ISO 8601 string, it builds it itself from the timestamp.
 
 ### `host.log`
 
@@ -195,11 +195,11 @@ namespace host.log {
 }
 ```
 
-Pas de `error` : utiliser `host.fail`.
+No `error`: use `host.fail`.
 
-Les logs handler-side sortent dans la sortie structurée d'One CLI quand `--debug` ou `--trace` est activé. Sinon ignorés silencieusement.
+Handler-side logs appear in One CLI's structured output when `--debug` or `--trace` is active. Otherwise silently ignored.
 
-**Ne pas spam.** Cap de 1000 lignes de log par invocation.
+**Do not spam.** Cap of 1000 log lines per invocation.
 
 ### `host.fail`
 
@@ -209,7 +209,7 @@ namespace host.fail {
 }
 ```
 
-Termine l'exécution avec une erreur structurée. Le `code` **doit** matcher une entrée du bloc `errors:` de l'action YAML. Sinon, l'host le mappe sur `unknown_error` et émet un warning au reviewer.
+Terminates execution with a structured error. The `code` **must** match an entry in the action's YAML `errors:` block. Otherwise, the host maps it to `unknown_error` and emits a warning to the reviewer.
 
 ```ts
 const res = host.http.request({ method: 'GET', url: '...' });
@@ -222,7 +222,7 @@ if (res.status === 404) {
 }
 ```
 
-L'agent reçoit côté CLI :
+The agent receives on the CLI side:
 
 ```json
 {
@@ -239,14 +239,14 @@ L'agent reçoit côté CLI :
 }
 ```
 
-## Cycle de vie
+## Lifecycle
 
-**Une invocation = un module instancié.** Pas de réutilisation entre appels. Plus lent (~10ms d'overhead pour wazero AOT-compiled), mais isole les bugs d'état.
+**One invocation = one instantiated module.** No reuse between calls. Slower (~10ms overhead for wazero AOT-compiled), but isolates state bugs.
 
-**Pas de fonction `main()`.** Le handler exporte une ou plusieurs fonctions par nom, dispatch via `handler_entry` du YAML :
+**No `main()` function.** The handler exports one or more functions by name, dispatched via `handler_entry` in the YAML:
 
 ```ts
-// handler.ts compilé en handler.wasm
+// handler.ts compiled to handler.wasm
 export function upload(inputs: UploadInputs): UploadOutput {
   // ...
 }
@@ -256,35 +256,35 @@ export function bucket_create(inputs: BucketCreateInputs): BucketCreateOutput {
 }
 ```
 
-Le host invoque `handler.upload(deserialize(stdin_json).inputs)`. Les signatures sont typées via les schémas YAML : le SDK génère les types depuis le `service.yaml`.
+The host invokes `handler.upload(deserialize(stdin_json).inputs)`. Signatures are typed via YAML schemas: the SDK generates types from `service.yaml`.
 
-### Limites de ressources
+### Resource limits
 
 ```
-memory:     64 MB par défaut, max 256 MB (configurable via service.yaml)
-cpu time:   30s wall-clock par invocation (max 120s)
+memory:     64 MB by default, max 256 MB (configurable via service.yaml)
+cpu time:   30s wall-clock per invocation (max 120s)
 stack:      1 MB
-http calls: 50 max par invocation
-log lines:  1000 max par invocation
-sleep:      30s par appel, 60s cumulés
+http calls: 50 max per invocation
+log lines:  1000 max per invocation
+sleep:      30s per call, 60s cumulative
 ```
 
-Au-delà, kill brutal et erreur `resource_exhausted` côté agent.
+Beyond these limits, hard kill and `resource_exhausted` error on the agent side.
 
-## SDKs par langage
+## SDKs by language
 
-Trois toolchains officiellement supportées au début.
+Three officially supported toolchains at launch.
 
-### TypeScript (recommandé pour débuter)
+### TypeScript (recommended for getting started)
 
-Compilé via [Javy](https://github.com/bytecodealliance/javy) (QuickJS embarqué dans WASM).
+Compiled via [Javy](https://github.com/bytecodealliance/javy) (QuickJS embedded in WASM).
 
 ```bash
 bun add -d @one-cli/handler-sdk-ts
 bun add -d @bytecodealliance/javy
 ```
 
-**`handlers/main.ts`** :
+**`handlers/main.ts`**:
 
 ```ts
 import { host } from '@one-cli/handler-sdk-ts';
@@ -323,14 +323,14 @@ export function pages_create(inputs: Inputs): Output {
 }
 ```
 
-**Build** :
+**Build**:
 
 ```bash
 bun run build
-# génère handlers/main.wasm
+# generates handlers/main.wasm
 ```
 
-**Tests** (avec fake host) :
+**Tests** (with fake host):
 
 ```ts
 import { test, fakeHost } from '@one-cli/handler-test';
@@ -363,7 +363,7 @@ test('pages_create POSTs to /v1/pages', async () => {
 tinygo build -o handlers/main.wasm -target=wasi handlers/main.go
 ```
 
-**`handlers/main.go`** :
+**`handlers/main.go`**:
 
 ```go
 package main
@@ -404,16 +404,16 @@ func pages_create() {
     handler.WriteOutput(out)
 }
 
-func main() {} // requis par tinygo
+func main() {} // required by tinygo
 ```
 
-### Rust (pour les besoins performants)
+### Rust (for performance-critical needs)
 
 ```bash
 cargo build --target wasm32-wasi --release
 ```
 
-**`src/lib.rs`** :
+**`src/lib.rs`**:
 
 ```rust
 use one_handler::{host, Inputs, Output};
@@ -442,9 +442,9 @@ pub extern "C" fn pages_create() {
 }
 ```
 
-## Patterns courants
+## Common patterns
 
-### Auth Bearer avec validation
+### Bearer auth with validation
 
 ```ts
 const token = host.creds.get('access_token');
@@ -455,9 +455,9 @@ const res = host.http.request({
 });
 ```
 
-Souvent inutile si `injection: auto` est configuré.
+Often unnecessary if `injection: auto` is configured.
 
-### Signature SigV4 pour AWS
+### SigV4 signing for AWS
 
 ```ts
 import { signSigV4 } from '@one-cli/handler-sdk-ts/aws';
@@ -479,12 +479,12 @@ const signed = signSigV4({
 const res = host.http.request(signed);
 ```
 
-Le helper `signSigV4` est fourni par le SDK, utilise `host.crypto.*` en interne.
+The `signSigV4` helper is provided by the SDK and uses `host.crypto.*` internally.
 
-### Chains d'appels avec rollback
+### Call chains with rollback
 
 ```ts
-// stripe customer.full-create : 3 appels avec rollback best-effort
+// stripe customer.full-create : 3 calls with best-effort rollback
 export function customer_full_create(inputs: CustomerFullCreateInputs) {
   const apiKey = host.creds.get('api_key');
   const headers = { Authorization: `Bearer ${apiKey}` };
@@ -507,7 +507,7 @@ export function customer_full_create(inputs: CustomerFullCreateInputs) {
 
     return { customer_id: cust.id };
   } catch (e) {
-    // Rollback best-effort
+    // Best-effort rollback
     try {
       host.http.request({
         method: 'DELETE',
@@ -523,7 +523,7 @@ export function customer_full_create(inputs: CustomerFullCreateInputs) {
 }
 ```
 
-### Pagination auto
+### Auto pagination
 
 ```ts
 export function* messages_list_all(inputs: ListAllInputs) {
@@ -549,11 +549,11 @@ export function* messages_list_all(inputs: ListAllInputs) {
 }
 ```
 
-Le SDK gère la sérialisation du generator en NDJSON pour l'host.
+The SDK handles serializing the generator to NDJSON for the host.
 
-## Le `service.yaml > calls:` (allowlist URL)
+## The `service.yaml > calls:` (URL allowlist)
 
-C'est le mécanisme qui rend la sandbox réelle. Sans allowlist, un handler malveillant pourrait exfiltrer des credentials vers un serveur tiers.
+This is the mechanism that makes the sandbox real. Without an allowlist, a malicious handler could exfiltrate credentials to a third-party server.
 
 ```yaml
 calls:
@@ -565,48 +565,48 @@ calls:
     url_pattern: "^https://api\\.notion\\.com/v1/pages/[a-f0-9-]+$"
 ```
 
-**Patterns supportés** :
+**Supported patterns**:
 
-- `url` : match exact
-- `url_pattern` : regex (validée à l'enregistrement)
+- `url`: exact match
+- `url_pattern`: regex (validated at registration)
 
-**Bonnes pratiques** :
+**Best practices**:
 
-- Utiliser des patterns aussi spécifiques que possible. Pas de `^https://api\\.notion\\.com/.*` qui autorise tout.
-- Listés à granularité fine (un endpoint = une entrée), pour faciliter le review.
-- Méthode HTTP toujours explicitée.
+- Use patterns as specific as possible. Avoid `^https://api\\.notion\\.com/.*` which allows everything.
+- Listed at fine granularity (one endpoint = one entry), to ease review.
+- HTTP method always explicit.
 
-**Vérifié en CI** : un linter analyse statiquement le handler et vérifie que toutes les URLs hit par le code matchent au moins un pattern.
+**Verified in CI**: a linter statically analyzes the handler and verifies that all URLs hit by the code match at least one pattern.
 
-## Versionnement du contrat host
+## Host contract versioning
 
-Le `host_api_version` du service.yaml déclare la version d'API host attendue :
+The `host_api_version` in service.yaml declares the expected host API version:
 
 ```yaml
 host_api_version: 1
 ```
 
-Le binaire vérifie au load. Si le handler attend une v2 mais le binaire n'expose que v1, refuse le load avec un message clair : "upgrade `one` to use this service".
+The binary checks at load time. If the handler expects v2 but the binary only exposes v1, it refuses to load with a clear message: "upgrade `one` to use this service".
 
-Permet l'évolution du contrat host sans casser les anciens handlers. Les changements compatibles (ajout de fonctions) ne bumpent pas la version majeure ; les changements incompatibles (renommage, signature changée) sont rares mais bumpent.
+Allows the host contract to evolve without breaking old handlers. Compatible changes (adding functions) do not bump the major version; incompatible changes (renaming, changed signature) are rare but do bump it.
 
 ## Distribution
 
-Compilé par la CI du repo catalog, joint au tarball du service. Hash SHA-256 dans l'index, vérifié au download par `one`. Le source du handler est dans le repo, donc auditable, et le binaire est reproductible.
+Compiled by the catalog repo's CI, bundled with the service tarball. SHA-256 hash in the index, verified at download by `one`. The handler source is in the repo, so it is auditable, and the binary is reproducible.
 
-**Le contributeur ne commit jamais le `.wasm`.** C'est la CI qui le construit. Empêche la dérive entre source et binaire.
+**Contributors never commit the `.wasm`.** CI builds it. This prevents drift between source and binary.
 
 ## Tests
 
-### Pattern recommandé
+### Recommended pattern
 
-Pour chaque handler :
+For each handler:
 
-1. Un test "happy path" : input valide, mock l'HTTP, vérifie le résultat.
-2. Un test par code d'erreur déclaré dans `errors:` : assert que `host.fail.withCode` est appelé avec le bon code.
-3. Un test pour chaque branche conditionnelle non triviale du handler.
+1. One "happy path" test: valid input, mock the HTTP, verify the result.
+2. One test per error code declared in `errors:`: assert that `host.fail.withCode` is called with the correct code.
+3. One test for each non-trivial conditional branch in the handler.
 
-### Exemple
+### Example
 
 ```ts
 import { test, fakeHost } from '@one-cli/handler-test';
@@ -638,23 +638,23 @@ test('404 maps to not_found with hint', async () => {
 });
 ```
 
-### Lint en CI
+### Lint in CI
 
-Le repo catalog tourne un lint statique sur chaque PR :
+The catalog repo runs static lint on every PR:
 
-- Toutes les URLs hit par le handler matchent une entrée de `calls:`
-- Toutes les `host.creds.get(key)` matchent une entrée de `credentials:`
-- Tous les `host.fail.withCode(code, ...)` matchent une entrée de `errors:`
-- Pas d'`import` interdit (pas de `fs`, `child_process`, etc.)
+- All URLs hit by the handler match an entry in `calls:`
+- All `host.creds.get(key)` calls match an entry in `credentials:`
+- All `host.fail.withCode(code, ...)` calls match an entry in `errors:`
+- No forbidden `import` (no `fs`, `child_process`, etc.)
 
-C'est ce qui rend la communauté capable de contribuer sans casser. Le linter attrape 80% des erreurs avant code review.
+This is what allows the community to contribute without breaking things. The linter catches 80% of errors before code review.
 
 ## Anti-patterns
 
-### Stocker un token en variable globale
+### Storing a token in a global variable
 
 ```ts
-// MAUVAIS
+// BAD
 let cachedToken: string | null = null;
 export function action(inputs) {
   if (!cachedToken) cachedToken = host.creds.get('access_token');
@@ -662,27 +662,27 @@ export function action(inputs) {
 }
 ```
 
-Une invocation = un module fresh. Le cache ne survit pas et c'est une source de confusion. Toujours `host.creds.get` à chaque invocation.
+One invocation = one fresh module. The cache does not survive and is a source of confusion. Always call `host.creds.get` on each invocation.
 
-### Faire des appels HTTP non déclarés
+### Making undeclared HTTP calls
 
 ```ts
-// MAUVAIS : crash à l'exécution avec url_not_allowed
+// BAD: crashes at runtime with url_not_allowed
 host.http.request({ url: 'https://my-personal-server.com/log' });
 ```
 
-Toutes les URLs doivent être dans `service.yaml > calls:`.
+All URLs must be in `service.yaml > calls:`.
 
-### Logger des secrets
+### Logging secrets
 
 ```ts
-// MAUVAIS
+// BAD
 host.log.info('Auth', { token: host.creds.get('access_token') });
 ```
 
-Les `Secret` côté host sont redactés, mais les valeurs retournées par `host.creds.get` côté handler sont des strings. Le host n'a pas de moyen sûr de détecter la fuite. **Ne logge jamais ce que tu reçois de `creds.get`.**
+`Secret` values on the host side are redacted, but values returned by `host.creds.get` on the handler side are plain strings. The host has no reliable way to detect the leak. **Never log what you receive from `creds.get`.**
 
-### Bypasser l'injection auto
+### Bypassing auto injection
 
 ```yaml
 # service.yaml
@@ -696,7 +696,7 @@ auth:
 ```
 
 ```ts
-// MAUVAIS : injection auto déjà active, tu duplifies
+// BAD: auto injection is already active, you are duplicating it
 const token = host.creds.get('access_token');
 host.http.request({
   url: '...',
@@ -704,49 +704,49 @@ host.http.request({
 });
 ```
 
-Avec `inject: auto`, le handler n'a pas besoin de toucher au token. Plus simple et plus sûr.
+With `inject: auto`, the handler does not need to touch the token. Simpler and safer.
 
-### Pas gérer les erreurs
+### Not handling errors
 
 ```ts
-// MAUVAIS : le handler renvoie un crash sale au lieu d'une erreur typée
+// BAD: the handler returns a raw crash instead of a typed error
 const res = host.http.request({ ... });
 return JSON.parse(new TextDecoder().decode(res.body));
-// Si res.status != 200, le JSON sera potentiellement invalide
+// If res.status != 200, the JSON may be invalid
 ```
 
-Toujours brancher sur le status code et appeler `host.fail.withCode` avec un code mappé.
+Always branch on the status code and call `host.fail.withCode` with a mapped code.
 
 ## Performance
 
-### Cold start d'un handler
+### Handler cold start
 
-Un module WASM est compilé à la première utilisation puis caché. Le cache est partagé entre invocations du même processus, mais pas entre processus (chaque `one ...` est un process neuf).
+A WASM module is compiled on first use and then cached. The cache is shared between invocations within the same process, but not across processes (each `one ...` is a fresh process).
 
-Cold start handler typique : 10-30ms (compilation) + 5ms (instanciation). Acceptable pour la majorité des cas. Si critique, le binaire peut pré-compiler les handlers fréquents en AOT (`wazero compile`) au moment du `one catalog update`.
+Typical handler cold start: 10-30ms (compilation) + 5ms (instantiation). Acceptable for most cases. If critical, the binary can pre-compile frequent handlers to AOT (`wazero compile`) during `one catalog update`.
 
 ### Memory footprint
 
-Un handler simple consomme ~5-10 MB. Un handler complexe avec beaucoup de string manipulation peut monter à 30-50 MB. Le cap à 64 MB par défaut est large.
+A simple handler uses ~5-10 MB. A complex handler with heavy string manipulation can reach 30-50 MB. The default 64 MB cap is generous.
 
-Si un handler approche les 64 MB, c'est probablement un bug (fuite, boucle, accumulation). Augmenter le cap est rarement la bonne solution.
+If a handler approaches 64 MB, it is likely a bug (leak, loop, accumulation). Raising the cap is rarely the right fix.
 
 ### Throughput
 
-Pas le bottleneck d'un CLI. Si un handler fait 10ms de logique + 200ms de latence HTTP, le total est dominé par le HTTP. WASM ajoute <5ms d'overhead.
+Not the bottleneck for a CLI. If a handler does 10ms of logic + 200ms of HTTP latency, the total is dominated by HTTP. WASM adds <5ms of overhead.
 
-## Sécurité (résumé)
+## Security (summary)
 
-Le détail est dans [SECURITY.md](./SECURITY.md). Les points clés pour un auteur de handler :
+Details are in [SECURITY.md](./SECURITY.md). Key points for a handler author:
 
-1. **Allowlist URL stricte.** Pas d'évasion possible.
-2. **Credentials lues uniquement via `host.creds.get`.** Déclarées dans `service.yaml > credentials`.
-3. **Pas d'I/O hors host functions.** Pas de filesystem, pas d'env vars, pas d'exec.
-4. **Codes d'erreur sortants typés.** Pas de string-matching côté utilisateur.
-5. **Pas de logging de secrets.** Toujours.
+1. **Strict URL allowlist.** No escape possible.
+2. **Credentials read only via `host.creds.get`.** Declared in `service.yaml > credentials`.
+3. **No I/O outside host functions.** No filesystem, no env vars, no exec.
+4. **Typed outgoing error codes.** No string-matching on the user side.
+5. **No logging of secrets.** Ever.
 
-Si tu suis ces règles, ton handler peut être mergé sans inquiétude.
+If you follow these rules, your handler can be merged without concern.
 
 ---
 
-*Pour proposer une évolution du contrat host (nouvelle fonction, nouveau type), ouvrir un RFC dans `one-cli/rfcs`. Toute évolution doit être backward-compatible avec les handlers existants.*
+*To propose an evolution of the host contract (new function, new type), open an RFC in `one-cli/rfcs`. Any evolution must be backward-compatible with existing handlers.*

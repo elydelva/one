@@ -1,49 +1,49 @@
 # CONTRIBUTING.md
 
-> Guide pour contribuer au projet One CLI. Si tu contribues au catalogue (ajouter un service), va directement à [CATALOG.md](./CATALOG.md). Ce document couvre les contributions au **binaire Go**.
+> Guide for contributing to the One CLI project. If you're contributing to the catalogue (adding a service), go directly to [CATALOG.md](./CATALOG.md). This document covers contributions to the **Go binary**.
 
-## Premier setup
+## Initial setup
 
-### Pré-requis
+### Prerequisites
 
 - **Go 1.23+** : `go version`
 - **Git** : `git --version`
-- **make** : ou rebuild via `go build` directement
-- **golangci-lint** : pour le linting (`brew install golangci-lint`)
-- **tinygo** : seulement si tu touches aux tests handlers Go (`brew install tinygo`)
-- **bun** ou **node** : seulement si tu touches aux tests handlers TypeScript
+- **make** : or rebuild directly via `go build`
+- **golangci-lint** : for linting (`brew install golangci-lint`)
+- **tinygo** : only if you touch Go handler tests (`brew install tinygo`)
+- **bun** or **node** : only if you touch TypeScript handler tests
 
-Optionnel :
+Optional:
 
-- **wasmtime** ou **wasmer** CLI : pour debugger des modules WASM
-- **age** : pour tester le vault chiffré
+- **wasmtime** or **wasmer** CLI : for debugging WASM modules
+- **age** : for testing the encrypted vault
 
-### Cloner et builder
+### Clone and build
 
 ```bash
 git clone https://github.com/one-cli/one
 cd one
-make build                            # produit ./bin/one
-./bin/one --version                   # vérifie
+make build                            # produces ./bin/one
+./bin/one --version                   # verify
 ```
 
-Ou sans make :
+Or without make:
 
 ```bash
 go build -o bin/one ./cmd/one
 ```
 
-### Lancer les tests
+### Running the tests
 
 ```bash
 make test                             # unit + integration + contract
-make test-security                    # tests sécurité (long, ~30s)
-make test-e2e                         # tests E2E (lent, ~2min)
+make test-security                    # security tests (long, ~30s)
+make test-e2e                         # E2E tests (slow, ~2min)
 make bench                            # benchmarks
 make lint                             # golangci-lint
 ```
 
-Ou sans make :
+Or without make:
 
 ```bash
 go test ./...
@@ -53,57 +53,57 @@ go test -bench=. ./...
 golangci-lint run
 ```
 
-### Faire tourner en dev
+### Running in dev
 
 ```bash
-# Build et utilise en local
-make install                          # met le binaire dans $GOBIN
-which one                             # vérifie
+# Build and use locally
+make install                          # puts the binary in $GOBIN
+which one                             # verify
 
-# Ou directement
+# Or directly
 go run ./cmd/one -- --version
 ```
 
-## Workflow de contribution
+## Contribution workflow
 
-### 1. Trouver une issue
+### 1. Find an issue
 
-Trois bonnes manières de commencer :
+Three good ways to get started:
 
-- **Issues taggées `good-first-issue`** : conçues pour découvrir le code
-- **Issues taggées `help-wanted`** : besoin réel d'aide, scope moyen
-- **RFC ouvertes** : feature en discussion, ton avis bienvenu
+- **Issues tagged `good-first-issue`**: designed to explore the code
+- **Issues tagged `help-wanted`**: real need for help, medium scope
+- **Open RFCs**: feature under discussion, your input is welcome
 
-Avant de coder, **commente l'issue pour signaler ton intérêt**. Évite de dupliquer le travail.
+Before coding, **comment on the issue to signal your interest**. Avoid duplicating work.
 
-### 2. Fork et branch
+### 2. Fork and branch
 
 ```bash
-# Fork via GitHub UI, puis :
-git clone https://github.com/<toi>/one
+# Fork via GitHub UI, then:
+git clone https://github.com/<you>/one
 cd one
 git remote add upstream https://github.com/one-cli/one
 git checkout -b feat/add-bitbucket-provider
 ```
 
-**Nom de branche** : `<type>/<courte-description>`. Types : `feat`, `fix`, `docs`, `test`, `refactor`, `perf`, `chore`.
+**Branch name**: `<type>/<short-description>`. Types: `feat`, `fix`, `docs`, `test`, `refactor`, `perf`, `chore`.
 
-### 3. Coder
+### 3. Code
 
-Voir les sections plus bas pour le code style et les conventions.
+See the sections below for code style and conventions.
 
-### 4. Tester
+### 4. Test
 
 ```bash
 make test
 make lint
 ```
 
-CI fait tourner les deux. Si ça passe localement, ça passe en CI (sauf cas cross-platform).
+CI runs both. If it passes locally, it passes in CI (except cross-platform cases).
 
 ### 5. Commit
 
-Format : **conventional commits**.
+Format: **conventional commits**.
 
 ```
 feat(auth): add bitbucket OAuth provider
@@ -115,54 +115,54 @@ ports.AuthProvider contract.
 Closes #142
 ```
 
-Types acceptés : `feat`, `fix`, `docs`, `test`, `refactor`, `perf`, `chore`, `ci`, `build`. Scope optionnel mais recommandé : `auth`, `catalog`, `vault`, `runtime`, `cli`, `core`, etc.
+Accepted types: `feat`, `fix`, `docs`, `test`, `refactor`, `perf`, `chore`, `ci`, `build`. Scope is optional but recommended: `auth`, `catalog`, `vault`, `runtime`, `cli`, `core`, etc.
 
-**Pas de commits "WIP"** dans la PR finale (rebase pour squash si tu en as).
+**No "WIP" commits** in the final PR (rebase to squash if you have any).
 
-### 6. Push et PR
+### 6. Push and PR
 
 ```bash
 git push origin feat/add-bitbucket-provider
 ```
 
-Ouvre la PR via GitHub UI. Le template pré-rempli demande :
+Open the PR via the GitHub UI. The pre-filled template asks for:
 
-- Description du changement
-- Issue liée
-- Tests ajoutés
-- Breaking changes (si applicable)
-- Screenshots (si UI/TTY changée)
+- Description of the change
+- Linked issue
+- Tests added
+- Breaking changes (if applicable)
+- Screenshots (if UI/TTY changed)
 
 ### 7. Review
 
-Un maintainer review dans les 7 jours. Possibles itérations :
+A maintainer will review within 7 days. Possible iterations:
 
-- Demandes de changement → push sur la même branche, pas besoin de rouvrir la PR
-- Discussions sur le design → on tranche dans la PR, ou on ouvre une RFC si trop large
+- Change requests: push to the same branch, no need to reopen the PR
+- Design discussions: resolved in the PR, or a RFC is opened if too broad
 
 ### 8. Merge
 
-Merge en **squash and merge** par défaut. Ton ou tes commits deviennent un seul commit sur main. Message final édité par le maintainer pour respecter conventional commits.
+Merged via **squash and merge** by default. Your commit(s) become a single commit on main. The final message is edited by the maintainer to follow conventional commits.
 
-Une fois mergé, ton nom apparaît dans `CHANGELOG.md` de la prochaine release.
+Once merged, your name appears in the `CHANGELOG.md` of the next release.
 
 ## Code style
 
-### Go : conventions standards
+### Go: standard conventions
 
-On suit [Effective Go](https://go.dev/doc/effective_go) et [Go Code Review Comments](https://github.com/golang/go/wiki/CodeReviewComments). Quelques points spécifiques :
+We follow [Effective Go](https://go.dev/doc/effective_go) and [Go Code Review Comments](https://github.com/golang/go/wiki/CodeReviewComments). A few specific points:
 
 #### Naming
 
-- Types exportés : `PascalCase` (`Credential`, `ServiceID`)
-- Types non exportés : `camelCase` (`vaultState`)
-- Fonctions de constructor : `New<Type>(...)` (`NewScope`, `NewCachedCatalog`)
-- Interfaces : nom sans `I` prefix, plutôt avec un suffixe descriptif (`Catalog`, `AuthProvider`, pas `ICatalog`)
-- Variables courtes pour scope court (`ctx`, `err`, `i`), explicites pour scope long (`servicesByName`)
+- Exported types: `PascalCase` (`Credential`, `ServiceID`)
+- Unexported types: `camelCase` (`vaultState`)
+- Constructor functions: `New<Type>(...)` (`NewScope`, `NewCachedCatalog`)
+- Interfaces: name without `I` prefix, rather with a descriptive suffix (`Catalog`, `AuthProvider`, not `ICatalog`)
+- Short variables for short scope (`ctx`, `err`, `i`), explicit for long scope (`servicesByName`)
 
 #### Imports
 
-Ordonnés en 3 blocs séparés par une ligne vide :
+Ordered in 3 blocks separated by a blank line:
 
 ```go
 import (
@@ -178,56 +178,56 @@ import (
 )
 ```
 
-Stdlib | externe | local.
+Stdlib | external | local.
 
 #### Errors
 
-- Wrap avec contexte : `fmt.Errorf("fetch credential: %w", err)`
-- Pas de "failed to" devant : `"fetch credential"` suffit
-- Pas de capitalisation du premier caractère du message
-- Pas de point final
-- Types d'erreurs sentinelles définis dans `core/errors.go`, jamais dispersés
+- Wrap with context: `fmt.Errorf("fetch credential: %w", err)`
+- No "failed to" prefix: `"fetch credential"` is enough
+- No capitalisation of the first character of the message
+- No trailing period
+- Sentinel error types defined in `core/errors.go`, never scattered
 
 #### Comments
 
-- Toutes les fonctions/types exportés ont un comment doc Go
-- Format : `// FuncName does X. Returns Y when Z.`
-- Pas de commentaires dans des cas évidents (`// increment i`)
-- Préfère des noms clairs à des commentaires explicatifs
+- All exported functions/types have a Go doc comment
+- Format: `// FuncName does X. Returns Y when Z.`
+- No comments for obvious cases (`// increment i`)
+- Prefer clear names over explanatory comments
 
 #### Context
 
-- Toujours premier argument : `func Foo(ctx context.Context, ...)`
-- Jamais stocké dans une struct
-- Propagé partout, même quand "pas utilisé maintenant"
+- Always first argument: `func Foo(ctx context.Context, ...)`
+- Never stored in a struct
+- Propagated everywhere, even when "not used right now"
 
-#### Concurrence
+#### Concurrency
 
-- Préfère les channels aux mutexes quand possible
-- Si mutex, doc le invariant qu'il protège
-- Toujours `defer mu.Unlock()` après `mu.Lock()`
-- Pas de `time.Sleep` pour synchroniser ; utiliser channels ou waitgroups
+- Prefer channels over mutexes when possible
+- If mutex, document the invariant it protects
+- Always `defer mu.Unlock()` after `mu.Lock()`
+- No `time.Sleep` to synchronise; use channels or waitgroups
 
-### Layout du repo
+### Repo layout
 
-Voir [ARCHITECTURE.md](./ARCHITECTURE.md#layout-du-repo) pour le layout complet. Règle d'or :
+See [ARCHITECTURE.md](./ARCHITECTURE.md#layout-du-repo) for the full layout. Golden rule:
 
-- **Domaine** dans `internal/core/` : zéro dépendance externe
-- **Ports** dans `internal/ports/` : interfaces uniquement
-- **Adapters** dans `internal/adapters/<port>/` : implémentations
-- **Use cases** dans `internal/app/` : orchestration
-- **CLI** dans `internal/cli/` : adapter UI (cobra)
+- **Domain** in `internal/core/`: zero external dependencies
+- **Ports** in `internal/ports/`: interfaces only
+- **Adapters** in `internal/adapters/<port>/`: implementations
+- **Use cases** in `internal/app/`: orchestration
+- **CLI** in `internal/cli/`: UI adapter (cobra)
 
-Si ta PR met du HTTP dans `core/`, refus immédiat.
+If your PR puts HTTP code in `core/`, immediate rejection.
 
-### Patterns récurrents
+### Recurring patterns
 
-#### Constructeurs
+#### Constructors
 
-Constructeurs explicites, pas de "init magic" :
+Explicit constructors, no "init magic":
 
 ```go
-// BON
+// GOOD
 func NewExecuteAction(
     catalog ports.Catalog,
     vault ports.Vault,
@@ -238,12 +238,12 @@ func NewExecuteAction(
     return &ExecuteAction{...}
 }
 
-// PAS BIEN
+// NOT GOOD
 type ExecuteAction struct { ... }
 func (e *ExecuteAction) Init(...) { ... }
 ```
 
-#### Options patterns pour les structs complexes
+#### Options patterns for complex structs
 
 ```go
 type Server struct { ... }
@@ -255,7 +255,7 @@ func WithTimeout(d time.Duration) ServerOption {
 }
 
 func NewServer(opts ...ServerOption) *Server {
-    s := &Server{timeout: 30 * time.Second}  // défauts
+    s := &Server{timeout: 30 * time.Second}  // defaults
     for _, opt := range opts { opt(s) }
     return s
 }
@@ -263,10 +263,10 @@ func NewServer(opts ...ServerOption) *Server {
 
 #### Interface segregation
 
-Une interface = une responsabilité. Si tu as besoin de 3 méthodes, fais peut-être 2-3 interfaces et compose-les.
+One interface = one responsibility. If you need 3 methods, consider making 2-3 interfaces and composing them.
 
 ```go
-// BON
+// GOOD
 type CatalogReader interface {
     GetService(ctx, ServiceID) (*Service, error)
     ListServices(ctx) ([]Service, error)
@@ -282,106 +282,106 @@ type Catalog interface {
 }
 ```
 
-## Que faire et ne pas faire
+## Dos and don'ts
 
-### À faire
+### Do
 
-- **Écrire des tests pour chaque changement.** Niveau approprié : unit pour la logique métier, contract pour les adapters, integration pour les use cases.
-- **Documenter les fonctions exportées.** Si elles le sont, c'est qu'on les utilise ; doc + doc test idéalement.
-- **Update les docs en parallèle du code.** Si tu changes un comportement décrit dans CLI.md, update CLI.md dans la même PR.
-- **Bénéficier des fakes existants.** `internal/testing/fake/` a déjà ce dont tu as besoin pour 80% des cas.
-- **Préférer ajouter à modifier.** Si tu peux ajouter un adapter sans toucher au domaine, c'est mieux.
-- **Discuter avant de coder pour les gros changements.** Ouvre une issue ou une RFC.
+- **Write tests for every change.** Appropriate level: unit for business logic, contract for adapters, integration for use cases.
+- **Document exported functions.** If they're exported, they're being used; doc + doc test ideally.
+- **Update docs in parallel with code.** If you change a behaviour described in CLI.md, update CLI.md in the same PR.
+- **Take advantage of existing fakes.** `internal/testing/fake/` already has what you need for 80% of cases.
+- **Prefer adding over modifying.** If you can add an adapter without touching the domain, that's better.
+- **Discuss before coding for large changes.** Open an issue or a RFC.
 
-### À ne pas faire
+### Don't
 
-- **Pas de PR géantes.** Une PR = un changement focused. Si tu touches 30 fichiers, découpe.
-- **Pas de breaking changes silencieux.** Si tu casses une API publique, mentionne-le en titre de PR et propose un path de migration.
-- **Pas de "fix unrelated typo in passing".** Si tu vois une typo, ouvre une PR dédiée. Ça facilite la review.
-- **Pas de dépendance ajoutée sans discussion.** Chaque nouvelle dépendance externe est un coût. Si elle se justifie, mentionne-le explicitement dans la PR.
-- **Pas de magie.** Pas de génération de code custom, pas de réflection abusive, pas de panic dans le code applicatif.
+- **No giant PRs.** One PR = one focused change. If you're touching 30 files, split it up.
+- **No silent breaking changes.** If you break a public API, mention it in the PR title and propose a migration path.
+- **No "fix unrelated typo in passing".** If you see a typo, open a dedicated PR. It makes review easier.
+- **No dependency added without discussion.** Every new external dependency has a cost. If it's justified, mention it explicitly in the PR.
+- **No magic.** No custom code generation, no excessive reflection, no panic in application code.
 
-## Ajouter une nouvelle dépendance externe
+## Adding a new external dependency
 
-Critères avant d'ajouter un package :
+Criteria before adding a package:
 
-1. **Pas trouvable en stdlib** : la stdlib Go est riche, vérifie d'abord.
-2. **Maintenu activement** : dernier commit < 6 mois, ou si abandonné, justifie pourquoi c'est OK.
-3. **License compatible** : MIT, Apache 2.0, BSD-3, MPL-2.0. Pas GPL, pas custom.
-4. **Pas de dépendances transitives explosives** : check `go mod graph`.
-5. **Surface d'API minimale** : si tu n'utilises qu'une fonction sur 50, considère l'écrire toi-même.
+1. **Not available in stdlib**: the Go stdlib is rich, check there first.
+2. **Actively maintained**: last commit < 6 months, or if abandoned, justify why that's OK.
+3. **Compatible license**: MIT, Apache 2.0, BSD-3, MPL-2.0. Not GPL, not custom.
+4. **No explosive transitive dependencies**: check `go mod graph`.
+5. **Minimal API surface**: if you only use one function out of 50, consider writing it yourself.
 
-Liste indicative des dépendances acceptables au moment de l'écriture :
+Indicative list of acceptable dependencies at the time of writing:
 
-- `github.com/spf13/cobra` : CLI (déjà en place)
-- `github.com/spf13/viper` : config (déjà en place)
-- `github.com/zalando/go-keyring` : keychain (déjà en place)
-- `github.com/tetratelabs/wazero` : WASM runtime (déjà en place)
-- `filippo.io/age` : vault chiffré (déjà en place)
-- `github.com/goccy/go-yaml` : YAML parser (déjà en place)
-- `github.com/santhosh-tekuri/jsonschema/v6` : JSON Schema (déjà en place)
-- `golang.org/x/oauth2` : OAuth helpers (déjà en place)
-- `github.com/charmbracelet/lipgloss` : styling TTY (déjà en place)
-- `github.com/charmbracelet/bubbletea` : TUI interactif (déjà en place pour les flows interactifs)
+- `github.com/spf13/cobra` : CLI (already in place)
+- `github.com/spf13/viper` : config (already in place)
+- `github.com/zalando/go-keyring` : keychain (already in place)
+- `github.com/tetratelabs/wazero` : WASM runtime (already in place)
+- `filippo.io/age` : encrypted vault (already in place)
+- `github.com/goccy/go-yaml` : YAML parser (already in place)
+- `github.com/santhosh-tekuri/jsonschema/v6` : JSON Schema (already in place)
+- `golang.org/x/oauth2` : OAuth helpers (already in place)
+- `github.com/charmbracelet/lipgloss` : TTY styling (already in place)
+- `github.com/charmbracelet/bubbletea` : interactive TUI (already in place for interactive flows)
 
-Si tu veux en ajouter une autre, motive dans la PR.
+If you want to add another one, motivate it in the PR.
 
-## RFC : pour les gros changements
+## RFC: for large changes
 
-Si tu veux changer :
+If you want to change:
 
-- L'API du `service.yaml`
-- La grammaire du scope file
-- Le contrat des host functions WASM
-- Une convention de naming structurante
-- Un mécanisme de sécurité
+- The `service.yaml` API
+- The scope file grammar
+- The WASM host functions contract
+- A structuring naming convention
+- A security mechanism
 
-Ouvre une RFC dans le repo `one-cli/rfcs`. Format dans `rfcs/0000-template.md`.
+Open a RFC in the `one-cli/rfcs` repo. Format in `rfcs/0000-template.md`.
 
-Processus :
+Process:
 
-1. Fork `rfcs`, copie le template, rename `0000-` en un nombre libre.
-2. Édite, push, ouvre une PR.
-3. Discussion ouverte 14 jours minimum.
-4. Décision : accept, defer, reject. Documentée par le mainteneur.
-5. Si accepté, l'implémentation suit normalement via une PR sur le repo concerné.
+1. Fork `rfcs`, copy the template, rename `0000-` to a free number.
+2. Edit, push, open a PR.
+3. Open discussion for a minimum of 14 days.
+4. Decision: accept, defer, reject. Documented by the maintainer.
+5. If accepted, implementation follows normally via a PR on the relevant repo.
 
-## Sécurité
+## Security
 
-Si tu trouves une vulnérabilité, **n'ouvre pas une issue publique**. Voir [SECURITY.md > Disclosure policy](./SECURITY.md#disclosure-policy).
+If you find a vulnerability, **do not open a public issue**. See [SECURITY.md > Disclosure policy](./SECURITY.md#disclosure-policy).
 
 ## License
 
-En ouvrant une PR, tu acceptes que ton code soit licencié sous la même license que le projet (Apache 2.0 ou MIT, voir LICENSE). Pas de CLA, signature implicite via le merge.
+By opening a PR, you agree that your code is licensed under the same license as the project (Apache 2.0 or MIT, see LICENSE). No CLA, implicit sign-off via merge.
 
-## Communauté
+## Community
 
-- **GitHub Discussions** : questions générales, design ideas, retours d'usage
-- **GitHub Issues** : bugs et features concrètes
-- **Discord** (à venir) : chat en temps réel
+- **GitHub Discussions**: general questions, design ideas, usage feedback
+- **GitHub Issues**: concrete bugs and features
+- **Discord** (coming soon): real-time chat
 
-Code of conduct : standard, [Contributor Covenant 2.1](https://www.contributor-covenant.org/version/2/1/code_of_conduct/). En substance : sois respectueux, prudent dans les désaccords, focalisé sur le projet.
+Code of conduct: standard, [Contributor Covenant 2.1](https://www.contributor-covenant.org/version/2/1/code_of_conduct/). In short: be respectful, careful in disagreements, focused on the project.
 
-## Récompenses
+## Rewards
 
-Le projet est open source, pas de paiement direct. Mais :
+The project is open source, no direct payment. But:
 
-- Ton nom dans le `CHANGELOG.md` et `CONTRIBUTORS.md`
-- Reconnaissance publique sur les annonces de release
-- Mentorship : si tu débutes en Go ou en open source, les mainteneurs prennent le temps de t'aider en review
-- Pour les contributeurs réguliers : commit access possible après 3-5 PRs de qualité
+- Your name in `CHANGELOG.md` and `CONTRIBUTORS.md`
+- Public recognition in release announcements
+- Mentorship: if you're new to Go or open source, maintainers take the time to help you in review
+- For regular contributors: commit access possible after 3-5 quality PRs
 
-## Premier issue suggérée
+## Suggested first issue
 
-Si tu veux contribuer mais ne sais pas par où commencer :
+If you want to contribute but don't know where to start:
 
-1. **Lis `DESIGN.md` et `ARCHITECTURE.md`** : 20 minutes pour la vue d'ensemble.
-2. **Run `make build && make test`** : assure-toi que ton setup marche.
-3. **Pick une issue `good-first-issue`** : généralement ajout d'un test, fix d'un message d'erreur, amélioration d'un guide.
-4. **Suis le workflow ci-dessus** : pas de surprise.
+1. **Read `DESIGN.md` and `ARCHITECTURE.md`**: 20 minutes for the overview.
+2. **Run `make build && make test`**: make sure your setup works.
+3. **Pick a `good-first-issue`**: usually adding a test, fixing an error message, improving a guide.
+4. **Follow the workflow above**: no surprises.
 
-Bienvenue !
+Welcome!
 
 ---
 
-*Maintenu par [@elydelva](https://github.com/elydelva) et la communauté. Toute proposition d'amélioration de ce document est bienvenue via PR.*
+*Maintained by [@elydelva](https://github.com/elydelva) and the community. Any suggestion to improve this document is welcome via PR.*

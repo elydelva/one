@@ -1,53 +1,53 @@
 # CLAUDE.md
 
-> Instructions opérationnelles pour les agents IA (Claude Code, Cursor, Aider) qui contribuent au binaire **One CLI**. Lis ce fichier en premier. Pointe vers les autres docs pour les détails. Si tu as 5 minutes avant de coder, c'est ici qu'elles vont.
+> Operational instructions for AI agents (Claude Code, Cursor, Aider) contributing to the **One CLI** binary. Read this file first. It points to other docs for details. If you have 5 minutes before coding, spend them here.
 
-## Le projet en 30 secondes
+## The project in 30 seconds
 
-**One CLI** est un binaire Go qui unifie l'accès aux APIs tierces pour les agents IA. Trois piliers structurants :
+**One CLI** is a Go binary that unifies access to third-party APIs for AI agents. Three structural pillars:
 
-1. Un **vault local** multi-comptes chiffré (jamais en SaaS)
-2. Un **scope file** `.onerc.yaml` versionné qui rend explicite ce qu'un agent peut faire
-3. Un **catalogue** open source de services, distribué via Git + CDN
+1. A **local vault** multi-account encrypted (never SaaS)
+2. A **scope file** `.onerc.yaml` versioned that makes explicit what an agent can do
+3. An **open source catalog** of services, distributed via Git + CDN
 
-Quatre verbes côté agent : `one <service> <action>`, `one capabilities`, `one info`, `one can`.
+Four verbs on the agent side: `one <service> <action>`, `one capabilities`, `one info`, `one can`.
 
-**Statut actuel** : pre-alpha. Voir `ROADMAP.md` pour la phase en cours.
+**Current status**: v1.0.
 
-## Que faire avant de coder
+## What to do before coding
 
-### 1. Lire les bons docs
+### 1. Read the right docs
 
-Selon ta tâche, lis dans cet ordre :
+Depending on your task, read in this order:
 
-| Tâche | Docs à lire |
+| Task | Docs to read |
 |---|---|
-| Comprendre le projet | DESIGN.md (10 min) |
-| Toucher au binaire Go | ARCHITECTURE.md (20 min) puis TESTING.md (15 min) |
-| Ajouter un service au catalogue | CATALOG.md (15 min) |
-| Écrire un handler WASM | HANDLERS.md (15 min) puis SECURITY.md (sandbox section) |
-| Modifier le scope file format | SCOPE.md (10 min) puis ouvrir un RFC avant |
-| Toucher à l'auth | AUTH.md (15 min) puis SECURITY.md |
-| Modifier la CLI | CLI.md (10 min) |
+| Understand the project | DESIGN.md (10 min) |
+| Touch the Go binary | ARCHITECTURE.md (20 min) then TESTING.md (15 min) |
+| Add a service to the catalog | CATALOG.md (15 min) |
+| Write a WASM handler | HANDLERS.md (15 min) then SECURITY.md (sandbox section) |
+| Modify the scope file format | SCOPE.md (10 min) then open an RFC first |
+| Touch auth | AUTH.md (15 min) then SECURITY.md |
+| Modify the CLI | CLI.md (10 min) |
 
-**Ne lis pas tout systématiquement.** Cible le doc qui matche ta tâche.
+**Don't read everything systematically.** Target the doc that matches your task.
 
-### 2. Setup local
+### 2. Local setup
 
 ```bash
-go version                    # doit être 1.23+
-make build                    # produit ./bin/one
-make test                     # doit passer (sinon stop, signale)
+go version                    # must be 1.23+
+make build                    # produces ./bin/one
+make test                     # must pass (otherwise stop, report it)
 ./bin/one --version
 ```
 
-Si `make test` échoue sur main, ne commence pas ta task. Signale-le, c'est probablement un fix qui doit passer d'abord.
+If `make test` fails on main, don't start your task. Report it, it's probably a fix that needs to land first.
 
-### 3. Identifier le périmètre
+### 3. Identify the scope
 
-Avant d'écrire du code, **dis clairement quel use case tu touches** et **quel adapter ou port**. Si tu ne peux pas localiser ton changement précisément dans le layout d'ARCHITECTURE.md, tu n'es pas prêt à coder.
+Before writing code, **clearly state which use case you're touching** and **which adapter or port**. If you can't precisely locate your change in the ARCHITECTURE.md layout, you're not ready to code.
 
-## Architecture en image
+## Architecture at a glance
 
 ```
 cmd/one/main.go                  composition root (≤100 lignes)
@@ -64,113 +64,113 @@ internal/core/  ◄── internal/ports/  ◄──  internal/adapters/<port>/
  zéro deps)
 ```
 
-**La règle d'or** : `internal/core/` n'importe que la stdlib Go. Aucune exception. Si ton code dans `core/` a besoin de YAML, HTTP, crypto externe, c'est qu'il appartient ailleurs.
+**The golden rule**: `internal/core/` only imports the Go stdlib. No exceptions. If your code in `core/` needs YAML, HTTP, or external crypto, it belongs elsewhere.
 
-## Workflows types
+## Common workflows
 
-### Tu ajoutes une nouvelle commande CLI
+### Adding a new CLI command
 
-1. Définir le use case dans `internal/app/<usecase>.go`
-2. Définir la commande cobra dans `internal/cli/<command>.go`
-3. Wire dans `cmd/one/main.go` (composition root)
-4. Tests : unit du use case avec fakes, integration via `internal/app/<usecase>_test.go`, et un cas E2E si critique
-5. Update `CLI.md` avec la nouvelle commande
-6. Si la commande est accessible aux agents : update le `one skill`
+1. Define the use case in `internal/app/<usecase>.go`
+2. Define the cobra command in `internal/cli/<command>.go`
+3. Wire in `cmd/one/main.go` (composition root)
+4. Tests: unit test the use case with fakes, integration via `internal/app/<usecase>_test.go`, and an E2E case if critical
+5. Update `CLI.md` with the new command
+6. If the command is accessible to agents: update the `one skill`
 
-### Tu ajoutes un nouvel adapter (genre une 2ème implémentation de Vault)
+### Adding a new adapter (e.g. a 2nd Vault implementation)
 
-1. Crée le fichier dans `internal/adapters/<port>/<impl>.go`
-2. Implémente l'interface du port
-3. **Run les contract tests** : `portstest.Run<Port>Tests(t, "<Impl>", factory)`
-4. Wire dans la composition root si tu veux qu'il soit utilisé
-5. Documente brièvement dans le doc concerné (AUTH, ou autre)
+1. Create the file in `internal/adapters/<port>/<impl>.go`
+2. Implement the port interface
+3. **Run the contract tests**: `portstest.Run<Port>Tests(t, "<Impl>", factory)`
+4. Wire in the composition root if you want it to be used
+5. Document briefly in the relevant doc (AUTH, or other)
 
-Les contract tests sont l'élément clé. Si tu ne les fais pas tourner, tu n'as pas fini.
+Contract tests are the key element. If you don't run them, you're not done.
 
-### Tu ajoutes un nouveau port (besoin domaine nouveau)
+### Adding a new port (new domain need)
 
-**Stop.** C'est probablement le signe qu'il faut une discussion avant. Ouvre une issue, propose le port et son interface, attends un feedback. Un nouveau port = nouvelle responsabilité dans le domaine, ça mérite réflexion.
+**Stop.** This is probably a sign that a discussion is needed first. Open an issue, propose the port and its interface, wait for feedback. A new port = new responsibility in the domain, it deserves thought.
 
-### Tu fix un bug
+### Fixing a bug
 
-1. Reproduit le bug avec un test qui fail
-2. Fix le code
-3. Vérifie que le test pass
-4. Vérifie que la suite complète passe : `make test`
-5. Si le bug venait d'un manque dans la doc, update la doc
+1. Reproduce the bug with a failing test
+2. Fix the code
+3. Verify the test passes
+4. Verify the full suite passes: `make test`
+5. If the bug came from a gap in the docs, update the docs
 
-### Tu changes un comportement décrit dans une doc
+### Changing behavior described in a doc
 
-**Update la doc dans la même PR.** Pas dans une PR séparée "plus tard". Une doc qui ment est pire qu'une doc absente.
+**Update the doc in the same PR.** Not in a separate PR "later". A doc that lies is worse than no doc at all.
 
-## Règles non-négociables
+## Non-negotiable rules
 
-Ces règles existent pour des raisons documentées dans DESIGN.md. Ne les enfreins pas sans ouvrir une RFC d'abord.
+These rules exist for reasons documented in DESIGN.md. Don't break them without opening an RFC first.
 
-1. **Default deny strict.** Aucune permission, aucun accès, aucune URL n'est implicite.
-2. **Pas d'I/O dans `internal/core/`.** Le domaine est pur.
-3. **Tout secret est typé `core.Secret`.** Jamais de string en clair pour un token.
-4. **Pas de panic en code applicatif.** Retourne une erreur typée.
-5. **Pas de framework DI.** Composition explicite dans main.go.
-6. **Pas de génération de code custom** (au-delà de `go generate` pour structures depuis JSON Schema).
-7. **Allowlist URL stricte pour les handlers WASM.** Pas d'évasion possible.
-8. **Tests cross-platform pour tout ce qui touche au keychain, aux paths, ou aux locks.**
+1. **Strict default deny.** No permission, no access, no URL is implicit.
+2. **No I/O in `internal/core/`.** The domain is pure.
+3. **Every secret is typed `core.Secret`.** Never a plain string for a token.
+4. **No panic in application code.** Return a typed error.
+5. **No DI framework.** Explicit composition in main.go.
+6. **No custom code generation** (beyond `go generate` for structures from JSON Schema).
+7. **Strict URL allowlist for WASM handlers.** No escape possible.
+8. **Cross-platform tests for anything touching the keychain, paths, or locks.**
 
-Si une PR enfreint une de ces règles, elle sera rejetée même si le code est élégant.
+If a PR breaks one of these rules, it will be rejected even if the code is elegant.
 
-## Anti-patterns courants
+## Common anti-patterns
 
-À éviter, vu fréquemment dans les premières contributions :
+To avoid, seen frequently in early contributions:
 
-### Stocker un client HTTP global dans une variable de package
+### Storing a global HTTP client in a package variable
 ```go
 var defaultClient = &http.Client{Timeout: 30 * time.Second}
 ```
-**Non.** Toute config passe par les constructeurs. Pas de globals mutables.
+**No.** All config goes through constructors. No mutable globals.
 
-### Logger des credentials
+### Logging credentials
 ```go
 log.Info("got token", "token", cred.AccessToken.Reveal())
 ```
-**Non.** Le type `Secret` retourne `[REDACTED]` par défaut. `Reveal()` uniquement au point d'injection HTTP.
+**No.** The `Secret` type returns `[REDACTED]` by default. `Reveal()` only at the HTTP injection point.
 
-### Mocks avec 30 expectations
+### Mocks with 30 expectations
 ```go
 mockVault.EXPECT().Fetch(gomock.Any(), gomock.Eq(ref1)).Return(...)
 mockVault.EXPECT().Store(gomock.Any(), gomock.Any(), ...)
 // ... 28 lignes
 ```
-**Non.** Utilise les fakes dans `internal/testing/fake/`. Voir TESTING.md.
+**No.** Use the fakes in `internal/testing/fake/`. See TESTING.md.
 
-### Importer une lib externe dans `core/`
+### Importing an external lib into `core/`
 ```go
 // internal/core/credential.go
 import "filippo.io/age"
 ```
-**Non.** Le domaine ne sait pas qui chiffre. Mets ça dans `adapters/vault/age.go`.
+**No.** The domain doesn't know who encrypts. Put that in `adapters/vault/age.go`.
 
-### Faire une PR qui touche 20 fichiers
-**Non.** Découpe. Une PR a un objectif précis et atteignable, idéalement en moins de 10 fichiers modifiés.
+### Opening a PR that touches 20 files
+**No.** Break it down. A PR has a precise and achievable goal, ideally under 10 files modified.
 
-### Ajouter une dépendance Go sans discussion
-**Non.** Chaque dépendance est un coût. Voir CONTRIBUTING.md pour les critères.
+### Adding a Go dependency without discussion
+**No.** Every dependency has a cost. See CONTRIBUTING.md for the criteria.
 
-### `time.Sleep` pour synchroniser un test
+### `time.Sleep` to synchronize a test
 ```go
 go startBackground()
 time.Sleep(100 * time.Millisecond)
 ```
-**Non.** Flaky en CI. Utilise channels ou `t.Cleanup`.
+**No.** Flaky in CI. Use channels or `t.Cleanup`.
 
-### Tests dépendant de l'ordre d'exécution
-**Non.** Chaque test indépendant, setup + cleanup propres.
+### Tests that depend on execution order
+**No.** Each test independent, clean setup + cleanup.
 
-### Réponse evasive sur un trade-off
-Si tu te dis "je sais pas, je fais les deux pour être safe" et que tu codes les deux options, **non**. Tranche. Documente le choix. Si tu hésites sincèrement, demande au mainteneur via l'issue avant de coder.
+### Evasive answer on a trade-off
+If you're thinking "I don't know, I'll do both to be safe" and you code both options, **no**. Pick one. Document the choice. If you're genuinely unsure, ask the maintainer via the issue before coding.
 
-## Convention de commits et PRs
+## Commit and PR conventions
 
-**Conventional commits.** Format :
+**Conventional commits.** Format:
 
 ```
 feat(auth): add bitbucket OAuth provider
@@ -181,36 +181,36 @@ ports.AuthProvider contract.
 Closes #142
 ```
 
-Types : `feat`, `fix`, `docs`, `test`, `refactor`, `perf`, `chore`, `ci`, `build`.
+Types: `feat`, `fix`, `docs`, `test`, `refactor`, `perf`, `chore`, `ci`, `build`.
 
-Scopes : `core`, `auth`, `vault`, `catalog`, `runtime`, `cli`, `scope`, `skill`, etc.
+Scopes: `core`, `auth`, `vault`, `catalog`, `runtime`, `cli`, `scope`, `skill`, etc.
 
-**Une PR = un objectif.** Pas de "PR fourre-tout" mélangeant un fix, un refactor, et une feature.
+**One PR = one goal.** No "catch-all PRs" mixing a fix, a refactor, and a feature.
 
-**Titre de PR descriptif et impératif** : "Add bitbucket OAuth provider", pas "Bitbucket stuff".
+**Descriptive and imperative PR title**: "Add bitbucket OAuth provider", not "Bitbucket stuff".
 
-**Description de PR** : ce qui change, pourquoi, ce qui n'est pas couvert, breaking changes éventuels.
+**PR description**: what changes, why, what's not covered, potential breaking changes.
 
-## Où trouver quoi
+## Where to find things
 
-Quelques pointers rapides pour ne pas perdre du temps à chercher :
+A few quick pointers to avoid wasting time searching:
 
-| Question | Réponse |
+| Question | Answer |
 |---|---|
-| Comment créer une nouvelle erreur typée ? | `internal/core/errors.go` |
-| Comment ajouter un exit code ? | `internal/cli/exit.go`, mapping depuis erreur typée |
-| Format du `service.yaml` ? | CATALOG.md + `pkg/catalog/schema/v1.json` |
-| Comment écrire un fake ? | `internal/testing/fake/` (modèles existants) |
-| Comment écrire un contract test ? | `internal/testing/portstest/` (modèles existants) |
-| Comment debugger un handler WASM ? | HANDLERS.md, section tests + `ONE_DEBUG=1` |
-| Où sont stockées les credentials en local ? | Keychain natif (macOS/Linux/Windows), voir AUTH.md |
-| Comment ajouter une fixture de catalog pour tests ? | `internal/testing/fixture/catalog/v1-<name>/` |
-| Comment générer un benchmark ? | `make bench`, voir TESTING.md section perf |
-| Comment release une nouvelle version ? | `make release`, tag SemVer, CI fait le reste |
+| How to create a new typed error? | `internal/core/errors.go` |
+| How to add an exit code? | `internal/cli/exit.go`, mapping from typed error |
+| Format of `service.yaml`? | CATALOG.md + `pkg/catalog/schema/v1.json` |
+| How to write a fake? | `internal/testing/fake/` (existing models) |
+| How to write a contract test? | `internal/testing/portstest/` (existing models) |
+| How to debug a WASM handler? | HANDLERS.md, tests section + `ONE_DEBUG=1` |
+| Where are credentials stored locally? | Native keychain (macOS/Linux/Windows), see AUTH.md |
+| How to add a catalog fixture for tests? | `internal/testing/fixture/catalog/v1-<name>/` |
+| How to generate a benchmark? | `make bench`, see TESTING.md perf section |
+| How to release a new version? | `make release`, SemVer tag, CI does the rest |
 
-## Comment toi (agent) tu utilises One CLI
+## How you (agent) use One CLI
 
-Quand tu travailles sur le repo, **tu as `one` installé**. Tu peux et dois t'en servir au lieu de coder à la main des appels API.
+When working on the repo, **you have `one` installed**. You can and should use it instead of hand-coding API calls.
 
 ```bash
 one capabilities --scope-only      # qu'est-ce que je peux faire ?
@@ -219,64 +219,64 @@ one can <service> <action>         # vérifie avant de tenter
 one <service> <action> ...         # exécute
 ```
 
-Si tu te demandes comment interagir avec un service tiers (GitHub, Linear, etc.), **utilise `one`** plutôt que de générer du `curl` ou de demander à l'utilisateur ses credentials.
+If you're wondering how to interact with a third-party service (GitHub, Linear, etc.), **use `one`** rather than generating `curl` or asking the user for their credentials.
 
-Si une action te renvoie `setup_required`, l'output JSON contient `install.command`. Affiche-le à l'utilisateur, attends sa confirmation, puis poursuis.
+If an action returns `setup_required`, the JSON output contains `install.command`. Display it to the user, wait for confirmation, then continue.
 
-Si une action te renvoie `not_in_scope` (exit 3), propose `one scope add <service> <perm>` à l'utilisateur. **Ne contourne jamais le scope file en passant par autre chose.**
+If an action returns `not_in_scope` (exit 3), propose `one scope add <service> <perm>` to the user. **Never bypass the scope file by going through something else.**
 
-## Style de réponse à l'utilisateur
+## Response style to the user
 
-L'utilisateur principal (Ely) préfère :
+The primary user (Ely) prefers:
 
-- **Direct et pragmatique.** Pas de "Great question!", pas de "Let me think about this carefully". Va à l'essentiel.
-- **Anti-théâtral.** Pas de langage pompeux. Pas de "embark on this journey", pas de "let's dive deep".
-- **Push back constructif accepté.** Si tu vois un trade-off non discuté, tu le signales avec ton avis.
-- **Pas de tirets cadratins.** Utilise `:`, `(`, ou phrases courtes.
-- **Français** (sauf code, commits, et noms d'entités techniques).
-- **Concis.** Si une réponse de 5 lignes suffit, ne fais pas 30 lignes.
+- **Direct and pragmatic.** No "Great question!", no "Let me think about this carefully". Get to the point.
+- **Anti-theatrical.** No pompous language. No "embark on this journey", no "let's dive deep".
+- **Constructive pushback accepted.** If you see an undiscussed trade-off, flag it with your opinion.
+- **No em dashes.** Use `:`, `(`, or short sentences.
+- **English** (except code, commits, and technical entity names).
+- **Concise.** If a 5-line answer is enough, don't write 30 lines.
 
-Quand tu proposes un changement non trivial, **anticipe les objections** : si tu vois 2 options viables, dis lesquelles et tranche en argumentant brièvement.
+When proposing a non-trivial change, **anticipate objections**: if you see 2 viable options, name them and pick one with a brief argument.
 
-## Trois choses à toujours faire
+## Three things to always do
 
-1. **Lis le doc pertinent avant de coder.** 15 minutes économisées en lecture évitent 2h de débogage.
-2. **Run `make test && make lint` avant de proposer un commit.** Pas après "j'ai fini", pendant.
-3. **Pose des questions quand c'est ambigu.** Mieux vaut une question de 30 secondes qu'une PR refusée après 3h de travail.
+1. **Read the relevant doc before coding.** 15 minutes saved in reading prevents 2 hours of debugging.
+2. **Run `make test && make lint` before proposing a commit.** Not after "I'm done", during.
+3. **Ask questions when something is ambiguous.** A 30-second question beats a rejected PR after 3 hours of work.
 
-## Trois choses à ne jamais faire
+## Three things to never do
 
-1. **Ne modifie jamais `internal/core/` pour ajouter une dépendance externe.** Refactor en port + adapter d'abord.
-2. **Ne contourne jamais une règle de sécurité** documentée dans SECURITY.md, même temporairement, même pour "débug".
-3. **Ne refactor pas hors de ton scope.** Si tu vois 4 trucs à améliorer en passant, **note-les dans une issue**, mais ne les fais pas dans la PR courante. Le focus est plus précieux que la complétude.
+1. **Never modify `internal/core/` to add an external dependency.** Refactor into a port + adapter first.
+2. **Never bypass a security rule** documented in SECURITY.md, even temporarily, even for "debug".
+3. **Never refactor outside your scope.** If you spot 4 things to improve along the way, **note them in an issue**, but don't do them in the current PR. Focus is more valuable than completeness.
 
-## Cas particuliers à connaître
+## Edge cases to know
 
-### Tu travailles sur le repo `one` mais une question concerne le catalogue
+### You're working on the `one` repo but a question concerns the catalog
 
-Le catalogue (services, handlers WASM, install guides) est dans un **repo séparé** : `one-cli/catalog`. Si la question concerne le format `service.yaml` ou un handler concret, redirige vers ce repo. Le binaire ne contient pas la définition des services.
+The catalog (services, WASM handlers, install guides) is in a **separate repo**: `one-cli/catalog`. If the question concerns the `service.yaml` format or a concrete handler, redirect to that repo. The binary does not contain service definitions.
 
-### Tu vois une décision dans le code qui semble contredire la doc
+### You see a decision in the code that seems to contradict the doc
 
-Demande avant d'agir. Soit la doc ment (à fix), soit le code a un bug (à fix), soit il y a un contexte que tu ignores. Les trois cas méritent une issue avant un changement.
+Ask before acting. Either the doc is wrong (fix it), the code has a bug (fix it), or there's context you're missing. All three cases deserve an issue before a change.
 
-### Tu hésites entre faire un truc "proprement" et "rapidement"
+### You're torn between doing something "properly" and "quickly"
 
-Par défaut, fais proprement. Le projet est jeune, c'est l'inverse d'une codebase legacy : chaque shortcut pris maintenant coûtera 10x plus cher dans 6 mois. Si l'utilisateur veut un quick fix, il te le dira explicitement.
+Default to properly. The project is young, it's the opposite of a legacy codebase: every shortcut taken now will cost 10x more in 6 months. If the user wants a quick fix, they'll tell you explicitly.
 
-### Tu trouves un bug critique de sécurité
+### You find a critical security bug
 
-**Ne l'ouvre pas en issue publique.** Voir SECURITY.md > Disclosure policy. Email direct au mainteneur.
+**Don't open a public issue.** See SECURITY.md > Disclosure policy. Email the maintainer directly.
 
-## Ressources
+## Resources
 
-- **Docs** dans `/docs` : DESIGN.md, ARCHITECTURE.md, CATALOG.md, HANDLERS.md, SCOPE.md, AUTH.md, SECURITY.md, TESTING.md, CLI.md, CONTRIBUTING.md, ROADMAP.md
-- **Code** : `cmd/`, `internal/`, `pkg/`
-- **Tests** : `*_test.go` colocalisés, `tests/e2e/`, `tests/security/`
-- **Fixtures** : `internal/testing/fixture/`
-- **Issues GitHub** : tagging `good-first-issue`, `help-wanted`, `bug`, `feat`
-- **RFC** : repo séparé `one-cli/rfcs` pour les gros changements
+- **Docs** in `/docs`: DESIGN.md, ARCHITECTURE.md, CATALOG.md, HANDLERS.md, SCOPE.md, AUTH.md, SECURITY.md, TESTING.md, CLI.md, CONTRIBUTING.md, ROADMAP.md
+- **Code**: `cmd/`, `internal/`, `pkg/`
+- **Tests**: `*_test.go` co-located, `tests/e2e/`, `tests/security/`
+- **Fixtures**: `internal/testing/fixture/`
+- **GitHub Issues**: tagged `good-first-issue`, `help-wanted`, `bug`, `feat`
+- **RFC**: separate repo `one-cli/rfcs` for large changes
 
 ---
 
-*Si quelque chose dans ce fichier te semble obsolète ou contradictoire avec le reste de la doc, c'est probablement vrai. Signale-le.*
+*If something in this file seems outdated or contradicts the rest of the docs, it's probably true. Flag it.*

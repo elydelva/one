@@ -1,69 +1,69 @@
 # CLI.md
 
-> Référence exhaustive des commandes du binaire `one`. Pour les concepts (scope, vault, catalog), voir les docs dédiés.
+> Exhaustive reference for `one` binary commands. For concepts (scope, vault, catalog), see the dedicated docs.
 
-## Conventions générales
+## General conventions
 
-### Format des commandes
+### Command format
 
 ```
 one [global flags] <command> [args] [command flags]
-one <service> <action> [inputs]                # forme courte pour l'exec
+one <service> <action> [inputs]                # short form for exec
 ```
 
-### Flags globaux
+### Global flags
 
-Persistants sur la racine cobra :
+Persistent on the cobra root:
 
 | Flag | Description |
 |---|---|
-| `--json` | Force la sortie JSON même en TTY (défaut : auto-détecté) |
-| `--account <alias>` | Compte à utiliser (équivalent de `--as` côté exec) |
-| `--dry-run` | Exécute sans effet de bord (pour les mutations) |
-| `--project <dir>` | Dossier de projet (défaut : cwd) |
-| `--help`, `-h` | Affiche l'aide |
-| `--version`, `-v` | Affiche la version |
+| `--json` | Force JSON output even in TTY (default: auto-detected) |
+| `--account <alias>` | Account to use (equivalent to `--as` on the exec side) |
+| `--dry-run` | Execute without side effects (for mutations) |
+| `--project <dir>` | Project directory (default: cwd) |
+| `--help`, `-h` | Show help |
+| `--version`, `-v` | Show version |
 
-Profil : se contrôle via la variable d'environnement `ONE_PROFILE` (pas un flag). Pas de `--tty`, `--quiet`, `--debug`, `--trace`, `--no-color`, `--catalog-dir` en v0.4.
+Profile: controlled via the `ONE_PROFILE` environment variable (not a flag). No `--tty`, `--quiet`, `--debug`, `--trace`, `--no-color`, `--catalog-dir` in v0.4.
 
-### Détection TTY
+### TTY detection
 
-Par défaut :
+By default:
 
-- **stdout est un TTY** : sortie colorée et formatée
-- **stdout est piped** : sortie JSON
+- **stdout is a TTY**: colored and formatted output
+- **stdout is piped**: JSON output
 
-Override possible via `--json` ou `--tty`. Important : si tu pipe l'output dans `jq`, tu auras du JSON automatiquement.
+Can be overridden via `--json` or `--tty`. Important: if you pipe the output to `jq`, you will get JSON automatically.
 
 ## Exit codes
 
-Convention stable, **API publique pour les agents**.
+Stable convention, **public API for agents**.
 
-| Code | Signification | Quand |
+| Code | Meaning | When |
 |---|---|---|
-| 0 | Succès | L'action s'est exécutée et a réussi |
-| 1 | Erreur générique | Bug interne, erreur réseau non spécifique, validation d'inputs |
-| 2 | Non authentifié | Aucun credential pour ce service/account, ou refresh impossible |
-| 3 | Hors scope | L'action n'est pas autorisée par `.onerc.yaml` |
-| 4 | Setup requis | Une étape humaine est nécessaire (`one install` proposé) |
-| 5 | Service ou action inconnu | Pas dans le catalogue |
+| 0 | Success | The action executed and succeeded |
+| 1 | Generic error | Internal bug, non-specific network error, input validation |
+| 2 | Not authenticated | No credential for this service/account, or refresh not possible |
+| 3 | Out of scope | The action is not allowed by `.onerc.yaml` |
+| 4 | Setup required | A human step is needed (`one install` suggested) |
+| 5 | Unknown service or action | Not in the catalog |
 
-Tout exit code >5 est un bug. L'agent peut s'appuyer sur ces codes sans parser stderr.
+Any exit code >5 is a bug. Agents can rely on these codes without parsing stderr.
 
-## Format de sortie JSON
+## JSON output format
 
-Schéma stable pour `one <service> <action>` en mode JSON :
+Stable schema for `one <service> <action>` in JSON mode:
 
 ```json
 {
   "ok": true,
-  "data": { ... },                  // output de l'action
+  "data": { ... },                  // action output
   "trace_id": "01HXYZ...",
   "warnings": []
 }
 ```
 
-En cas d'erreur :
+On error:
 
 ```json
 {
@@ -78,7 +78,7 @@ En cas d'erreur :
 }
 ```
 
-Avec `install` quand pertinent :
+With `install` when relevant:
 
 ```json
 {
@@ -96,29 +96,29 @@ Avec `install` quand pertinent :
 }
 ```
 
-## Commandes par catégorie
+## Commands by category
 
-### Initialisation
+### Initialization
 
 #### `one init`
 
-Crée un `.onerc.yaml` minimal dans le répertoire courant et ajoute `.onerc.local.yaml` au `.gitignore` (créé ou complété).
+Creates a minimal `.onerc.yaml` in the current directory and adds `.onerc.local.yaml` to `.gitignore` (created or appended).
 
 ```bash
 one init
 ```
 
-Pas de `--from-template` en v0.4.
+No `--from-template` in v0.4.
 
 #### `one doctor`
 
-Diagnostic complet de l'installation et de la config.
+Full diagnostic of the installation and config.
 
 ```bash
 one doctor
 ```
 
-Sortie : une ligne par check, préfixée par `✓` (ok), `!` (warn) ou `✗` (fail).
+Output: one line per check, prefixed by `✓` (ok), `!` (warn) or `✗` (fail).
 
 ```
 ✓ scope    2 service(s) in scope
@@ -128,71 +128,71 @@ Sortie : une ligne par check, préfixée par `✓` (ok), `!` (warn) ou `✗` (fa
 ✓ home     /Users/x/.one
 ```
 
-Exit 0 si aucun fail, 1 dès qu'un check `fail` apparaît (les `warn` ne font pas échouer).
+Exit 0 if no failures, 1 as soon as a `fail` check appears (`warn` checks do not cause failure).
 
 #### `one upgrade`
 
-Reporté à v0.5.
+Deferred to v0.5.
 
-### Authentification
+### Authentication
 
 #### `one login <service>`
 
-Authentifie au service. Provider par défaut : `pat`.
+Authenticates to the service. Default provider: `pat`.
 
 ```bash
 one login github                              # provider pat
 one login github --provider oauth2_user       # OAuth user-flow
 one login github --provider oauth2_device     # device flow (headless)
-one login github --as perso                   # crée/écrase l'alias "perso"
+one login github --as perso                   # creates/overwrites the "perso" alias
 ```
 
-Pas de `--client-id` flag en v0.4 (les `client_id` sont résolus depuis le catalogue / variables d'env documentées par le service). Voir [AUTH.md](./AUTH.md).
+No `--client-id` flag in v0.4 (the `client_id` values are resolved from the catalog / env variables documented by the service). See [AUTH.md](./AUTH.md).
 
 #### `one logout <service>`
 
-Supprime un compte du vault.
+Removes an account from the vault.
 
 ```bash
-one logout github                     # supprime "default"
-one logout github --as perso          # supprime "perso"
+one logout github                     # removes "default"
+one logout github --as perso          # removes "perso"
 ```
 
-Pas de `--all` en v0.4.
+No `--all` in v0.4.
 
 #### `one accounts <service>`
 
-Liste les comptes registrés pour un service (arg obligatoire).
+Lists registered accounts for a service (required argument).
 
 ```bash
 one accounts github
 ```
 
-Sortie : une ligne `<service>:<alias>` par compte, ou `no accounts`.
+Output: one `<service>:<alias>` line per account, or `no accounts`.
 
 #### `one rotate <service> <account>`
 
-Re-run le login flow et écrase la credential dans le vault.
+Re-runs the login flow and overwrites the credential in the vault.
 
 ```bash
 one rotate github work
 ```
 
-La révocation côté OAuth provider est reportée à v0.5.
+OAuth provider-side revocation is deferred to v0.5.
 
 #### `one refresh <service> <account>`
 
-Force un refresh manuel sans attendre l'expiration.
+Forces a manual refresh without waiting for expiration.
 
 ```bash
 one refresh github work
 ```
 
-Utile pour diagnostiquer un problème de refresh.
+Useful for diagnosing a refresh issue.
 
 #### `one vault export`
 
-Dump JSON **plaintext** des credentials in-scope sur stdout. Pipe à `age -p` (ou équivalent) avant de persister.
+Dumps **plaintext** JSON of in-scope credentials to stdout. Pipe to `age -p` (or equivalent) before persisting.
 
 ```bash
 one vault export | age -p > backup.age
@@ -200,7 +200,7 @@ one vault export | age -p > backup.age
 
 #### `one vault import`
 
-Restaure depuis un JSON bundle lu sur stdin. Écrase systématiquement les entrées existantes (pas de flag `--overwrite` : c'est le comportement par défaut).
+Restores from a JSON bundle read from stdin. Always overwrites existing entries (no `--overwrite` flag: this is the default behavior).
 
 ```bash
 age -d backup.age | one vault import
@@ -208,7 +208,7 @@ age -d backup.age | one vault import
 
 #### `one vault status`
 
-JSON : compte de credentials par service en scope.
+JSON: credential count per in-scope service.
 
 ```bash
 $ one vault status
@@ -218,11 +218,11 @@ $ one vault status
 }
 ```
 
-### Scope et permissions
+### Scope and permissions
 
 #### `one scope show [service]`
 
-Affiche le scope effectif (merge `.onerc.yaml` + `.onerc.local.yaml`, et override `.onerc.<profile>.yaml` si `ONE_PROFILE` est défini), au format JSON.
+Shows the effective scope (merges `.onerc.yaml` + `.onerc.local.yaml`, and overrides `.onerc.<profile>.yaml` if `ONE_PROFILE` is set), in JSON format.
 
 ```bash
 one scope show
@@ -231,7 +231,7 @@ one scope show github
 
 #### `one scope add <service> <permission>`
 
-Ajoute une permission à `allow` (ou à `deny` avec `--deny`). Écrit toujours dans `.onerc.yaml`.
+Adds a permission to `allow` (or to `deny` with `--deny`). Always writes to `.onerc.yaml`.
 
 ```bash
 one scope add github issues.read
@@ -239,11 +239,11 @@ one scope add github "issues.*"
 one scope add github issues.delete --deny
 ```
 
-Pas de `--local` en v0.4.
+No `--local` in v0.4.
 
 #### `one scope remove <service> <permission>`
 
-Retire une permission (cherche dans `allow` et `deny`).
+Removes a permission (searches in both `allow` and `deny`).
 
 ```bash
 one scope remove github issues.read
@@ -251,7 +251,7 @@ one scope remove github issues.read
 
 #### `one scope check <service> <action>`
 
-Exit 0 si autorisé, exit 3 (`ErrNotInScope`) sinon.
+Exit 0 if allowed, exit 3 (`ErrNotInScope`) otherwise.
 
 ```bash
 one scope check github issues.delete
@@ -259,34 +259,34 @@ one scope check github issues.delete
 
 #### `one scope explain <service> <action>`
 
-Affiche en JSON `{allowed, reason, service, action}` puis exit 0 si autorisé, non-zéro avec la raison sinon.
+Outputs `{allowed, reason, service, action}` as JSON, then exit 0 if allowed, non-zero with the reason otherwise.
 
-`one scope use`, `--strict`, `--raw` : reportés à v0.5.
+`one scope use`, `--strict`, `--raw`: deferred to v0.5.
 
-### Catalogue et lock
+### Catalog and lock
 
 #### `one catalog ...`
 
-`one catalog update`, `search`, `lint`, `scaffold`, `test` : reportés à v0.5. En v0.4, le catalogue HTTP est piloté par `ONE_CATALOG_URL` (cache 15 min) et la chaîne FS → HTTP. Cf. [CATALOG.md](./CATALOG.md).
+`one catalog update`, `search`, `lint`, `scaffold`, `test`: deferred to v0.5. In v0.4, the HTTP catalog is driven by `ONE_CATALOG_URL` (15-minute cache) and the FS → HTTP chain. See [CATALOG.md](./CATALOG.md).
 
 #### `one lock`
 
-Génère ou met à jour `.onerc.lock` (schema v1).
+Generates or updates `.onerc.lock` (schema v1).
 
 ```bash
-one lock                              # (re)génère depuis le scope courant
-one lock --update notion              # refresh un service
-one lock --update-all                 # refresh tous les services en scope
-one lock --check                      # exit 1 (ErrLockDrift) si drift
+one lock                              # (re)generates from the current scope
+one lock --update notion              # refreshes one service
+one lock --update-all                 # refreshes all in-scope services
+one lock --check                      # exit 1 (ErrLockDrift) if drift
 ```
 
-`--check` retourne une erreur `lock drift detected: ...` listant les services divergents, avec hint `run \`one lock --update-all\` to refresh`.
+`--check` returns a `lock drift detected: ...` error listing divergent services, with the hint `run \`one lock --update-all\` to refresh`.
 
-### Exécution d'actions
+### Action execution
 
 #### `one <service> <action>`
 
-Forme principale.
+Primary form.
 
 ```bash
 one github issues.read --issue 42
@@ -299,52 +299,52 @@ one stripe customers.create \
   --idempotency_key cust-2026-05-20-001
 ```
 
-#### Passer des inputs
+#### Passing inputs
 
-Trois modes possibles selon le type :
+Three possible modes depending on the type:
 
-**1. Flags simples (string, number, bool)** :
+**1. Simple flags (string, number, bool)**:
 
 ```bash
 one github issues.read --issue 42 --include_pull_requests true
 ```
 
-**2. Flags JSON pour les objets** :
+**2. JSON flags for objects**:
 
 ```bash
 one notion pages.create --properties '{"title":[...]}'
 ```
 
-**3. `@file` pour les fichiers** :
+**3. `@file` for files**:
 
 ```bash
 one notion blocks.append --children @blocks.json
 one s3 objects.put --bucket mybucket --key file.pdf --body @./file.pdf
 ```
 
-**4. stdin pour piping** : reporté à v0.5.
+**4. stdin for piping**: deferred to v0.5.
 
-#### Options pour les mutations
+#### Options for mutations
 
 ```bash
---dry-run                             # validation sans side effect
+--dry-run                             # validation without side effect
 ```
 
-`--idempotency-key` / `--confirm` : reportés à v0.5.
+`--idempotency-key` / `--confirm`: deferred to v0.5.
 
-### Introspection (verbes agent)
+### Introspection (agent verbs)
 
 #### `one capabilities`
 
-JSON listant les services et actions disponibles.
+JSON listing available services and actions.
 
 ```bash
-one capabilities                      # tous les services + actions
-one capabilities github               # juste github
-one capabilities --scope-only         # seulement ce qui est dans le scope courant
+one capabilities                      # all services + actions
+one capabilities github               # just github
+one capabilities --scope-only         # only what is in the current scope
 ```
 
-Sortie typique :
+Typical output:
 
 ```json
 {
@@ -376,152 +376,152 @@ Sortie typique :
 
 #### `one info`
 
-Documentation markdown.
+Markdown documentation.
 
 ```bash
-one info                              # skill global "onecli"
-one info github                       # skill du service github
-one info github issues.create         # doc d'une action spécifique
+one info                              # global "onecli" skill
+one info github                       # github service skill
+one info github issues.create         # doc for a specific action
 ```
 
-Sortie : markdown pour les humains et les agents qui aiment le markdown. Pour parsing structuré, utiliser `capabilities`.
+Output: markdown for humans and agents that like markdown. For structured parsing, use `capabilities`.
 
 #### `one can <service> <action>`
 
-Precheck rapide de permission, sans exécuter.
+Quick permission precheck, without executing.
 
 ```bash
 one can github issues.delete
-# exit 0 si OK, exit 3 si pas dans le scope, exit 2 si pas authentifié
+# exit 0 if OK, exit 3 if not in scope, exit 2 if not authenticated
 ```
 
-Utile pour les agents qui veulent vérifier avant de tenter, ou pour scripter.
+Useful for agents that want to check before attempting, or for scripting.
 
-### Install et setup
+### Install and setup
 
 #### `one install <service> [guide]`
 
-Affiche un guide d'install. Sans `[guide]`, requiert `--list`.
+Displays an install guide. Without `[guide]`, requires `--list`.
 
 ```bash
-one install notion share-page          # affiche le guide
-one install notion --list              # liste tous les guides du service
+one install notion share-page          # displays the guide
+one install notion --list              # lists all guides for the service
 ```
 
-Sortie TTY (guide simple) :
+TTY output (simple guide):
 
 ```
 # <title>
 
 <content markdown>
 
-Verify: one <service> <action>          # si le frontmatter a `verify.action`
+Verify: one <service> <action>          # if frontmatter has `verify.action`
 ```
 
-`--list` affiche `<id>\t<title>` par ligne. Pas de `--verify`, ni d'exécution automatique en v0.4.
+`--list` prints `<id>\t<title>` per line. No `--verify`, nor automatic execution in v0.4.
 
-### Skill et intégration IDE
+### Skill and IDE integration
 
 #### `one skill`
 
-Stub en v0.4: retourne `not implemented`. Le flag `--install` est déclaré mais inerte. Reporté à v0.5.
+Stub in v0.4: returns `not implemented`. The `--install` flag is declared but inert. Deferred to v0.5.
 
-### Audit et debug
+### Audit and debug
 
 #### `one trace`
 
-Câblé côté CLI mais l'implémentation retourne `not implemented`. Persistence de l'audit log reportée à v0.5.
+Wired on the CLI side but the implementation returns `not implemented`. Audit log persistence deferred to v0.5.
 
 #### `--debug`
 
-Reporté à v0.5. Le logger interne tourne à niveau `warn` en sortie texte sur stderr.
+Deferred to v0.5. The internal logger runs at `warn` level as text output on stderr.
 
-## Variables d'environnement
+## Environment variables
 
 | Variable | Description |
 |---|---|
-| `ONE_CATALOG_URL` | Active la couche HTTP du catalogue (sinon FS seul) |
-| `ONE_CATALOG_ROOT` | Override le dossier local du catalogue (défaut `$HOME/.one/catalog`) |
-| `ONE_AGE_VAULT_PATH` | Path du fichier age vault (défaut `$HOME/.one/vault.age`) |
-| `ONE_AGE_PASSPHRASE` | Passphrase du vault age (requise pour activer la couche age) |
-| `ONE_PROFILE` | Profil de scope actif (charge `.onerc.<profile>.yaml`) |
-| `ONE_CREDS_<SERVICE>_<ACCOUNT>` | Credential inline (JSON storage shape) — vault read-only |
-| `ONE_CERT_<SERVICE>_<ACCOUNT>_CERT` | Chemin PEM cert client (provider `certificate`) |
-| `ONE_CERT_<SERVICE>_<ACCOUNT>_KEY` | Chemin PEM clé privée (provider `certificate`) |
-| `ONE_TRANSPORT_ALLOW_HTTP` | `1` pour tolérer `http://` (tests; refuse par défaut) |
-| `ONE_TRANSPORT_ALLOWED_HOSTS` | Bypass SSRF pour ces hosts (CSV) |
+| `ONE_CATALOG_URL` | Enables the catalog HTTP layer (otherwise FS only) |
+| `ONE_CATALOG_ROOT` | Overrides the local catalog directory (default `$HOME/.one/catalog`) |
+| `ONE_AGE_VAULT_PATH` | Path to the age vault file (default `$HOME/.one/vault.age`) |
+| `ONE_AGE_PASSPHRASE` | Age vault passphrase (required to enable the age layer) |
+| `ONE_PROFILE` | Active scope profile (loads `.onerc.<profile>.yaml`) |
+| `ONE_CREDS_<SERVICE>_<ACCOUNT>` | Inline credential (JSON storage shape) — read-only vault |
+| `ONE_CERT_<SERVICE>_<ACCOUNT>_CERT` | PEM client cert path (provider `certificate`) |
+| `ONE_CERT_<SERVICE>_<ACCOUNT>_KEY` | PEM private key path (provider `certificate`) |
+| `ONE_TRANSPORT_ALLOW_HTTP` | `1` to tolerate `http://` (tests; refused by default) |
+| `ONE_TRANSPORT_ALLOWED_HOSTS` | SSRF bypass for these hosts (CSV) |
 
-`ONE_DEBUG`, `ONE_NO_COLOR`, `ONE_<SERVICE>_API_BASE`, `ONE_PPROF`, `ONE_HOME`, `XDG_CONFIG_HOME` : pas câblés en v0.4.
+`ONE_DEBUG`, `ONE_NO_COLOR`, `ONE_<SERVICE>_API_BASE`, `ONE_PPROF`, `ONE_HOME`, `XDG_CONFIG_HOME`: not wired in v0.4.
 
-### Exemples d'utilisation
+### Usage examples
 
 ```bash
 # CI: credentials via env, no keychain
 export ONE_CREDS_GITHUB_DEFAULT='{"access_token":"ghp_xxx","provider":"pat","service":"github","account":"default"}'
 one github issues.list --repo me/repo
 
-# CI: vault age depuis un secret
+# CI: age vault from a secret
 export ONE_AGE_VAULT_PATH=/tmp/vault.age
 export ONE_AGE_PASSPHRASE="$VAULT_PASSPHRASE"
 
-# Profil restrictif
+# Restrictive profile
 export ONE_PROFILE=production
 one stripe customers.create --email ...
 ```
 
-## Fichiers utilisés
+## Files used
 
-### Par projet (cwd)
+### Per project (cwd)
 
-| Fichier | Description |
+| File | Description |
 |---|---|
-| `.onerc.yaml` | Scope file principal (commité) |
-| `.onerc.local.yaml` | Override personnel (gitignored) |
-| `.onerc.lock` | Versions du catalogue figées (commité) |
+| `.onerc.yaml` | Main scope file (committed) |
+| `.onerc.local.yaml` | Personal override (gitignored) |
+| `.onerc.lock` | Pinned catalog versions (committed) |
 
-### Globaux (`~/.one/`)
+### Global (`~/.one/`)
 
-| Fichier/dossier | Description |
+| File/directory | Description |
 |---|---|
-| `~/.one/catalog/` | Catalogue local FS (override via `ONE_CATALOG_ROOT`) |
-| `~/.one/locks/<service>:<alias>.lock` | File locks de refresh (gofrs/flock, 10s timeout) |
-| `~/.one/vault.age` | Vault age (si la couche age est activée) |
-| `~/.one/cache/wasm/` | Cache des modules WASM compilés |
+| `~/.one/catalog/` | Local FS catalog (override via `ONE_CATALOG_ROOT`) |
+| `~/.one/locks/<service>:<alias>.lock` | Refresh file locks (gofrs/flock, 10s timeout) |
+| `~/.one/vault.age` | Age vault (if the age layer is enabled) |
+| `~/.one/cache/wasm/` | Cache of compiled WASM modules |
 
-`audit.log`, `config.yaml`, convention XDG : reportés à v0.5.
+`audit.log`, `config.yaml`, XDG convention: deferred to v0.5.
 
-## Workflow complet
+## Full workflow
 
-### Première installation
+### First installation
 
 ```bash
-# Installer le binaire
+# Install the binary
 curl -fsSL https://one-cli.dev/install.sh | sh
 
-# Vérifier
+# Verify
 one --version
 one doctor
 
-# (Optionnel) Installer le skill dans Claude Code
+# (Optional) Install the skill in Claude Code
 one skill --install
 ```
 
-### Premier projet
+### First project
 
 ```bash
-cd mon-projet
-one init                              # crée .onerc.yaml
+cd my-project
+one init                              # creates .onerc.yaml
 
-# Login aux services
+# Login to services
 one login github
 one login notion --as kaampus
 
-# Définir le scope
+# Define scope
 one scope add github issues.*
 one scope add github pulls.read
 one scope add notion pages.*
 
-# Verrouiller
+# Lock
 one lock
 
 # Commit
@@ -529,66 +529,66 @@ git add .onerc.yaml .onerc.lock .gitignore
 git commit -m "init: setup One CLI"
 ```
 
-### Workflow agent
+### Agent workflow
 
 ```bash
 # Discovery
-one capabilities --scope-only          # qu'est-ce que je peux faire ?
-one info github                        # comment ça marche ?
+one capabilities --scope-only          # what can I do?
+one info github                        # how does it work?
 
 # Pre-check
-one can github issues.create          # est-ce autorisé ?
+one can github issues.create          # is this allowed?
 
-# Exécution
+# Execution
 one github issues.create \
   --repo me/myrepo \
   --title "Bug: foo" \
   --body "Detailed description"
 # stdout: {"ok":true,"data":{"id":42,"url":"https://github.com/..."}}
 
-# En cas d'erreur de setup
+# On setup error
 # stdout: {"ok":false,"error":{"code":"setup_required",...,"install":{"command":"one install ..."}}}
-# L'agent sait quoi faire : suggérer à l'humain de lancer le install
+# The agent knows what to do: suggest to the human to run the install
 ```
 
-### Workflow CI
+### CI workflow
 
 ```bash
-# Dans le pipeline
+# In the pipeline
 export ONE_AGE_VAULT_PATH=/tmp/vault.age
 export ONE_AGE_PASSPHRASE="$VAULT_PASSPHRASE"
 
 aws s3 cp s3://my-secrets/vault.age $ONE_AGE_VAULT_PATH
 
-one doctor                            # vérifie tout est OK
-one lock --check                      # exit 1 (ErrLockDrift) si drift
+one doctor                            # verify everything is OK
+one lock --check                      # exit 1 (ErrLockDrift) if drift
 
 one github issues.list --repo me/repo
 ```
 
-## Comportement détaillé
+## Detailed behavior
 
-### Resolution de la commande `one <service> <action>`
+### Resolution of the `one <service> <action>` command
 
-Algorithme :
+Algorithm:
 
-1. Parser les flags globaux
-2. Identifier `<service>` : s'il matche une commande built-in (login, scope, info, etc.), router vers celle-ci
-3. Sinon, charger `<service>` depuis le catalogue
-4. Charger `<action>` depuis ce service
-5. Parser les flags de l'action selon son schéma d'inputs
-6. Charger le scope file
-7. Vérifier que `action.permission` est dans le scope
-8. Résoudre le compte (default → local → --as)
-9. Fetch credentials du vault
-10. Refresh si nécessaire
-11. Si setup requis : retourner ErrSetupRequired (exit 4)
-12. Invoquer le runtime (déclaratif ou WASM)
+1. Parse global flags
+2. Identify `<service>`: if it matches a built-in command (login, scope, info, etc.), route to it
+3. Otherwise, load `<service>` from the catalog
+4. Load `<action>` from that service
+5. Parse action flags according to its input schema
+6. Load the scope file
+7. Verify that `action.permission` is in scope
+8. Resolve the account (default → local → --as)
+9. Fetch credentials from the vault
+10. Refresh if necessary
+11. If setup required: return ErrSetupRequired (exit 4)
+12. Invoke the runtime (declarative or WASM)
 13. Render output
 
-Chaque étape peut court-circuiter avec un exit code spécifique.
+Each step can short-circuit with a specific exit code.
 
-### Comportement sur erreur de validation d'inputs
+### Behavior on input validation error
 
 ```bash
 one github issues.read --issue not-a-number
@@ -596,9 +596,9 @@ one github issues.read --issue not-a-number
 # exit 1
 ```
 
-L'erreur est validée **avant** tout appel réseau. Pas de gaspillage de quota.
+The error is validated **before** any network call. No quota wasted.
 
-### Comportement sur action inconnue
+### Behavior on unknown action
 
 ```bash
 one github does.not.exist
@@ -607,9 +607,9 @@ one github does.not.exist
 # exit 5
 ```
 
-Suggestion via distance de Levenshtein si une action proche existe.
+Suggestion via Levenshtein distance if a close action exists.
 
-### Comportement sur service inconnu
+### Behavior on unknown service
 
 ```bash
 one unknown-service action
@@ -618,70 +618,70 @@ one unknown-service action
 # exit 5
 ```
 
-### Comportement piped
+### Piped behavior
 
 ```bash
 one github issues.read --issue 42 | jq .data.title
 ```
 
-Le binaire détecte que stdout est piped, switch en JSON automatiquement. Stderr reste lisible pour les warnings.
+The binary detects that stdout is piped and switches to JSON automatically. Stderr remains readable for warnings.
 
-### Comportement TTY interactif
+### Interactive TTY behavior
 
 ```bash
 one stripe customers.delete --customer cus_xxx
 # Confirm: This will permanently delete customer cus_xxx. Type 'yes' to confirm: _
 ```
 
-Pour les actions `side_effects: destructive`, prompt de confirmation en TTY. Bypass via `--confirm` ou en pipe (où le prompt n'a pas de sens).
+For `side_effects: destructive` actions, a confirmation prompt in TTY. Bypassed via `--confirm` or when piped (where the prompt makes no sense).
 
-## Codes d'erreur sortants (au-delà des exit codes)
+## Outgoing error codes (beyond exit codes)
 
-Codes stables dans le champ `error.code` du JSON output :
+Stable codes in the `error.code` field of JSON output:
 
-| Code | Sens |
+| Code | Meaning |
 |---|---|
-| `not_authenticated` | aucun credential ou refresh impossible |
-| `not_in_scope` | permission refusée par scope file |
-| `setup_required` | action humaine requise (avec install hint) |
-| `unknown_service` | service pas dans le catalogue |
-| `unknown_action` | action pas dans le service |
-| `invalid_input` | inputs ne matchent pas le schéma |
-| `api_error` | erreur retournée par le service tiers |
-| `rate_limited` | service tiers rate limit (avec retry-after) |
-| `not_found` | ressource inexistante |
-| `forbidden` | les credentials sont valides mais pas le droit |
-| `network_error` | timeout, DNS fail, connexion refusée |
-| `internal_error` | bug du binaire (à reporter) |
-| `lock_violation` | lock file ne matche pas le catalog installé |
-| `url_not_allowed` | un handler a tenté un appel hors allowlist (bug catalog) |
+| `not_authenticated` | no credential or refresh not possible |
+| `not_in_scope` | permission denied by scope file |
+| `setup_required` | human action required (with install hint) |
+| `unknown_service` | service not in the catalog |
+| `unknown_action` | action not in the service |
+| `invalid_input` | inputs do not match the schema |
+| `api_error` | error returned by the third-party service |
+| `rate_limited` | third-party service rate limit (with retry-after) |
+| `not_found` | resource does not exist |
+| `forbidden` | credentials are valid but permission denied |
+| `network_error` | timeout, DNS failure, connection refused |
+| `internal_error` | binary bug (to be reported) |
+| `lock_violation` | lock file does not match installed catalog |
+| `url_not_allowed` | a handler attempted a call outside the allowlist (catalog bug) |
 | `resource_exhausted` | timeout/memory/calls limits hit |
 
-L'agent peut switcher selon le code sans parser le message.
+Agents can switch on the code without parsing the message.
 
-## Conventions de naming des actions
+## Action naming conventions
 
-Les noms d'actions suivent `<resource>.<verb>`, en minuscules :
+Action names follow `<resource>.<verb>`, in lowercase:
 
-| Verbe | Sémantique |
+| Verb | Semantics |
 |---|---|
-| `read`, `get`, `retrieve` | lecture d'une ressource par ID |
-| `list` | liste paginée de ressources |
-| `search`, `query` | recherche avec filtres |
-| `create` | création |
-| `update` | update partiel |
-| `replace` | update total |
-| `delete`, `archive` | suppression (destructive) |
-| `enable`, `disable` | toggle d'état |
-| `attach`, `detach` | gestion de liens |
-| `subscribe`, `unsubscribe` | événements |
+| `read`, `get`, `retrieve` | read a resource by ID |
+| `list` | paginated list of resources |
+| `search`, `query` | search with filters |
+| `create` | creation |
+| `update` | partial update |
+| `replace` | full update |
+| `delete`, `archive` | deletion (destructive) |
+| `enable`, `disable` | state toggle |
+| `attach`, `detach` | link management |
+| `subscribe`, `unsubscribe` | events |
 
-Si tu as un doute en contribuant un service, regarde des services existants du même domaine.
+If you are unsure when contributing a service, look at existing services in the same domain.
 
-## Commandes pour les contributeurs au catalogue
+## Commands for catalog contributors
 
-`one catalog lint`, `scaffold`, `test`, ainsi que `one completion` (bash/zsh/fish) : reportés à v0.5.
+`one catalog lint`, `scaffold`, `test`, as well as `one completion` (bash/zsh/fish): deferred to v0.5.
 
 ---
 
-*Toute commande ajoutée requiert : test d'intégration dans `internal/app/`, test E2E dans `tests/e2e/`, doc dans ce fichier, entrée dans le `one skill` si l'agent doit la connaître.*
+*Any command added requires: an integration test in `internal/app/`, an E2E test in `tests/e2e/`, documentation in this file, and an entry in the `one skill` if agents need to know about it.*

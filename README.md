@@ -1,56 +1,56 @@
 # One CLI
 
-> Un binaire local qui donne à tes agents IA un accès unifié, gouverné et auditable aux services tiers.
+> A local binary that gives your AI agents unified, governed, and auditable access to third-party services.
 
 ```bash
 one notion pages.create --parent_page_id abc-123 --properties '{"title":[{"text":{"content":"Hello"}}]}'
 ```
 
-Pas besoin d'apprendre dix SDKs. Pas besoin de gérer dix vaults. Pas besoin de coder dix workflows d'auth. Un seul binaire, un catalogue communautaire, et un fichier `.onerc.yaml` versionné qui dit exactement ce que tes agents ont le droit de faire sur ton projet.
+No need to learn ten SDKs. No need to manage ten vaults. No need to code ten auth workflows. A single binary, a community catalog, and a versioned `.onerc.yaml` file that says exactly what your agents are allowed to do on your project.
 
-## En 30 secondes
+## In 30 seconds
 
-- **Un binaire** Go cross-platform, installation en une ligne, cold start <30ms.
-- **Un catalogue** de services open source, contribué via PR (~40 services au lancement).
-- **Un vault** local multi-comptes : keychain natif de l'OS, jamais en SaaS, multi-providers (OAuth, PAT, API key, AWS).
-- **Un scope file** `.onerc.yaml` versionné qui rend explicite, reviewable et default-deny ce qu'un agent peut faire.
-- **Des install guides** first-class pour les setups qui ne s'automatisent pas (genre "partage cette page Notion avec l'intégration").
-- **Un audit log** local, `one trace` pour voir ce qui a été fait.
+- **One binary**: cross-platform Go, single-line install, cold start <30ms.
+- **One catalog**: open source services, contributed via PR (~40 services at launch).
+- **One vault**: local multi-account: native OS keychain, never SaaS, multi-provider (OAuth, PAT, API key, AWS).
+- **One scope file**: versioned `.onerc.yaml` that makes what an agent can do explicit, reviewable, and default-deny.
+- **First-class install guides**: for setups that can't be automated (e.g. "share this Notion page with the integration").
+- **A local audit log**: `one trace` to see what was done.
 
 ## Quick start
 
-### Installer
+### Install
 
 ```bash
 curl -fsSL https://one-cli.dev/install.sh | sh
 one --version
 ```
 
-Ou via Homebrew :
+Or via Homebrew:
 
 ```bash
 brew install one-cli/tap/one
 ```
 
-### Setup d'un projet
+### Project setup
 
 ```bash
-cd mon-projet
-one init                              # crée .onerc.yaml
+cd my-project
+one init                              # creates .onerc.yaml
 
 one login github                      # OAuth flow, browser
-one login notion --as kaampus         # OAuth, alias pour multi-comptes
+one login notion --as kaampus         # OAuth, alias for multi-account
 
-one scope add github "issues.*"       # globs supportés
+one scope add github "issues.*"       # globs supported
 one scope add github pulls.read
 one scope add notion "pages.*"
 
-one lock                              # fige les versions du catalog
+one lock                              # pins catalog versions
 git add .onerc.yaml .onerc.lock
 git commit -m "init: setup One CLI"
 ```
 
-### Exécuter une action
+### Run an action
 
 ```bash
 one github issues.create \
@@ -59,7 +59,7 @@ one github issues.create \
   --body "Detailed description"
 ```
 
-Output JSON :
+JSON output:
 
 ```json
 {
@@ -69,67 +69,65 @@ Output JSON :
 }
 ```
 
-### Workflow pour un agent IA
+### Workflow for an AI agent
 
 ```bash
-one capabilities --scope-only         # qu'est-ce que je peux faire ?
-one info github                       # comment ça marche ?
-one can github issues.create          # est-ce que c'est dans le scope ?
-one github issues.create ...          # exécution
+one capabilities --scope-only         # what can I do?
+one info github                       # how does it work?
+one can github issues.create          # is this in scope?
+one github issues.create ...          # execute
 ```
 
-Voir [`one skill`](./CLI.md#one-skill) pour installer le skill dans Claude Code, Cursor, etc.
+See [`one skill`](./CLI.md#one-skill) to install the skill in Claude Code, Cursor, etc.
 
 ## Vs MCP
 
 | Dimension | MCP | One CLI |
 |---|---|---|
-| Forme | Serveur HTTP/stdio par service | Un binaire local |
-| Auth | Géré par chaque serveur | Vault unifié multi-comptes |
-| Scope par projet | Pas couvert | `.onerc.yaml` versionné |
-| Setup humain | Pas couvert | `one install` first-class |
-| Distribution | Un package par serveur | Catalogue centralisé reviewable |
-| Audit | Logs par serveur | Audit log unifié `one trace` |
+| Form | HTTP/stdio server per service | One local binary |
+| Auth | Managed by each server | Unified multi-account vault |
+| Per-project scope | Not covered | Versioned `.onerc.yaml` |
+| Human setup | Not covered | First-class `one install` |
+| Distribution | One package per server | Centralized reviewable catalog |
+| Audit | Per-server logs | Unified audit log `one trace` |
 
-One CLI n'est pas anti-MCP. Les deux coexistent. La différence de fond est la **gouvernance par projet** via scope file et la **vault locale unifiée**.
+One CLI is not anti-MCP. Both coexist. The core difference is **per-project governance** via scope file and the **unified local vault**.
 
 ## Documentation
 
-| Document | Pour |
+| Document | For |
 |---|---|
-| [DESIGN.md](./DESIGN.md) | Comprendre le **pourquoi** : pitch, positionnement, concepts, philosophie |
-| [ARCHITECTURE.md](./ARCHITECTURE.md) | Contribuer au binaire Go : layout, ports & adapters, patterns |
-| [CATALOG.md](./CATALOG.md) | Ajouter un service au catalogue : format service.yaml, process PR |
-| [HANDLERS.md](./HANDLERS.md) | Écrire un handler WASM : contrat, host functions, SDKs TS/Go/Rust |
-| [SCOPE.md](./SCOPE.md) | Maîtriser le scope file : grammaire, layering, lock file |
-| [AUTH.md](./AUTH.md) | Comprendre l'auth : providers, flows OAuth, vault, multi-comptes |
-| [SECURITY.md](./SECURITY.md) | Threat model, sandbox WASM, disclosure policy |
-| [TESTING.md](./TESTING.md) | Stratégie de test : pyramide, contract tests, fakes vs mocks |
-| [CLI.md](./CLI.md) | Référence des commandes, exit codes, env vars |
-| [CONTRIBUTING.md](./CONTRIBUTING.md) | Premier setup, workflow, code style |
+| [DESIGN.md](./DESIGN.md) | Understanding the **why**: pitch, positioning, concepts, philosophy |
+| [ARCHITECTURE.md](./ARCHITECTURE.md) | Contributing to the Go binary: layout, ports & adapters, patterns |
+| [CATALOG.md](./CATALOG.md) | Adding a service to the catalog: service.yaml format, PR process |
+| [HANDLERS.md](./HANDLERS.md) | Writing a WASM handler: contract, host functions, TS/Go/Rust SDKs |
+| [SCOPE.md](./SCOPE.md) | Mastering the scope file: grammar, layering, lock file |
+| [AUTH.md](./AUTH.md) | Understanding auth: providers, OAuth flows, vault, multi-account |
+| [SECURITY.md](./SECURITY.md) | Threat model, WASM sandbox, disclosure policy |
+| [TESTING.md](./TESTING.md) | Test strategy: pyramid, contract tests, fakes vs mocks |
+| [CLI.md](./CLI.md) | Command reference, exit codes, env vars |
+| [CONTRIBUTING.md](./CONTRIBUTING.md) | First setup, workflow, code style |
 
-## Services supportés (v0.5 cible)
+## Supported services
 
 GitHub, Notion, Linear, Stripe, Resend, Slack, Google Drive, Google Calendar, Gmail, AWS S3, Cloudflare, OpenAI, Anthropic, Vercel, Supabase, PostgreSQL, Discord, Twilio, SendGrid, HubSpot, Airtable, Asana, Trello, Figma, Bitbucket, GitLab, Sentry, PagerDuty, Datadog, MongoDB Atlas, Mailchimp, Calendly, Zoom, Microsoft Graph, Reddit, Twitter/X, Webflow, Shopify.
 
-Catalogue complet : `one catalog search` ou https://one-cli.dev/catalog.
+Full catalog: `one catalog search` or https://one-cli.dev/catalog.
 
 ## Status
 
-**Pre-alpha** : v0.1 en cours de développement. Pas stable. Voir [ROADMAP.md](./ROADMAP.md) pour le sequencing.
-
-Ne pas utiliser en production. Open issue ou contribute si quelque chose vous frustre.
+**v1.0** — stable release. Open an issue or contribute if something frustrates you.
 
 ## License
 
-Apache 2.0. Voir [LICENSE](./LICENSE).
+Apache 2.0. See [LICENSE](./LICENSE).
 
-## Crédits
+## Credits
 
-Conçu et développé par [@elydelva](https://github.com/elydelva). Inspiré par : Homebrew formulae (modèle de catalogue), [Inngest](https://inngest.com) (philosophie agent-native), MCP (positionnement), git (philosophie de versioning local).
+Designed and developed by [@elydelva](https://github.com/elydelva). Inspired by: Homebrew formulae (catalog model), [Inngest](https://inngest.com) (agent-native philosophy), MCP (positioning), git (local versioning philosophy).
 
-Contributions bienvenues : voir [CONTRIBUTING.md](./CONTRIBUTING.md).
+Contributions welcome: see [CONTRIBUTING.md](./CONTRIBUTING.md).
 
 ---
 
-*Questions ? Idées ? [GitHub Discussions](https://github.com/one-cli/one/discussions).*
+*Questions? Ideas? [GitHub Discussions](https://github.com/one-cli/one/discussions).*

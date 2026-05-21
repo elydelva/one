@@ -1,64 +1,64 @@
 # DESIGN.md
 
-> Le **north star** du projet. Ce document décrit *pourquoi* One CLI existe, *quoi* il fait, et *quels principes* tranchent les arbitrages quand un choix se présente. Si un futur contributeur ne lit qu'un seul document, c'est celui-ci.
+> The **north star** of the project. This document describes *why* One CLI exists, *what* it does, and *which principles* guide trade-offs when a choice arises. If a future contributor reads only one document, this is it.
 
-## Pitch en 30 secondes
+## Pitch in 30 seconds
 
-**One CLI est une couche d'abstraction unifiée entre les agents IA (ou les humains) et les services tiers.** Au lieu d'apprendre N SDKs et de gérer N modèles d'authentification, l'agent appelle `one <service> <action>`. Le binaire gère l'auth, applique des permissions définies par projet, exécute l'action, et retourne du JSON propre. Si l'action sort de son périmètre, il renvoie un guide actionnable.
+**One CLI is a unified abstraction layer between AI agents (or humans) and third-party services.** Instead of learning N SDKs and managing N authentication models, the agent calls `one <service> <action>`. The binary handles auth, enforces project-defined permissions, executes the action, and returns clean JSON. If the action falls outside its scope, it returns an actionable guide.
 
-Trois différenciateurs durables :
+Three durable differentiators:
 
-1. **Un vault local multi-comptes** chiffré dans le keychain de l'OS, jamais en SaaS.
-2. **Un scope file versionné** dans la repo, qui rend explicite et reviewable ce qu'un agent a le droit de faire sur ce projet précis.
-3. **Des install guides first-class** qui matérialisent honnêtement les frontières entre ce qui est automatisable et ce qui requiert un humain.
+1. **A local multi-account vault** encrypted in the OS keychain, never in SaaS.
+2. **A versioned scope file** in the repo, making explicit and reviewable what an agent is allowed to do on that specific project.
+3. **First-class install guides** that honestly materialize the boundaries between what is automatable and what requires a human.
 
-## Le problème
+## The problem
 
-Les agents IA ont besoin d'agir dans le monde réel. Aujourd'hui ils le font de trois manières, toutes imparfaites :
+AI agents need to act in the real world. Today they do so in three ways, all imperfect:
 
-**1. Via des SDKs spécifiques (OpenAI tools, Anthropic tools).** Chaque agent re-implémente l'appel à GitHub, Stripe, Notion. Pas de gouvernance, pas de réutilisation, credentials gérées ad hoc par chaque dev (souvent dans des env vars éparpillées).
+**1. Via specific SDKs (OpenAI tools, Anthropic tools).** Each agent re-implements calls to GitHub, Stripe, Notion. No governance, no reuse, credentials managed ad hoc by each dev (often scattered in env vars).
 
-**2. Via MCP (Model Context Protocol).** Standardisation prometteuse, mais orientée serveur, sans modèle de scope par projet, sans vault unifié multi-comptes, sans gestion des opérations humaines requises. Et MCP a tendance à pousser vers du "tout-en-conteneur" alors que beaucoup de devs préfèrent un binaire local sous leur contrôle direct.
+**2. Via MCP (Model Context Protocol).** Promising standardization, but server-oriented, without a per-project scope model, without a unified multi-account vault, without handling human-required operations. And MCP tends to push toward "everything-in-a-container" while many devs prefer a local binary under their direct control.
 
-**3. En écrivant du code à chaque fois.** L'agent génère du `curl` ou du fetch, l'humain lui passe ses tokens. Fragile, dangereux, non-auditable.
+**3. By writing code every time.** The agent generates `curl` or fetch, the human hands over their tokens. Fragile, dangerous, non-auditable.
 
-**Ce qui manque, et que personne ne fait bien aujourd'hui** :
+**What is missing, and nobody does well today**:
 
-- Un binaire local, unique, qui parle à N services avec un modèle unifié.
-- Un fichier versionné dans la repo qui dit explicitement "sur ce projet, l'agent peut faire X mais pas Y".
-- Un mécanisme propre pour les setups qui ne peuvent pas être automatisés (genre "partage cette page Notion avec l'intégration"), au lieu de boucles d'erreurs incompréhensibles.
-- Un catalogue de services maintenu en open source, à la manière de Homebrew formulae, où la communauté ajoute ses intégrations.
+- A single local binary that speaks to N services with a unified model.
+- A file versioned in the repo that explicitly states "on this project, the agent can do X but not Y".
+- A clean mechanism for setups that cannot be automated (e.g. "share this Notion page with the integration"), instead of incomprehensible error loops.
+- An open source catalog of services, in the style of Homebrew formulae, where the community adds its integrations.
 
-One CLI est l'intersection de ces quatre besoins.
+One CLI is the intersection of these four needs.
 
-## Le positionnement vs MCP
+## Positioning vs MCP
 
-MCP est l'alternative la plus proche conceptuellement. La question "pourquoi pas juste utiliser MCP ?" doit avoir une réponse claire.
+MCP is the closest conceptual alternative. The question "why not just use MCP?" must have a clear answer.
 
 | Dimension | MCP | One CLI |
 |---|---|---|
-| Forme | Serveur HTTP/stdio par service | Un seul binaire local |
-| Auth | Géré par chaque serveur, ad hoc | Vault unifié, multi-comptes, multi-providers |
-| Scope par projet | Pas d'équivalent | Fichier `.onerc.yaml` versionné |
-| Setup humain | Pas couvert nativement | Verbe `install` first-class |
-| Distribution | Chaque server est un package séparé | Catalogue centralisé reviewable |
-| Audit | Logs par serveur | Audit log unifié `one trace` |
-| Modèle mental | "L'agent parle à des serveurs" | "L'agent utilise un outil local" |
+| Form | HTTP/stdio server per service | A single local binary |
+| Auth | Managed by each server, ad hoc | Unified vault, multi-account, multi-provider |
+| Per-project scope | No equivalent | Versioned `.onerc.yaml` file |
+| Human setup | Not natively covered | First-class `install` verb |
+| Distribution | Each server is a separate package | Reviewable centralized catalog |
+| Audit | Per-server logs | Unified audit log `one trace` |
+| Mental model | "The agent talks to servers" | "The agent uses a local tool" |
 
-**One CLI n'est pas anti-MCP.** Les deux peuvent coexister. À long terme, One CLI pourra exposer son catalogue en mode "serveur MCP" pour qui veut l'intégrer dans ce protocole. Le différenciateur reste la **gouvernance par projet via scope file** et la **vault locale**, deux choses que MCP ne couvre pas et n'a pas vocation à couvrir.
+**One CLI is not anti-MCP.** Both can coexist. Long-term, One CLI could expose its catalog in "MCP server" mode for those who want to integrate it into that protocol. The differentiator remains **per-project governance via scope file** and **local vault**, two things MCP does not cover and is not intended to cover.
 
-## Les concepts centraux
+## Core concepts
 
-Cinq concepts à maîtriser pour comprendre toute la suite. Ils s'articulent comme ceci :
+Five concepts to master in order to understand everything else. They connect like this:
 
 ```
      ┌─────────────────────────────────────────┐
-     │              Agent ou humain            │
+     │              Agent or human             │
      └─────────────────┬───────────────────────┘
                        │  one <service> <action>
                        ▼
      ┌─────────────────────────────────────────┐
-     │              Binaire `one`              │
+     │              Binary `one`              │
      │                                         │
      │   ┌────────┐  ┌────────┐  ┌─────────┐   │
      │   │ Scope  │  │ Vault  │  │ Catalog │   │
@@ -69,31 +69,31 @@ Cinq concepts à maîtriser pour comprendre toute la suite. Ils s'articulent com
      └─────────────────────────────────────────┘
 ```
 
-### Catalogue
+### Catalog
 
-Un répertoire structuré (distribué via un repo Git public + index JSON sur CDN) qui contient la définition de chaque service supporté. Pour chaque service : ses actions, ses permissions, ses providers d'auth, ses install guides, son skill markdown.
+A structured directory (distributed via a public Git repo + JSON index on CDN) that contains the definition of each supported service. For each service: its actions, its permissions, its auth providers, its install guides, its markdown skill.
 
-Le catalogue est **purement déclaratif** (YAML + Markdown). Quand un service nécessite plus que du déclaratif (signature de requête, GraphQL complexe, chains d'appels), un handler **WASM sandboxé** est attaché.
+The catalog is **purely declarative** (YAML + Markdown). When a service requires more than declarative (request signing, complex GraphQL, call chains), a **sandboxed WASM handler** is attached.
 
-Le catalogue est **reviewable par PR** : ajouter un service = ouvrir une pull request. Voir [CATALOG.md](./CATALOG.md).
+The catalog is **reviewable by PR**: adding a service means opening a pull request. See [CATALOG.md](./CATALOG.md).
 
 ### Vault
 
-Stockage local sécurisé des credentials. Trois implémentations chaînées par priorité :
+Secure local storage for credentials. Three implementations chained by priority:
 
-1. **Variables d'environnement** (`ONE_CREDS_*`) pour CI et override
-2. **Keychain natif de l'OS** (macOS Keychain, libsecret Linux, Credential Manager Windows) pour les machines desktop
-3. **Fichier chiffré age** (`~/.one/vault.age`) pour les contextes headless sans keychain
+1. **Environment variables** (`ONE_CREDS_*`) for CI and overrides
+2. **Native OS keychain** (macOS Keychain, libsecret Linux, Credential Manager Windows) for desktop machines
+3. **age-encrypted file** (`~/.one/vault.age`) for headless contexts without a keychain
 
-Le vault stocke des `Credential` typés (access token, refresh token, expiration, scopes, metadata). Jamais en clair dans des fichiers de config, jamais transmis ailleurs que dans les requêtes HTTP des handlers.
+The vault stores typed `Credential` objects (access token, refresh token, expiration, scopes, metadata). Never in plaintext in config files, never transmitted anywhere other than in the HTTP requests of handlers.
 
-**Multi-comptes natif.** Un service peut avoir plusieurs accounts (`github:work`, `github:perso`). L'utilisateur choisit lequel utiliser par projet via le scope file ou via `--as <alias>` au runtime.
+**Native multi-account.** A service can have multiple accounts (`github:work`, `github:personal`). The user chooses which one to use per project via the scope file or via `--as <alias>` at runtime.
 
-Voir [AUTH.md](./AUTH.md) pour les détails.
+See [AUTH.md](./AUTH.md) for details.
 
 ### Scope file
 
-Un fichier `.onerc.yaml` versionné à la racine du projet qui déclare *ce qu'un agent peut faire sur ce projet précis*. Format minimaliste :
+A `.onerc.yaml` file versioned at the root of the project that declares *what an agent can do on that specific project*. Minimal format:
 
 ```yaml
 version: 1
@@ -105,196 +105,196 @@ services:
     allow: [pages.*, blocks.*]
 ```
 
-**Default deny strict** : tout ce qui n'est pas explicitement autorisé est refusé.
+**Strict default deny**: anything not explicitly allowed is denied.
 
-**Layering** : un fichier `.onerc.local.yaml` (gitignored) peut restreindre encore ou changer de compte, mais jamais étendre. Cette règle est non-négociable : le scope file commité est la source de vérité.
+**Layering**: a `.onerc.local.yaml` file (gitignored) can further restrict or change accounts, but never extend. This rule is non-negotiable: the committed scope file is the source of truth.
 
-**Lock file** `.onerc.lock` fige les versions du catalogue résolues, comme un `package-lock.json`.
+**Lock file** `.onerc.lock` pins the resolved catalog versions, like a `package-lock.json`.
 
-Voir [SCOPE.md](./SCOPE.md) pour la grammaire complète.
+See [SCOPE.md](./SCOPE.md) for the full grammar.
 
 ### Skill
 
-Un document markdown intégré au binaire (`one skill`) qui dit à un agent IA comment utiliser One CLI. Il décrit le discovery flow, les quatre verbes, les exit codes, les patterns idiomatiques, et les anti-patterns.
+A markdown document embedded in the binary (`one skill`) that tells an AI agent how to use One CLI. It describes the discovery flow, the four verbs, exit codes, idiomatic patterns, and anti-patterns.
 
-Le skill est **installable dans l'IDE de l'agent** (`one skill --install`) qui détecte Claude Code, Cursor, Aider, etc., et écrit le skill au bon endroit du projet.
+The skill is **installable in the agent's IDE** (`one skill --install`) which detects Claude Code, Cursor, Aider, etc., and writes the skill to the correct location in the project.
 
-Chaque service a aussi son propre skill (`one info <service>`), focalisé sur le mental model et les gotchas de ce service.
+Each service also has its own skill (`one info <service>`), focused on the mental model and gotchas of that service.
 
 ### Install guides
 
-Des recettes markdown qui décrivent les étapes humaines nécessaires pour qu'un service fonctionne. Exemples :
+Markdown recipes that describe the human steps required to make a service work. Examples:
 
-- Partager une page Notion avec l'intégration
-- Créer un webhook Stripe
-- Configurer un IAM role AWS
+- Share a Notion page with the integration
+- Create a Stripe webhook
+- Configure an AWS IAM role
 
-Chaque guide a un mode interactif (TTY) et un mode JSON (agent). Il peut déclarer une `verify` action qui prouve que l'install a fonctionné.
+Each guide has an interactive mode (TTY) and a JSON mode (agent). It can declare a `verify` action that proves the install worked.
 
-Le mécanisme central : quand une action échoue avec un code mappé à un guide, l'erreur sortante inclut directement `install.command: "one install <service> <guide>"`. L'agent reconnaît qu'il doit demander à l'humain, plutôt que de boucler.
+The central mechanism: when an action fails with a code mapped to a guide, the outgoing error directly includes `install.command: "one install <service> <guide>"`. The agent recognizes it needs to ask the human, rather than looping.
 
-## Les quatre verbes de l'agent
+## The four agent verbs
 
-L'API surface offerte aux agents est volontairement minimaliste :
-
-```
-one <service> <action> [args]    # exécuter une action
-one capabilities [<service>]     # introspection JSON (qu'est-ce qui existe)
-one info [<service> [<action>]]  # documentation markdown (comment l'utiliser)
-one can <service> <action>       # precheck de permission (exit 0/3)
-```
-
-Plus une commande utilitaire de hint :
+The API surface offered to agents is intentionally minimal:
 
 ```
-one install <service> <guide>    # affiche un guide humain requis
+one <service> <action> [args]    # execute an action
+one capabilities [<service>]     # JSON introspection (what exists)
+one info [<service> [<action>]]  # markdown documentation (how to use it)
+one can <service> <action>       # permission precheck (exit 0/3)
 ```
 
-Tout le reste (login, scope, accounts, lock, doctor, trace) est pour l'humain qui *configure* le binaire, pas pour l'agent qui *l'utilise*.
+Plus a utility hint command:
 
-## Philosophie
+```
+one install <service> <guide>    # display a required human guide
+```
 
-Six règles non-négociables qui tranchent les arbitrages :
+Everything else (login, scope, accounts, lock, doctor, trace) is for the human who *configures* the binary, not for the agent who *uses* it.
 
-### 1. Déclaratif d'abord, code en dernier recours
+## Philosophy
 
-Le YAML décrit 95% des services (REST classique avec auth). WASM n'arrive que quand le déclaratif est insuffisant (signature SigV4, GraphQL avec interpolation typée, chains d'appels avec rollback).
+Six non-negotiable rules that guide trade-offs:
 
-**Bénéfice** : un reviewer voit ce qu'un service va faire en lisant le YAML. Pas de "lis le code pour comprendre".
+### 1. Declarative first, code as last resort
 
-### 2. Default deny partout
+YAML describes 95% of services (standard REST with auth). WASM only arrives when declarative is insufficient (SigV4 signing, GraphQL with typed interpolation, call chains with rollback).
 
-Le scope file est deny par défaut. Le vault refuse les credentials non déclarées. Les handlers WASM ne peuvent hit que les URLs allowlistées. Aucune permission n'est implicite.
+**Benefit**: a reviewer sees what a service will do by reading the YAML. No "read the code to understand".
 
-**Bénéfice** : un dev qui ouvre `.onerc.yaml` voit *exactement* ce qui est autorisé, sans avoir à connaître les défauts du système.
+### 2. Default deny everywhere
 
-### 3. L'audit est first-class, pas un add-on
+The scope file is deny by default. The vault refuses undeclared credentials. WASM handlers can only hit allowlisted URLs. No permission is implicit.
 
-Chaque exécution est traçable via `one trace`. Chaque requête HTTP émise par un handler est loggée (méthode, URL, status, durée, sans body). Les credentials sont redactées via le type `Secret`.
+**Benefit**: a dev opening `.onerc.yaml` sees *exactly* what is allowed, without needing to know the system's defaults.
 
-**Bénéfice** : quand un agent fait quelque chose d'inattendu, on remonte la trace en quelques minutes.
+### 3. Audit is first-class, not an add-on
 
-### 4. Pas de magie réseau
+Every execution is traceable via `one trace`. Every HTTP request emitted by a handler is logged (method, URL, status, duration, without body). Credentials are redacted via the `Secret` type.
 
-Pas de daemon background, pas d'auto-discovery, pas de mDNS, pas de polling caché. Le binaire fait ce que l'utilisateur ou l'agent lui demande explicitement, rien de plus.
+**Benefit**: when an agent does something unexpected, the trace can be recovered in minutes.
 
-**Bénéfice** : la latence, la consommation de batterie, la sécurité réseau sont prévisibles.
+### 4. No network magic
 
-### 5. La doc fait partie du livrable
+No background daemon, no auto-discovery, no mDNS, no hidden polling. The binary does what the user or agent explicitly asks of it, nothing more.
 
-Un service sans `SKILL.md` à jour n'est pas mergé dans le catalogue. Une commande non documentée dans le skill `onecli` n'est pas releasée. Une feature qui n'a pas d'exemple dans la doc n'existe pas.
+**Benefit**: latency, battery consumption, and network security are predictable.
 
-**Bénéfice** : les agents qui n'ont pas la doc en contexte n'utilisent pas le binaire correctement. La doc est l'interface, pas un bonus.
+### 5. Documentation is part of the deliverable
 
-### 6. Le code est obstinément simple
+A service without an up-to-date `SKILL.md` is not merged into the catalog. A command not documented in the `onecli` skill is not released. A feature without an example in the docs does not exist.
 
-Pas de framework DI. Pas de génération de code custom. Pas de DSL. Si on hésite entre une abstraction et 50 lignes dupliquées, on prend les 50 lignes.
+**Benefit**: agents that don't have the docs in context don't use the binary correctly. The docs are the interface, not a bonus.
 
-**Bénéfice** : un contributeur peut comprendre le code en une journée. Aucun magicien à embaucher pour faire évoluer le projet.
+### 6. The code is stubbornly simple
 
-## Décisions structurantes et leur rationale
+No DI framework. No custom code generation. No DSL. If choosing between an abstraction and 50 duplicated lines, take the 50 lines.
 
-Documenté ici pour que les futurs Ely (et contributeurs) sachent pourquoi ces choix ont été faits, et puissent les remettre en question avec contexte.
+**Benefit**: a contributor can understand the code in a day. No wizard needed to evolve the project.
 
-### Go pour le binaire
+## Structural decisions and their rationale
 
-**Pourquoi** : cold start <30ms, cross-compilation native single-binary, écosystème keychain mature, distribution triviale (pas de runtime à installer).
+Documented here so that future contributors (and Ely) know why these choices were made, and can revisit them with context.
 
-**Pas Rust** : surcoût de complexité non justifié, temps de compilation tueurs de vélocité, pas d'invariants critiques où le borrow checker sauverait.
+### Go for the binary
 
-**Pas TypeScript/Bun** : cold start trop lent pour un binaire appelé 50 fois par session, runtime à installer ou embarquer (50+ MB), keychain bindings moins propres.
+**Why**: cold start <30ms, native cross-compilation single-binary, mature keychain ecosystem, trivial distribution (no runtime to install).
 
-### Catalogue en repo Git séparé + index JSON sur CDN
+**Not Rust**: unjustified complexity overhead, compile times that kill velocity, no critical invariants where the borrow checker would save us.
 
-**Pourquoi** : reviewable par PR comme Homebrew, gratuit à héberger (Pages ou R2), pas d'infra serveur à maintenir.
+**Not TypeScript/Bun**: too slow cold start for a binary called 50 times per session, runtime to install or bundle (50+ MB), less clean keychain bindings.
 
-**Pas un registry custom HTTP** : single point of failure, coût d'infra, complexité de maintenance.
+### Catalog in a separate Git repo + JSON index on CDN
 
-**Pas décentralisé (un repo par service)** : discovery cassée, qualité variable, pas de listing centralisé.
+**Why**: reviewable by PR like Homebrew, free to host (Pages or R2), no server infrastructure to maintain.
 
-### WASM (wazero) pour les handlers complexes
+**Not a custom HTTP registry**: single point of failure, infrastructure cost, maintenance complexity.
 
-**Pourquoi** : sandbox par défaut (WASI = rien d'exposé), polyglotte (TS via Javy, Go via tinygo, Rust direct), distribuable dans le tarball du service.
+**Not decentralized (one repo per service)**: broken discovery, variable quality, no centralized listing.
 
-**Pas de plugin natif Go** : pas de sandbox, sécurité catastrophique, binaire non-reproductible.
+### WASM (wazero) for complex handlers
 
-**Pas d'exécution de scripts arbitraires (Lua, JS V8)** : même problème de sandbox, ou alors ajoute des dépendances natives qui cassent la cross-compilation.
+**Why**: sandbox by default (WASI = nothing exposed), polyglot (TS via Javy, Go via tinygo, Rust directly), distributable in the service tarball.
 
-### Scope file versionné dans la repo
+**Not native Go plugins**: no sandbox, catastrophic security, non-reproducible binary.
 
-**Pourquoi** : code review des permissions, reproductibilité entre devs, source de vérité auditable.
+**Not arbitrary script execution (Lua, JS V8)**: same sandbox problem, or adds native dependencies that break cross-compilation.
 
-**Pas dans un cloud config** : créerait une dépendance, casserait l'offline-first, créerait un single point of failure.
+### Scope file versioned in the repo
 
-**Pas dans le vault** : le scope est public (committable), pas secret. Mélanger les deux est une erreur de design.
+**Why**: code review of permissions, reproducibility across devs, auditable source of truth.
 
-### Install guides en markdown avec frontmatter
+**Not in a cloud config**: would create a dependency, break offline-first, create a single point of failure.
 
-**Pourquoi** : lisible par humains, parsable par machines, versionnable dans le catalogue, traduisible.
+**Not in the vault**: the scope is public (committable), not secret. Mixing the two is a design error.
 
-**Pas en YAML pur** : illisible pour un humain qui suit les étapes.
+### Install guides in markdown with frontmatter
 
-**Pas en script exécutable** : ramène la sandbox dans les guides, vecteur d'attaque.
+**Why**: human-readable, machine-parsable, versionable in the catalog, translatable.
 
-### Exit codes typés (0/1/2/3/4/5)
+**Not pure YAML**: unreadable for a human following the steps.
 
-**Pourquoi** : l'agent peut écrire de la logique conditionnelle propre (`if exit==3 then ask scope`) sans parser des messages d'erreur en langage naturel.
+**Not an executable script**: brings the sandbox back into guides, attack vector.
 
-**Pas juste 0/1** : trop pauvre, force le parsing de stderr.
+### Typed exit codes (0/1/2/3/4/5)
 
-**Pas 7-bit ASCII full** (genre 0-127) : convention Unix dit que >128 sont signaux, on reste dans la norme.
+**Why**: the agent can write clean conditional logic (`if exit==3 then ask scope`) without parsing natural language error messages.
 
-## Non-buts
+**Not just 0/1**: too limited, forces stderr parsing.
 
-Ce que One CLI **ne fait pas** et n'a pas vocation à faire. Important à clarifier pour éviter les dérives.
+**Not full 7-bit ASCII** (e.g. 0-127): Unix convention says >128 are signals, we stay within the standard.
 
-**One CLI n'est pas un orchestrateur de workflows.** Pas de DAGs, pas de retries automatiques entre actions, pas de scheduling. Tu veux ça ? Utilise Temporal, Trigger.dev, ou un script.
+## Non-goals
 
-**One CLI n'est pas un proxy API public.** Ce n'est pas un service qu'on déploie, c'est un binaire local. Si tu veux un proxy avec rate limiting, route vers `kong` ou `nginx`.
+What One CLI **does not do** and is not intended to do. Important to clarify to avoid scope creep.
 
-**One CLI n'est pas un LLM gateway.** Anthropic, OpenAI, etc. peuvent être *appelés* via le catalogue, mais ce n'est pas un point d'entrée unifié pour les complétions (style portkey, OpenRouter). Si tu veux ça, utilise ces outils dédiés.
+**One CLI is not a workflow orchestrator.** No DAGs, no automatic retries between actions, no scheduling. Want that? Use Temporal, Trigger.dev, or a script.
 
-**One CLI ne gère pas le code généré par les agents.** Pas d'exécution de code dans un sandbox. C'est un outil pour *appeler des services*, pas pour *lancer du code*.
+**One CLI is not a public API proxy.** It is not a service to deploy, it is a local binary. If you want a proxy with rate limiting, route to `kong` or `nginx`.
 
-**One CLI ne fait pas de pricing par usage.** Open source pur. Les credentials sont à toi, les appels API sont facturés par les services tiers comme d'habitude.
+**One CLI is not an LLM gateway.** Anthropic, OpenAI, etc. can be *called* via the catalog, but it is not a unified entry point for completions (like portkey, OpenRouter). If you want that, use those dedicated tools.
 
-**One CLI n'est pas un agent.** C'est un *outil* utilisable par des agents. Il ne décide pas, il exécute.
+**One CLI does not manage code generated by agents.** No code execution in a sandbox. It is a tool for *calling services*, not for *running code*.
 
-## Cible utilisateur
+**One CLI does not do usage-based pricing.** Pure open source. Credentials are yours, API calls are billed by third-party services as usual.
 
-Trois publics, dans cet ordre de priorité :
+**One CLI is not an agent.** It is a *tool* usable by agents. It does not decide, it executes.
 
-**1. Le dev qui build des agents IA en 2026.** Il utilise Claude Code, Cursor, ou un agent custom. Il veut shipper des intégrations rapidement sans gérer 10 SDKs. Il préfère un binaire local sous son contrôle à un service tiers.
+## Target users
 
-**2. L'agent IA lui-même.** Il consomme le skill `onecli`, fait des `capabilities`/`info`/`exec`, gère les exit codes. C'est l'utilisateur le plus *fréquent* du binaire mais pas celui qui le configure.
+Three audiences, in this order of priority:
 
-**3. Le team lead qui veut gouverner.** Il définit le scope file pour son équipe, il review les PRs sur `.onerc.yaml`, il s'assure qu'aucun agent ne va `delete repos` par accident en prod.
+**1. The dev building AI agents in 2026.** They use Claude Code, Cursor, or a custom agent. They want to ship integrations quickly without managing 10 SDKs. They prefer a local binary under their control to a third-party service.
 
-**Pas ciblés au début** : les utilisateurs grand public non-techniques, les entreprises avec compliance SOC2 strict (viendront en v1.0+).
+**2. The AI agent itself.** It consumes the `onecli` skill, does `capabilities`/`info`/`exec`, handles exit codes. It is the most *frequent* user of the binary but not the one who configures it.
 
-## Métriques de succès du design
+**3. The team lead who wants governance.** They define the scope file for their team, review PRs on `.onerc.yaml`, and ensure no agent accidentally `delete repos` in prod.
 
-Comment savoir si le design tient ses promesses ? Quatre signaux à surveiller :
+**Not targeted initially**: non-technical general public users, enterprises with strict SOC2 compliance (coming in v1.0+).
 
-1. **Temps pour ajouter un service simple au catalogue** (genre Resend) : <2h pour un dev qui découvre. Si c'est 8h, le format service.yaml est trop complexe.
+## Design success metrics
 
-2. **Temps pour qu'un agent comprenne One CLI** : <30s de lecture du skill avant de pouvoir l'utiliser. Si l'agent se trompe systématiquement après avoir lu le skill, la doc est mal écrite.
+How to know if the design delivers on its promises? Four signals to monitor:
 
-3. **Nombre de questions "comment je fais X" sur GitHub Discussions** : devrait diminuer au cours du temps à mesure que la doc s'enrichit. Si ça reste stable, le projet est moins bien documenté qu'il devrait.
+1. **Time to add a simple service to the catalog** (e.g. Resend): <2h for a dev discovering it for the first time. If it takes 8h, the service.yaml format is too complex.
 
-4. **Surface des breaking changes par version** : 0 entre versions mineures, listés explicitement entre majeures. Si on en a 3 par mineure, l'API n'était pas mûre.
+2. **Time for an agent to understand One CLI**: <30s of reading the skill before being able to use it. If the agent consistently makes mistakes after reading the skill, the docs are poorly written.
 
-## Évolution prévue
+3. **Number of "how do I do X" questions on GitHub Discussions**: should decrease over time as the docs grow. If it stays stable, the project is less well documented than it should be.
 
-Ce design est figé pour v0.1 à v1.0. Après v1.0, les évolutions possibles :
+4. **Surface of breaking changes per version**: 0 between minor versions, explicitly listed between major versions. If there are 3 per minor release, the API was not mature.
 
-- **Mode serveur MCP** : exposer le catalogue One CLI comme un serveur MCP pour l'interop.
-- **Audit log distant** : envoi opt-in des traces vers un endpoint pour les équipes qui veulent du monitoring centralisé.
-- **Templates de scope** : `.onerc.yaml.template` partagés par communauté (genre "scope pour un agent customer support", "scope pour un agent DevOps").
-- **Tier entreprise** : support payant pour les organisations, sans changer le core open source.
+## Planned evolution
 
-Aucune de ces évolutions ne casse les concepts décrits dans ce document.
+This design is frozen for v0.1 to v1.0. After v1.0, possible evolutions:
+
+- **MCP server mode**: expose the One CLI catalog as an MCP server for interop.
+- **Remote audit log**: opt-in sending of traces to an endpoint for teams wanting centralized monitoring.
+- **Scope templates**: `.onerc.yaml.template` shared by the community (e.g. "scope for a customer support agent", "scope for a DevOps agent").
+- **Enterprise tier**: paid support for organizations, without changing the open source core.
+
+None of these evolutions breaks the concepts described in this document.
 
 ---
 
-*Document maintenu en parallèle du code. Si une décision décrite ici devient obsolète, il faut soit mettre à jour ce document avec un changelog clair, soit reverter le code.*
+*Document maintained in parallel with the code. If a decision described here becomes obsolete, either update this document with a clear changelog, or revert the code.*
