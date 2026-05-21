@@ -37,6 +37,7 @@ jobs:
         run: go test ./...
 
       - name: Test (security)
+        shell: bash
         run: go test -tags=security ./tests/security/... 2>/dev/null || true
 
       - name: Upload coverage
@@ -62,7 +63,7 @@ jobs:
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v7
         with:
-          version: v2.1.6
+          version: v2.12.2
 
   vulncheck:
     name: Vulnerability check
