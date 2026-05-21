@@ -21,6 +21,7 @@ type Login struct {
 	catalog ports.Catalog
 	auth    []ports.AuthProvider
 	log     ports.Logger
+	audit   ports.Audit
 }
 
 // NewLogin creates a Login use case.
@@ -28,8 +29,11 @@ func NewLogin(vault ports.Vault, catalog ports.Catalog, auth []ports.AuthProvide
 	return &Login{vault: vault, catalog: catalog, auth: auth, log: log}
 }
 
+// WithAudit installs an audit recorder. Events: LOGIN ok/error.
+func (uc *Login) WithAudit(a ports.Audit) *Login { uc.audit = a; return uc }
+
 // Run starts the login flow.
-func (uc *Login) Run(ctx context.Context, in LoginInput) error {
+func (uc *Login) Run(ctx context.Context, in LoginInput) (err error) {
 	if in.Service == "" {
 		return core.ErrInputValidation{Field: "service", Reason: "required"}
 	}
@@ -41,6 +45,12 @@ func (uc *Login) Run(ctx context.Context, in LoginInput) error {
 	if kind == "" {
 		kind = core.ProviderPAT
 	}
+	defer func() {
+		emit(ctx, uc.audit, core.AuditEvent{
+			Kind: core.AuditLogin, Service: in.Service, Account: string(alias),
+			Outcome: outcomeOf(err), Err: errMsg(err),
+		})
+	}()
 
 	var provider ports.AuthProvider
 	for _, p := range uc.auth {

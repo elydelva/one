@@ -18,6 +18,7 @@ type LogoutInput struct {
 type Logout struct {
 	vault ports.Vault
 	log   ports.Logger
+	audit ports.Audit
 }
 
 // NewLogout creates a Logout use case.
@@ -25,8 +26,11 @@ func NewLogout(vault ports.Vault, log ports.Logger) *Logout {
 	return &Logout{vault: vault, log: log}
 }
 
+// WithAudit installs an audit recorder.
+func (uc *Logout) WithAudit(a ports.Audit) *Logout { uc.audit = a; return uc }
+
 // Run removes the credential. Idempotent: missing credentials are not an error.
-func (uc *Logout) Run(ctx context.Context, in LogoutInput) error {
+func (uc *Logout) Run(ctx context.Context, in LogoutInput) (rerr error) {
 	if in.Service == "" {
 		return core.ErrInputValidation{Field: "service", Reason: "required"}
 	}
@@ -34,6 +38,12 @@ func (uc *Logout) Run(ctx context.Context, in LogoutInput) error {
 	if alias == "" {
 		alias = "default"
 	}
+	defer func() {
+		emit(ctx, uc.audit, core.AuditEvent{
+			Kind: core.AuditLogout, Service: in.Service, Account: string(alias),
+			Outcome: outcomeOf(rerr), Err: errMsg(rerr),
+		})
+	}()
 	ref := core.AccountRef{Service: core.ServiceID(in.Service), Alias: alias}
 	err := uc.vault.Delete(ctx, ref)
 	if err != nil {

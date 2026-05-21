@@ -118,5 +118,69 @@ func (uc *VaultImport) Run(ctx context.Context, in io.Reader) error {
 	return nil
 }
 
+// VaultRotate re-encrypts every in-scope credential by fetching then re-storing
+// it. With the age vault, this effectively re-encrypts under the currently
+// configured passphrase (typically a new one set via ONE_AGE_PASSPHRASE).
+type VaultRotate struct {
+	vault ports.Vault
+	scope ports.ScopeStore
+	log   ports.Logger
+	audit ports.Audit
+}
+
+// NewVaultRotate creates the use case.
+func NewVaultRotate(v ports.Vault, s ports.ScopeStore, log ports.Logger) *VaultRotate {
+	return &VaultRotate{vault: v, scope: s, log: log}
+}
+
+// WithAudit installs an audit recorder.
+func (uc *VaultRotate) WithAudit(a ports.Audit) *VaultRotate { uc.audit = a; return uc }
+
+// VaultRotateOutput summarizes how many credentials were rotated.
+type VaultRotateOutput struct {
+	Rotated int            `json:"rotated"`
+	Failed  map[string]string `json:"failed,omitempty"`
+}
+
+// Run iterates every in-scope account and re-stores its credential.
+func (uc *VaultRotate) Run(ctx context.Context, dir string) (VaultRotateOutput, error) {
+	out := VaultRotateOutput{Failed: map[string]string{}}
+	sc, err := uc.scope.Load(dir)
+	if err != nil {
+		return out, err
+	}
+	for id := range sc.Services {
+		refs, err := uc.vault.List(ctx, id)
+		if err != nil {
+			out.Failed[string(id)] = err.Error()
+			continue
+		}
+		for _, ref := range refs {
+			cred, ferr := uc.vault.Fetch(ctx, ref)
+			if ferr != nil {
+				out.Failed[ref.String()] = ferr.Error()
+				continue
+			}
+			if serr := uc.vault.Store(ctx, ref, cred); serr != nil {
+				out.Failed[ref.String()] = serr.Error()
+				emit(ctx, uc.audit, core.AuditEvent{
+					Kind: core.AuditRotate, Service: string(ref.Service), Account: string(ref.Alias),
+					Outcome: core.OutcomeError, Err: serr.Error(),
+				})
+				continue
+			}
+			out.Rotated++
+			emit(ctx, uc.audit, core.AuditEvent{
+				Kind: core.AuditRotate, Service: string(ref.Service), Account: string(ref.Alias),
+				Outcome: core.OutcomeOK,
+			})
+		}
+	}
+	if uc.log != nil {
+		uc.log.Info("vault rotate completed", "rotated", out.Rotated, "failed", len(out.Failed))
+	}
+	return out, nil
+}
+
 // Ensure os import stays in case of future helpers.
 var _ = os.Stderr

@@ -218,6 +218,7 @@ func toCoreAction(svcID core.ServiceID, def pkgcatalog.ActionDef) (core.Action, 
 		Service:     svcID,
 		Description: def.Description,
 		Permission:  core.PermissionPath(def.Permission),
+		SideEffects: core.SideEffect(def.SideEffects),
 	}
 	if def.Request != nil {
 		out.Request = &core.RequestSpec{

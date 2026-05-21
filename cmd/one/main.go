@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"elydelva/one/internal/adapters/audit"
 	"elydelva/one/internal/adapters/auth"
 	"elydelva/one/internal/adapters/catalog"
 	adapterclock "elydelva/one/internal/adapters/clock"
@@ -59,13 +60,16 @@ func main() {
 		rnd = renderer.NewJSONRendererStd()
 	}
 
+	// Audit (NDJSON) — wired into all credentialed use cases.
+	aud := audit.NewNDJSONAudit(os.ExpandEnv("$HOME/.one/audit"), 0)
+
 	// Use cases
-	refresh := app.NewRefreshIfNeeded(vlt, authProviders, clk, log, os.ExpandEnv("$HOME/.one/locks"))
+	refresh := app.NewRefreshIfNeeded(vlt, authProviders, clk, log, os.ExpandEnv("$HOME/.one/locks")).WithAudit(aud)
 
 	deps := cli.Deps{
-		Execute:      app.NewExecuteAction(cat, vlt, rt, scp, authProviders, log, clk, crp).WithRefresh(refresh),
-		Login:        app.NewLogin(vlt, cat, authProviders, log),
-		Logout:       app.NewLogout(vlt, log),
+		Execute:      app.NewExecuteAction(cat, vlt, rt, scp, authProviders, log, clk, crp).WithRefresh(refresh).WithAudit(aud),
+		Login:        app.NewLogin(vlt, cat, authProviders, log).WithAudit(aud),
+		Logout:       app.NewLogout(vlt, log).WithAudit(aud),
 		Capabilities: app.NewListCapabilities(cat, scp),
 		Info:         app.NewShowInfo(cat),
 		ShowScope:    app.NewShowScope(scp),
@@ -74,7 +78,7 @@ func main() {
 		CheckScope:   app.NewCheckScope(scp),
 		ShowGuide:    app.NewShowGuide(cat),
 		LockScope:    app.NewLockScope(cat, scp),
-		ShowTrace:    app.NewShowTrace(),
+		ShowTrace:    app.NewShowTrace(aud, clk),
 		RunDoctor:    app.NewRunDoctor(vlt, cat, scp),
 		Init:         app.NewInit(scpWriter),
 		Accounts:     app.NewListAccounts(vlt),
@@ -83,6 +87,10 @@ func main() {
 		VaultStatus:  app.NewVaultStatus(vlt, cat, scp),
 		VaultExport:  app.NewVaultExport(vlt, scp),
 		VaultImport:  app.NewVaultImport(vlt),
+		VaultRotate:  app.NewVaultRotate(vlt, scp, log).WithAudit(aud),
+		Skill:        app.NewSkill(),
+		CatalogOps:   app.NewCatalogOps(cat, catalogRoot()),
+		Upgrade:      app.NewUpgrade(version),
 		Renderer:     rnd,
 		Catalog:      cat,
 	}

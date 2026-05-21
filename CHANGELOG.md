@@ -5,6 +5,34 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [S
 
 ## [Unreleased]
 
+## [1.0.0] — Phase 5: Polish, Trace, Skill, Release
+
+### Added
+- **TTY renderer** : `internal/adapters/renderer/tty.go` utilise lipgloss + glamour. `NO_COLOR` honoré, auto-détection TTY.
+- **Bubbletea install guides** : checklists interactives navigables. `--non-interactive` pour mode texte.
+- **Audit log NDJSON** : port `ports.Audit` + adapter `internal/adapters/audit/ndjson.go` (rotation mensuelle, retention 30 j, fsync). Émission auto de `LOGIN`/`LOGOUT`/`REFRESH`/`EXEC`/`ROTATE` (zéro secret dans les events).
+- **`one trace`** : filtres `--since`, `--service`, `--kind`, `--trace-id`, `--limit`, `--json`.
+- **`one skill [--install --ide claude-code|cursor|aider]`** : auto-détection IDE.
+- **`one catalog`** : `search` / `update` / `lint` / `scaffold <id>` / `test <service>`.
+- **`one upgrade --to vX.Y.Z`** : self-update avec SHA256 verify + atomic replace. Refuse `go install` path. `--dry-run`.
+- **`one vault rotate`** : re-encrypt tous les credentials in-scope, audit `ROTATE` par cred.
+- **Destructive prompts** : actions `side_effects: destructive` → confirmation TTY. Bypass via `--confirm`/`--dry-run`.
+- **Cold-start bench CI** : `.github/workflows/bench.yml` enforce les budgets de `.benchmarks.json`.
+- **E2E workflow** : `tests/e2e/workflow_test.go` couvre exec → trace → audit NDJSON.
+- **Goreleaser polish** : SBOM CycloneDX, signature checksums via cosign keyless, macOS notarize gated sur secrets.
+- **`install.sh` SHA256** : verify contre `checksums.txt` avant install.
+- **SKILL.md binaire** : `docs/SKILL.md` + `SkillContent` inline.
+
+### Changed
+- `core.Action.SideEffects` (read | write | destructive).
+- Composition root wire audit NDJSON dans toutes les use cases credentialled.
+- `Login`, `Logout`, `RefreshIfNeeded`, `ExecuteAction`, `VaultRotate` gagnent `WithAudit(ports.Audit)`.
+
+### Security
+- `install.sh` vérifie SHA256 (gap critique fermé).
+- Release artifacts signés via Sigstore keyless.
+- SBOM publié par release.
+
 ## [0.2.0] — Phase 2: Catalog FS + Runtime déclaratif + Execute
 
 ### Added

@@ -54,9 +54,25 @@ func runExecuteFromArgs(ctx context.Context, deps Deps, args []string) error {
 	if err != nil {
 		return err
 	}
-	inputs, account, dryRun, projectDir, err := parseActionFlags(rest, schema)
+	inputs, account, dryRun, projectDir, confirmed, err := parseActionFlags(rest, schema)
 	if err != nil {
 		return err
+	}
+
+	if actDef.IsDestructive() && !dryRun && !confirmed {
+		if isStdinTTY() {
+			ok, perr := promptConfirm(fmt.Sprintf("Action %s/%s is destructive. Proceed?", service, action))
+			if perr != nil {
+				return perr
+			}
+			if !ok {
+				return fmt.Errorf("aborted by user")
+			}
+		}
+		// Non-TTY without --confirm: refuse silently to avoid surprises.
+		if !isStdinTTY() {
+			return fmt.Errorf("destructive action requires --confirm when stdin is not a TTY")
+		}
 	}
 
 	out, err := deps.Execute.Run(ctx, app.ExecuteInput{
@@ -81,7 +97,7 @@ func runExecuteFromArgs(ctx context.Context, deps Deps, args []string) error {
 //
 // Other --name values are coerced to the type declared in schema.Defs.
 // A value of `@path` reads the file content as a string.
-func parseActionFlags(args []string, schema core.InputSchema) (inputs map[string]any, account string, dryRun bool, projectDir string, err error) {
+func parseActionFlags(args []string, schema core.InputSchema) (inputs map[string]any, account string, dryRun bool, projectDir string, confirmed bool, err error) {
 	inputs = map[string]any{}
 	defByName := map[string]core.InputDef{}
 	for _, d := range schema.Defs {
@@ -95,7 +111,7 @@ func parseActionFlags(args []string, schema core.InputSchema) (inputs map[string
 	for i < len(args) {
 		a := args[i]
 		if !strings.HasPrefix(a, "--") {
-			return nil, "", false, "", fmt.Errorf("unexpected positional %q (expected --name value pairs)", a)
+			return nil, "", false, "", false, fmt.Errorf("unexpected positional %q (expected --name value pairs)", a)
 		}
 		name := strings.TrimPrefix(a, "--")
 		// Support --flag=value too.
@@ -105,14 +121,19 @@ func parseActionFlags(args []string, schema core.InputSchema) (inputs map[string
 			name = name[:idx]
 			i++
 		} else {
-			// Boolean flags (no value): --dry-run.
+			// Boolean flags (no value): --dry-run, --confirm.
 			if name == "dry-run" {
 				dryRun = true
 				i++
 				continue
 			}
+			if name == "confirm" {
+				confirmed = true
+				i++
+				continue
+			}
 			if i+1 >= len(args) {
-				return nil, "", false, "", fmt.Errorf("flag --%s requires a value", name)
+				return nil, "", false, "", false, fmt.Errorf("flag --%s requires a value", name)
 			}
 			raw = args[i+1]
 			i += 2
@@ -128,19 +149,44 @@ func parseActionFlags(args []string, schema core.InputSchema) (inputs map[string
 		case "dry-run":
 			dryRun = (raw == "true" || raw == "1")
 			continue
+		case "confirm":
+			confirmed = (raw == "true" || raw == "1")
+			continue
 		}
 
 		def, ok := defByName[name]
 		if !ok {
-			return nil, "", false, "", fmt.Errorf("unknown input --%s for this action", name)
+			return nil, "", false, "", false, fmt.Errorf("unknown input --%s for this action", name)
 		}
 		val, err := coerceValue(raw, def)
 		if err != nil {
-			return nil, "", false, "", err
+			return nil, "", false, "", false, err
 		}
 		inputs[name] = val
 	}
-	return inputs, account, dryRun, projectDir, nil
+	return inputs, account, dryRun, projectDir, confirmed, nil
+}
+
+func isStdinTTY() bool {
+	fi, err := os.Stdin.Stat()
+	if err != nil {
+		return false
+	}
+	return (fi.Mode() & os.ModeCharDevice) != 0
+}
+
+func promptConfirm(msg string) (bool, error) {
+	fmt.Fprintf(os.Stderr, "%s [y/N] ", msg)
+	buf := make([]byte, 4)
+	n, err := os.Stdin.Read(buf)
+	if err != nil {
+		return false, err
+	}
+	if n == 0 {
+		return false, nil
+	}
+	c := buf[0]
+	return c == 'y' || c == 'Y', nil
 }
 
 func coerceValue(raw string, def core.InputDef) (any, error) {

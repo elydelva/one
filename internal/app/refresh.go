@@ -36,10 +36,14 @@ type RefreshIfNeeded struct {
 	lockDir  string
 	procLock sync.Mutex
 	locks    map[string]*sync.Mutex
+	audit    ports.Audit
 
 	Margin       time.Duration
 	LockTimeout  time.Duration
 }
+
+// WithAudit installs an audit recorder. REFRESH events emitted on each attempt.
+func (uc *RefreshIfNeeded) WithAudit(a ports.Audit) *RefreshIfNeeded { uc.audit = a; return uc }
 
 // NewRefreshIfNeeded creates the use case.
 func NewRefreshIfNeeded(vault ports.Vault, auth []ports.AuthProvider, clock ports.Clock, log ports.Logger, lockDir string) *RefreshIfNeeded {
@@ -95,12 +99,24 @@ func (uc *RefreshIfNeeded) Run(ctx context.Context, cred core.Credential) (core.
 	fresh, err := provider.Refresh(ctx, current)
 	if err != nil {
 		uc.log.Warn("refresh failed", "service", current.Service, "account", current.Account, "err", err.Error())
+		emit(ctx, uc.audit, core.AuditEvent{
+			Kind: core.AuditRefresh, Service: string(current.Service), Account: string(current.Account),
+			Outcome: core.OutcomeError, Err: err.Error(),
+		})
 		return core.Credential{}, err
 	}
 	if err := uc.vault.Store(ctx, fresh.Ref(), fresh); err != nil {
 		uc.log.Warn("refresh store failed", "service", fresh.Service, "err", err.Error())
+		emit(ctx, uc.audit, core.AuditEvent{
+			Kind: core.AuditRefresh, Service: string(fresh.Service), Account: string(fresh.Account),
+			Outcome: core.OutcomeError, Err: "store failed: " + err.Error(),
+		})
 		return core.Credential{}, core.ErrReAuthRequired{Service: fresh.Service, Account: fresh.Account}
 	}
+	emit(ctx, uc.audit, core.AuditEvent{
+		Kind: core.AuditRefresh, Service: string(fresh.Service), Account: string(fresh.Account),
+		Outcome: core.OutcomeOK,
+	})
 	return fresh, nil
 }
 

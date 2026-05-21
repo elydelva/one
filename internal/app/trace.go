@@ -3,30 +3,49 @@ package app
 import (
 	"context"
 	"errors"
+	"time"
+
+	"elydelva/one/internal/core"
+	"elydelva/one/internal/ports"
 )
 
 // TraceInput holds parameters for the ShowTrace use case.
 type TraceInput struct {
-	Follow bool
-	Limit  int
+	Since   time.Duration
+	Service string
+	Kind    core.AuditKind
+	TraceID string
+	Limit   int
 }
 
-// TraceEntry is a single audit log entry.
-type TraceEntry struct {
-	TraceID   string
-	Timestamp string
-	Service   string
-	Action    string
-	Exit      int
+// ShowTrace reads audit log entries via the Audit port.
+type ShowTrace struct {
+	audit ports.Audit
+	clock ports.Clock
 }
 
-// ShowTrace reads audit log entries.
-type ShowTrace struct{}
+// NewShowTrace creates a ShowTrace use case. audit may be nil (returns error on Run).
+func NewShowTrace(audit ports.Audit, clock ports.Clock) *ShowTrace {
+	return &ShowTrace{audit: audit, clock: clock}
+}
 
-// NewShowTrace creates a ShowTrace use case.
-func NewShowTrace() *ShowTrace { return &ShowTrace{} }
-
-// Run returns trace entries.
-func (uc *ShowTrace) Run(_ context.Context, _ TraceInput) ([]TraceEntry, error) {
-	return nil, errors.New("not implemented")
+// Run returns trace entries newest-first.
+func (uc *ShowTrace) Run(ctx context.Context, in TraceInput) ([]core.AuditEvent, error) {
+	if uc.audit == nil {
+		return nil, errors.New("trace: no audit backend configured")
+	}
+	f := core.AuditFilter{
+		Service: in.Service,
+		Kind:    in.Kind,
+		TraceID: in.TraceID,
+		Limit:   in.Limit,
+	}
+	if in.Since > 0 {
+		now := time.Now().UTC()
+		if uc.clock != nil {
+			now = uc.clock.Now().UTC()
+		}
+		f.Since = now.Add(-in.Since)
+	}
+	return uc.audit.Read(ctx, f)
 }

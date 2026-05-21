@@ -63,7 +63,20 @@ type Action struct {
 	Pagination  *PaginationSpec
 	Errors      map[int]ErrorSpec // keyed by HTTP status code
 	Handler     *HandlerRef
+	SideEffects SideEffect
 }
+
+// SideEffect classifies an action by its impact. Defaults to read.
+type SideEffect string
+
+const (
+	SideEffectRead        SideEffect = "read"
+	SideEffectWrite       SideEffect = "write"
+	SideEffectDestructive SideEffect = "destructive"
+)
 
 // IsDeclarative reports whether the action uses the built-in HTTP declarative runtime.
 func (a Action) IsDeclarative() bool { return a.Handler == nil }
+
+// IsDestructive reports whether the action is marked destructive in the catalog.
+func (a Action) IsDestructive() bool { return a.SideEffects == SideEffectDestructive }

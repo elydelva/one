@@ -33,6 +33,10 @@ type Deps struct {
 	VaultStatus  *app.VaultStatus
 	VaultExport  *app.VaultExport
 	VaultImport  *app.VaultImport
+	VaultRotate  *app.VaultRotate
+	Skill        *app.Skill
+	CatalogOps   *app.CatalogOps
+	Upgrade      *app.Upgrade
 	Renderer     ports.Renderer
 	Catalog      ports.Catalog
 }
@@ -92,13 +96,15 @@ func BuildRoot(deps Deps) *cobra.Command {
 		newLockCommand(deps.LockScope),
 		newTraceCommand(deps.ShowTrace),
 		newDoctorCommand(deps.RunDoctor),
-		newSkillCommand(),
+		newSkillCommand(deps.Skill),
 		newInitCommand(deps.Init),
 		newCanCommand(deps.CheckScope),
 		newAccountsCommand(deps.Accounts),
 		newRotateCommand(deps.Rotate),
 		newRefreshCommand(deps.Refresh),
-		newVaultCommand(deps.VaultStatus, deps.VaultExport, deps.VaultImport),
+		newVaultCommand(deps.VaultStatus, deps.VaultExport, deps.VaultImport, deps.VaultRotate),
+		newCatalogCommand(deps.CatalogOps),
+		newUpgradeCommand(deps.Upgrade),
 	)
 
 	return root

@@ -3,6 +3,8 @@ name: Benchmarks
 on:
   push:
     branches: [main]
+  pull_request:
+    branches: [main]
 
 jobs:
   bench:
@@ -18,6 +20,32 @@ jobs:
         run: go build -o bin/one ./cmd/one
       - name: Run benchmarks
         run: go test -bench=. -benchmem -run='^$' ./... | tee bench.txt
+      - name: Enforce budgets
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json, re, sys
+          budgets = json.load(open('.benchmarks.json'))
+          lines = open('bench.txt').read().splitlines()
+          rx = re.compile(r'^(Benchmark\S+?)-\d+\s+\d+\s+(\d+(?:\.\d+)?)\s+ns/op')
+          observed = {}
+          for line in lines:
+              m = rx.match(line)
+              if m:
+                  observed[m.group(1)] = float(m.group(2))
+          fail = False
+          for name, spec in budgets.items():
+              ns = observed.get(name)
+              if ns is None:
+                  print(f"SKIP  {name}: not run")
+                  continue
+              cap_ = spec['max_ns_per_op']
+              status = "OK   " if ns <= cap_ else "FAIL "
+              print(f"{status}{name}: {ns:.0f} ns/op (cap {cap_})")
+              if ns > cap_:
+                  fail = True
+          sys.exit(1 if fail else 0)
+          PY
       - name: Upload benchmark results
         uses: actions/upload-artifact@v4
         with:

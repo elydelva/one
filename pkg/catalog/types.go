@@ -51,6 +51,7 @@ type ActionDef struct {
 	Pagination  *PaginationDef `yaml:"pagination,omitempty" json:"pagination,omitempty"`
 	Errors      map[string]ErrorDef `yaml:"errors,omitempty" json:"errors,omitempty"`
 	Handler     *HandlerDef   `yaml:"handler,omitempty" json:"handler,omitempty"`
+	SideEffects string        `yaml:"side_effects,omitempty" json:"side_effects,omitempty"` // read | write | destructive
 }
 
 // RequestDef declares the HTTP request shape for declarative actions.

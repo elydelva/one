@@ -39,7 +39,11 @@ type ExecuteAction struct {
 	clock   ports.Clock
 	crypto  ports.Crypto
 	refresh *RefreshIfNeeded
+	audit   ports.Audit
 }
+
+// WithAudit installs an audit recorder. EXEC events emitted with trace_id.
+func (uc *ExecuteAction) WithAudit(a ports.Audit) *ExecuteAction { uc.audit = a; return uc }
 
 // WithRefresh installs a refresh use case (lazy + file-locked).
 // If not called, refresh falls back to the legacy in-process path.
@@ -66,10 +70,17 @@ func NewExecuteAction(
 }
 
 // Run executes the action.
-func (uc *ExecuteAction) Run(ctx context.Context, in ExecuteInput) (ExecuteOutput, error) {
+func (uc *ExecuteAction) Run(ctx context.Context, in ExecuteInput) (out ExecuteOutput, rerr error) {
 	if in.Service == "" || in.Action == "" {
 		return ExecuteOutput{}, core.ErrInputValidation{Field: "service+action", Reason: "required"}
 	}
+	defer func() {
+		emit(ctx, uc.audit, core.AuditEvent{
+			TraceID: out.TraceID, Kind: core.AuditExec,
+			Service: in.Service, Account: in.Account, Action: in.Action,
+			Outcome: outcomeOf(rerr), Err: errMsg(rerr),
+		})
+	}()
 	svcID := core.ServiceID(in.Service)
 	actionID := core.ActionID(in.Action)
 
