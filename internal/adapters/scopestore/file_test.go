@@ -3,6 +3,7 @@ package scopestore
 import (
 	"os"
 	"path/filepath"
+	"runtime"
 	"testing"
 
 	"elydelva/one/internal/core"
@@ -38,7 +39,7 @@ func TestFileScopeStore_RoundTrip(t *testing.T) {
 	if err != nil {
 		t.Fatalf("stat: %v", err)
 	}
-	if info.Mode().Perm() != 0o644 {
+	if runtime.GOOS != "windows" && info.Mode().Perm() != 0o644 {
 		t.Errorf("expected mode 0644, got %v", info.Mode().Perm())
 	}
 
