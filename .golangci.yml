@@ -38,6 +38,24 @@ linters:
           severity: warning
     exhaustive:
       default-signifies-exhaustive: true
+  exclusions:
+    rules:
+      - path: "internal/testing/"
+        linters:
+          - errcheck
+      - path: "_test.go"
+        linters:
+          - gosec
+          - errcheck
+      - path: "cmd/one/main.go"
+        linters:
+          - revive
+      - path: "internal/adapters/renderer/tty.go"
+        linters:
+          - errcheck
+      - path: "internal/adapters/transport/nethttp.go"
+        linters:
+          - gosec
 
 formatters:
   enable:
@@ -46,22 +64,3 @@ formatters:
     goimports:
       local-prefixes:
         - elydelva/one
-
-issues:
-  exclude-rules:
-    - path: "internal/testing/"
-      linters:
-        - errcheck
-    - path: "_test.go"
-      linters:
-        - gosec
-        - errcheck
-    - path: "cmd/one/main.go"
-      linters:
-        - revive
-    - path: "internal/adapters/renderer/tty.go"
-      linters:
-        - errcheck
-    - path: "internal/adapters/transport/nethttp.go"
-      linters:
-        - gosec
