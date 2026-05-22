@@ -64,6 +64,12 @@ type Action struct {
 	Errors      map[int]ErrorSpec // keyed by HTTP status code
 	Handler     *HandlerRef
 	SideEffects SideEffect
+	// Source identifies where this action's definition was loaded from.
+	// Empty means the built-in / official catalog. A non-empty value of the
+	// form "tap:<name>" means the action comes from a third-party tap; the
+	// runtime treats such actions as lower trust (e.g. WASM handlers refused
+	// unless explicitly allowlisted).
+	Source string
 }
 
 // SideEffect classifies an action by its impact. Defaults to read.

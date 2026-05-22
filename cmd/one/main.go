@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"log/slog"
 	"os"
 	"strings"
@@ -14,6 +15,7 @@ import (
 	"elydelva/one/internal/adapters/renderer"
 	"elydelva/one/internal/adapters/runtime"
 	"elydelva/one/internal/adapters/scopestore"
+	"elydelva/one/internal/adapters/tap"
 	"elydelva/one/internal/adapters/transport"
 	"elydelva/one/internal/adapters/vault"
 	"elydelva/one/internal/app"
@@ -31,7 +33,8 @@ func main() {
 	log := newLogger()
 
 	// Adapters
-	cat := buildCatalog(clk, http)
+	tapOps := app.NewTapOps(tapRoot(), tap.New(), tapAllowedHosts()...)
+	cat := buildCatalog(clk, http, tapOps)
 
 	// Auth providers (built after catalog: OAuth providers resolve endpoints from it).
 	authProviders := []ports.AuthProvider{
@@ -90,6 +93,7 @@ func main() {
 		VaultRotate:  app.NewVaultRotate(vlt, scp, log).WithAudit(aud),
 		Skill:        app.NewSkill(),
 		CatalogOps:   app.NewCatalogOps(cat, catalogRoot()),
+		TapOps:       tapOps,
 		Upgrade:      app.NewUpgrade(version),
 		Renderer:     rnd,
 		Catalog:      cat,
@@ -157,6 +161,25 @@ func catalogRoot() string {
 	return os.ExpandEnv("$HOME/.one/catalog")
 }
 
+// tapRoot returns the root directory for installed taps (registry + clones).
+// Overridable via ONE_TAP_ROOT for tests.
+func tapRoot() string {
+	if v := os.Getenv("ONE_TAP_ROOT"); v != "" {
+		return v
+	}
+	return os.ExpandEnv("$HOME/.one/taps")
+}
+
+// tapAllowedHosts returns the git hosts that may host taps. Default: github.com.
+// Override with ONE_TAP_ALLOWED_HOSTS=host1,host2 (e.g. gitlab.com,git.acme.corp).
+func tapAllowedHosts() []string {
+	v := os.Getenv("ONE_TAP_ALLOWED_HOSTS")
+	if v == "" {
+		return nil
+	}
+	return splitCSV(v)
+}
+
 // buildVault wires the vault chain: EnvVar → Keyring → Age (if ONE_AGE_VAULT_PATH set
 // or ONE_AGE_PASSPHRASE present).
 func buildVault() ports.Vault {
@@ -171,17 +194,42 @@ func buildVault() ports.Vault {
 	return vault.NewChainVault(layers...)
 }
 
-// buildCatalog wires the catalog chain. Always includes FS (local catalog);
-// if ONE_CATALOG_URL is set, appends Cached(HTTP) as fallback.
-func buildCatalog(clk ports.Clock, httpc ports.Transport) ports.Catalog {
-	fs := catalog.NewCatalogFS(catalogRoot())
-	url := os.Getenv("ONE_CATALOG_URL")
-	if url == "" {
-		return fs
+// buildCatalog wires the catalog chain. Resolution order:
+//
+//  1. Embedded official catalog (compiled into the binary).
+//  2. Local FS catalog under $HOME/.one/catalog (user overrides + dev work).
+//  3. Installed taps (third-party GitHub repos, TOFU-pinned).
+//  4. HTTP catalog (only if ONE_CATALOG_URL is set), wrapped in a 15-min cache.
+//
+// The official catalog wins on conflict, so neither a local override nor a
+// tap can shadow a built-in service.
+func buildCatalog(clk ports.Clock, httpc ports.Transport, taps *app.TapOps) ports.Catalog {
+	sources := []ports.Catalog{
+		catalog.NewCatalogEmbed(),
+		catalog.NewCatalogFS(catalogRoot()),
+		catalog.NewLazyTapCatalog(tapListerAdapter{ops: taps}, clk.Now, time.Second),
 	}
-	httpCat := catalog.NewCatalogHTTP(url, httpc)
-	cached := catalog.NewCachedCatalog(httpCat, 15*time.Minute, clk)
-	return catalog.NewChainCatalog(fs, cached)
+	if url := os.Getenv("ONE_CATALOG_URL"); url != "" {
+		httpCat := catalog.NewCatalogHTTP(url, httpc)
+		sources = append(sources, catalog.NewCachedCatalog(httpCat, 15*time.Minute, clk))
+	}
+	return catalog.NewChainCatalog(sources...)
+}
+
+// tapListerAdapter projects *app.TapOps onto catalog.TapLister, avoiding a
+// circular adapter→app import.
+type tapListerAdapter struct{ ops *app.TapOps }
+
+func (a tapListerAdapter) List(ctx context.Context) ([]catalog.TapListEntry, error) {
+	taps, err := a.ops.List(ctx)
+	if err != nil {
+		return nil, err
+	}
+	out := make([]catalog.TapListEntry, 0, len(taps))
+	for _, t := range taps {
+		out = append(out, catalog.TapListEntry{Name: t.Name, CloneDir: a.ops.CloneDir(t.Name)})
+	}
+	return out, nil
 }
 
 func isatty() bool {

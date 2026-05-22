@@ -84,6 +84,9 @@ func (r *WazeroRuntime) Execute(ctx context.Context, req ports.ExecuteRequest) (
 	if h == nil {
 		return ports.ExecuteResult{}, fmt.Errorf("wazero: action %s has no handler", req.Action.ID)
 	}
+	if err := checkSourceTrust(req.Action); err != nil {
+		return ports.ExecuteResult{}, err
+	}
 	if h.HostAPI != 0 && h.HostAPI != HostAPIVersion {
 		return ports.ExecuteResult{}, core.ErrSandboxViolation{
 			Action: req.Action.ID,

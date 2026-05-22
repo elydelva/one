@@ -1,0 +1,12 @@
+version: 1
+id: linear
+name: Linear
+description: Linear GraphQL API (REST-style wrapper actions where applicable)
+base_url: https://api.linear.app
+auth:
+  providers:
+    - pat
+  injection:
+    pat:
+      header: Authorization
+      format: "{access_token}"

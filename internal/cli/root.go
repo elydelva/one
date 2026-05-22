@@ -36,6 +36,7 @@ type Deps struct {
 	VaultRotate  *app.VaultRotate
 	Skill        *app.Skill
 	CatalogOps   *app.CatalogOps
+	TapOps       *app.TapOps
 	Upgrade      *app.Upgrade
 	Renderer     ports.Renderer
 	Catalog      ports.Catalog
@@ -104,6 +105,7 @@ func BuildRoot(deps Deps) *cobra.Command {
 		newRefreshCommand(deps.Refresh),
 		newVaultCommand(deps.VaultStatus, deps.VaultExport, deps.VaultImport, deps.VaultRotate),
 		newCatalogCommand(deps.CatalogOps),
+		newTapCommand(deps.TapOps),
 		newUpgradeCommand(deps.Upgrade),
 	)
 

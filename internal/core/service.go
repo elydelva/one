@@ -35,4 +35,8 @@ type Service struct {
 	Injection   map[ProviderKind]AuthInjection // per-provider injection rule
 	AuthConfigs map[ProviderKind]AuthConfig    // per-provider configuration
 	Actions     []Action
+	// Source identifies where this service was loaded from. Empty for the
+	// official built-in catalog; "tap:<name>" for a third-party tap. Action
+	// Source fields are populated from this.
+	Source string
 }

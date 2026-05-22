@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"io/fs"
 	"os"
-	"path/filepath"
+	"path"
 	"sort"
 	"strings"
 
@@ -18,7 +18,9 @@ import (
 	pkgcatalog "elydelva/one/pkg/catalog"
 )
 
-// CatalogFS implements ports.Catalog by reading service definitions from disk.
+// CatalogFS implements ports.Catalog by reading service definitions from an
+// io/fs.FS. The default constructor wraps a directory on disk; an alternative
+// constructor accepts any fs.FS (used by the embedded official catalog).
 //
 // Layout:
 //
@@ -26,15 +28,27 @@ import (
 //	<root>/<service>/actions/<action_id>.yaml   (optional; merged with service.yaml > actions)
 //	<root>/<service>/SKILL.md                   (optional)
 //	<root>/<service>/guides/<guide_id>.md       (Phase 4)
-type CatalogFS struct{ root string }
+type CatalogFS struct {
+	fsys fs.FS
+	// root is kept for error messages; "" when the FS is not a directory.
+	root string
+}
 
-// NewCatalogFS creates a CatalogFS rooted at the given directory.
-func NewCatalogFS(root string) *CatalogFS { return &CatalogFS{root: root} }
+// NewCatalogFS creates a CatalogFS rooted at the given directory on disk.
+func NewCatalogFS(root string) *CatalogFS {
+	return &CatalogFS{fsys: os.DirFS(root), root: root}
+}
+
+// NewCatalogFromFS creates a CatalogFS backed by an arbitrary fs.FS. Paths are
+// interpreted as `<service>/service.yaml` relative to the FS root.
+func NewCatalogFromFS(fsys fs.FS) *CatalogFS {
+	return &CatalogFS{fsys: fsys}
+}
 
 func (c *CatalogFS) GetService(_ context.Context, id core.ServiceID) (*core.Service, error) {
-	dir := filepath.Join(c.root, string(id))
-	servicePath := filepath.Join(dir, "service.yaml")
-	raw, err := os.ReadFile(servicePath)
+	dir := string(id)
+	servicePath := path.Join(dir, "service.yaml")
+	raw, err := fs.ReadFile(c.fsys, servicePath)
 	if err != nil {
 		if errors.Is(err, fs.ErrNotExist) {
 			return nil, core.ErrUnknownService{Service: id}
@@ -64,6 +78,7 @@ func (c *CatalogFS) GetService(_ context.Context, id core.ServiceID) (*core.Serv
 		BaseURL:     def.BaseURL,
 		Providers:   parseProviders(def.Auth.Providers),
 		Injection:   parseInjection(def.Auth.Injection),
+		AuthConfigs: parseAuthConfigs(def.Auth.Config),
 	}
 	for _, action := range actions {
 		ca, err := toCoreAction(svc.ID, action)
@@ -91,7 +106,7 @@ func (c *CatalogFS) GetAction(ctx context.Context, svcID core.ServiceID, actionI
 }
 
 func (c *CatalogFS) ListServices(ctx context.Context) ([]core.Service, error) {
-	entries, err := os.ReadDir(c.root)
+	entries, err := fs.ReadDir(c.fsys, ".")
 	if err != nil {
 		if errors.Is(err, fs.ErrNotExist) {
 			return nil, nil
@@ -105,7 +120,6 @@ func (c *CatalogFS) ListServices(ctx context.Context) ([]core.Service, error) {
 		}
 		svc, err := c.GetService(ctx, core.ServiceID(e.Name()))
 		if err != nil {
-			// Skip directories that aren't valid services.
 			if _, ok := err.(core.ErrUnknownService); ok {
 				continue
 			}
@@ -118,7 +132,7 @@ func (c *CatalogFS) ListServices(ctx context.Context) ([]core.Service, error) {
 }
 
 func (c *CatalogFS) GetSkill(_ context.Context, id core.ServiceID) (string, error) {
-	raw, err := os.ReadFile(filepath.Join(c.root, string(id), "SKILL.md"))
+	raw, err := fs.ReadFile(c.fsys, path.Join(string(id), "SKILL.md"))
 	if err != nil {
 		if errors.Is(err, fs.ErrNotExist) {
 			return "", nil
@@ -129,7 +143,7 @@ func (c *CatalogFS) GetSkill(_ context.Context, id core.ServiceID) (string, erro
 }
 
 func (c *CatalogFS) GetGuide(_ context.Context, svc core.ServiceID, id string) (*core.InstallGuide, error) {
-	raw, err := os.ReadFile(filepath.Join(c.root, string(svc), "guides", id+".md"))
+	raw, err := fs.ReadFile(c.fsys, path.Join(string(svc), "guides", id+".md"))
 	if err != nil {
 		if errors.Is(err, fs.ErrNotExist) {
 			return nil, core.ErrUnknownService{Service: svc}
@@ -140,8 +154,8 @@ func (c *CatalogFS) GetGuide(_ context.Context, svc core.ServiceID, id string) (
 }
 
 func (c *CatalogFS) ListGuides(_ context.Context, svc core.ServiceID) ([]core.InstallGuide, error) {
-	dir := filepath.Join(c.root, string(svc), "guides")
-	entries, err := os.ReadDir(dir)
+	dir := path.Join(string(svc), "guides")
+	entries, err := fs.ReadDir(c.fsys, dir)
 	if err != nil {
 		if errors.Is(err, fs.ErrNotExist) {
 			return nil, nil
@@ -154,7 +168,7 @@ func (c *CatalogFS) ListGuides(_ context.Context, svc core.ServiceID) ([]core.In
 			continue
 		}
 		id := strings.TrimSuffix(e.Name(), ".md")
-		raw, err := os.ReadFile(filepath.Join(dir, e.Name()))
+		raw, err := fs.ReadFile(c.fsys, path.Join(dir, e.Name()))
 		if err != nil {
 			return nil, err
 		}
@@ -179,8 +193,8 @@ func (c *CatalogFS) loadActions(dir string, def pkgcatalog.ServiceDef) ([]pkgcat
 		merged[id] = action
 	}
 
-	actionsDir := filepath.Join(dir, "actions")
-	entries, err := os.ReadDir(actionsDir)
+	actionsDir := path.Join(dir, "actions")
+	entries, err := fs.ReadDir(c.fsys, actionsDir)
 	if err != nil {
 		if !errors.Is(err, fs.ErrNotExist) {
 			return nil, err
@@ -190,7 +204,7 @@ func (c *CatalogFS) loadActions(dir string, def pkgcatalog.ServiceDef) ([]pkgcat
 			if e.IsDir() || !strings.HasSuffix(e.Name(), ".yaml") {
 				continue
 			}
-			raw, err := os.ReadFile(filepath.Join(actionsDir, e.Name()))
+			raw, err := fs.ReadFile(c.fsys, path.Join(actionsDir, e.Name()))
 			if err != nil {
 				return nil, err
 			}
@@ -264,8 +278,6 @@ func toCoreAction(svcID core.ServiceID, def pkgcatalog.ActionDef) (core.Action, 
 		}
 	}
 	if len(def.Inputs) > 0 {
-		// Convert pkgcatalog.InputDef → core.InputDef → json.RawMessage
-		// for downstream ParseInputSchema.
 		core_defs := make([]core.InputDef, len(def.Inputs))
 		for i, in := range def.Inputs {
 			core_defs[i] = convertInputDef(in)

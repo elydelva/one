@@ -1,0 +1,16 @@
+version: 1
+id: github
+name: GitHub
+description: GitHub REST API
+base_url: https://api.github.com
+auth:
+  providers:
+    - pat
+    - oauth2_user
+  injection:
+    pat:
+      header: Authorization
+      format: "Bearer {access_token}"
+    oauth2_user:
+      header: Authorization
+      format: "Bearer {access_token}"
