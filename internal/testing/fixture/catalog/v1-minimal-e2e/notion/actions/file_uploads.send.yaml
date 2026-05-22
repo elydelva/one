@@ -1,0 +1,37 @@
+id: file_uploads.send
+description: Upload bytes for a file_upload session. Requires a multipart/form-data body with `file` (binary) and, for multi_part mode, `part_number`. NOT exposed declaratively — the One runtime needs a WASM handler to assemble multipart; agents should use a dedicated upload tool or invoke this only when the handler is wired.
+permission: files.write
+side_effects: write
+request:
+  method: POST
+  path: /v1/file_uploads/{file_upload_id}/send
+  headers:
+    Notion-Version: "2025-09-03"
+inputs:
+  - name: file_upload_id
+    type: string
+    required: true
+    location: path
+  - name: file_path
+    type: string
+    required: true
+    location: body
+    description: "Local filesystem path to the file (handler reads + streams as multipart)."
+  - name: part_number
+    type: integer
+    location: body
+    description: "multi_part mode only. 1-indexed."
+errors:
+  "400":
+    code: validation_failed
+    hint: "Wrong part_number, file exceeds mode size limit, or session expired (1h)."
+  "401":
+    code: auth_failed
+  "403":
+    code: forbidden
+  "404":
+    code: not_found
+    hint: "file_upload_id wrong or session already completed/expired."
+  "429":
+    code: rate_limited
+    retry: backoff

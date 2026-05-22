@@ -1,0 +1,71 @@
+id: blocks.update
+description: Update a block's content. The body MUST contain a key matching the block's existing `type` — you cannot change a block's type.
+permission: blocks.write
+side_effects: write
+request:
+  method: PATCH
+  path: /v1/blocks/{block_id}
+  headers:
+    Notion-Version: "2025-09-03"
+  body: $inputs
+inputs:
+  - name: block_id
+    type: string
+    required: true
+    location: path
+  - name: paragraph
+    type: object
+    location: body
+    description: "{rich_text:[{type:'text', text:{content:'new text'}}], color:'default'}"
+  - name: heading_1
+    type: object
+    location: body
+  - name: heading_2
+    type: object
+    location: body
+  - name: heading_3
+    type: object
+    location: body
+  - name: to_do
+    type: object
+    location: body
+    description: "{rich_text:[...], checked:true}"
+  - name: bulleted_list_item
+    type: object
+    location: body
+  - name: numbered_list_item
+    type: object
+    location: body
+  - name: toggle
+    type: object
+    location: body
+  - name: quote
+    type: object
+    location: body
+  - name: callout
+    type: object
+    location: body
+    description: "{rich_text:[...], icon:{type:'emoji', emoji:'💡'}, color:'gray_background'}"
+  - name: code
+    type: object
+    location: body
+    description: "{rich_text:[...], language:'go'}"
+  - name: in_trash
+    type: boolean
+    location: body
+    description: "true = archive the block (children archived too). Reversible via false."
+errors:
+  "400":
+    code: validation_failed
+    hint: "Body key MUST match the block's existing type (you can't turn a paragraph into a heading). Retrieve the block first if unsure."
+  "401":
+    code: auth_failed
+  "403":
+    code: forbidden
+  "404":
+    code: not_found
+  "409":
+    code: conflict
+  "429":
+    code: rate_limited
+    retry: backoff

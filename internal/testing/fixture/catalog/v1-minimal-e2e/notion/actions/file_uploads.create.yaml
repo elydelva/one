@@ -1,0 +1,43 @@
+id: file_uploads.create
+description: Start a file upload session. Three modes — single_part (≤20MB), multi_part (5–5000 MB, chunked), external_url (Notion imports from a public URL).
+permission: files.write
+side_effects: write
+request:
+  method: POST
+  path: /v1/file_uploads
+  headers:
+    Notion-Version: "2025-09-03"
+  body: $inputs
+inputs:
+  - name: mode
+    type: string
+    location: body
+    enum: [single_part, multi_part, external_url]
+    default: single_part
+  - name: filename
+    type: string
+    location: body
+    description: "Required for multi_part and external_url. Used as the display name."
+  - name: content_type
+    type: string
+    location: body
+    description: "MIME type. Required for multi_part; recommended for single_part."
+  - name: number_of_parts
+    type: integer
+    location: body
+    description: "multi_part only. 1–1000."
+  - name: external_url
+    type: string
+    location: body
+    description: "external_url mode only. Publicly fetchable URL Notion will download from."
+errors:
+  "400":
+    code: validation_failed
+    hint: "Required fields depend on mode: see input descriptions."
+  "401":
+    code: auth_failed
+  "403":
+    code: forbidden
+  "429":
+    code: rate_limited
+    retry: backoff

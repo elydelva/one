@@ -1,0 +1,39 @@
+id: comments.list
+description: List unresolved comments on a block (or the discussions of a page if block_id is the page id). Resolved comments are NOT returned by the API. Paginated → `.data` is a flat array (no `.results` wrapper).
+permission: comments.read
+side_effects: read
+request:
+  method: GET
+  path: /v1/comments
+  headers:
+    Notion-Version: "2025-09-03"
+inputs:
+  - name: block_id
+    type: string
+    required: true
+    location: query
+    description: "Page id or block id. To get all page-level comments, pass the page_id here."
+  - name: page_size
+    type: integer
+    location: query
+    default: 100
+    min: 1
+    max: 100
+pagination:
+  style: cursor
+  request_param: start_cursor
+  request_location: query
+  response_token: next_cursor
+  response_items: results
+  max_pages: 10
+errors:
+  "401":
+    code: auth_failed
+  "403":
+    code: forbidden
+    hint: "Integration needs 'Read comments' capability."
+  "404":
+    code: not_found
+  "429":
+    code: rate_limited
+    retry: backoff

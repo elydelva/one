@@ -1,0 +1,51 @@
+id: pages.update
+description: Update a Notion page using Enhanced Markdown (append, replace, or search-and-replace)
+permission: pages.write
+side_effects: write
+request:
+  method: PATCH
+  path: /v1/pages/{page_id}/markdown
+  headers:
+    Notion-Version: "2026-03-11"
+  body: $inputs
+inputs:
+  - name: page_id
+    type: string
+    required: true
+    location: path
+  - name: type
+    type: string
+    required: true
+    location: body
+    enum: [update_content, replace_content, insert_content, replace_content_range]
+    description: "Operation kind"
+  - name: update_content
+    type: object
+    location: body
+    description: "{content_updates: [{old_str, new_str, replace_all_matches?}]}"
+  - name: replace_content
+    type: object
+    location: body
+    description: "{new_str: '...'} — replaces entire page"
+  - name: insert_content
+    type: object
+    location: body
+    description: "{position: 'start'|'end'|'after_selection', content: '...'}"
+  - name: replace_content_range
+    type: object
+    location: body
+    description: "{old_str, new_str}"
+  - name: allow_deleting_content
+    type: boolean
+    location: body
+    description: "Permit deletion of child pages/databases"
+errors:
+  "400":
+    code: validation_failed
+    hint: "Check the markdown payload (e.g. old_str matched 0 or 2+ locations without replace_all_matches)."
+  "401":
+    code: auth_failed
+  "403":
+    code: forbidden
+  "404":
+    code: not_found

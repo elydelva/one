@@ -1,0 +1,27 @@
+id: blocks.delete
+description: Archive a block (Notion calls this "delete" but it's recoverable via blocks.update with in_trash=false within the trash window).
+permission: blocks.write
+side_effects: destructive
+request:
+  method: DELETE
+  path: /v1/blocks/{block_id}
+  headers:
+    Notion-Version: "2025-09-03"
+inputs:
+  - name: block_id
+    type: string
+    required: true
+    location: path
+    description: "Archives the block and all its descendants. Passing a page_id archives the page."
+errors:
+  "401":
+    code: auth_failed
+  "403":
+    code: forbidden
+  "404":
+    code: not_found
+  "409":
+    code: conflict
+  "429":
+    code: rate_limited
+    retry: backoff

@@ -1,0 +1,25 @@
+id: file_uploads.complete
+description: Finalize a multi_part upload. Required after all parts are sent; not needed for single_part or external_url.
+permission: files.write
+side_effects: write
+request:
+  method: POST
+  path: /v1/file_uploads/{file_upload_id}/complete
+  headers:
+    Notion-Version: "2025-09-03"
+inputs:
+  - name: file_upload_id
+    type: string
+    required: true
+    location: path
+errors:
+  "400":
+    code: validation_failed
+    hint: "Some parts missing, or wrong mode (only multi_part needs complete)."
+  "401":
+    code: auth_failed
+  "404":
+    code: not_found
+  "429":
+    code: rate_limited
+    retry: backoff

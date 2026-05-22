@@ -1,0 +1,48 @@
+id: data_sources.update
+description: Edit a data source's property schema (add/remove/rename columns, change select options). Page-level property *values* are edited via pages.update_properties.
+permission: databases.write
+side_effects: write
+request:
+  method: PATCH
+  path: /v1/data_sources/{data_source_id}
+  headers:
+    Notion-Version: "2025-09-03"
+  body: $inputs
+inputs:
+  - name: data_source_id
+    type: string
+    required: true
+    location: path
+  - name: properties
+    type: object
+    location: body
+    description: |
+      Schema patch keyed by property name. Patterns:
+        - add:    {"NewCol": {"rich_text": {}}}
+        - rename: {"OldName": {"name": "NewName"}}
+        - retype: {"Col": {"number": {"format": "dollar"}}}
+        - delete: {"Col": null}
+        - select options: {"Status": {"select": {"options": [{"name":"Done","color":"green"}]}}}
+      You CANNOT delete the single `title` property.
+  - name: title
+    type: array
+    location: body
+    description: "Rich text. Renames the data source itself (not the parent DB)."
+  - name: in_trash
+    type: boolean
+    location: body
+errors:
+  "400":
+    code: validation_failed
+    hint: "Common: removing the title property, invalid select color, formula expression error."
+  "401":
+    code: auth_failed
+  "403":
+    code: forbidden
+  "404":
+    code: not_found
+  "409":
+    code: conflict
+  "429":
+    code: rate_limited
+    retry: backoff

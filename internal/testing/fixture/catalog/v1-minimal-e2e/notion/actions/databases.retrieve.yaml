@@ -1,0 +1,28 @@
+id: databases.retrieve
+description: Retrieve a Notion database. Returns the container (title, description, icon, cover) and the list of `data_sources` it wraps (id + name). The property schema lives on each data source, NOT on the database in 2025-09-03.
+permission: databases.read
+side_effects: read
+request:
+  method: GET
+  path: /v1/databases/{database_id}
+  headers:
+    Notion-Version: "2025-09-03"
+inputs:
+  - name: database_id
+    type: string
+    required: true
+    location: path
+    description: "UUID with or without dashes."
+errors:
+  "401":
+    code: auth_failed
+  "403":
+    code: forbidden
+    hint: "Share the database with the integration (open DB → ⋯ → Connections → add)."
+  "404":
+    code: not_found
+    hint: "ID wrong OR DB not shared with integration (Notion returns 404 for both)."
+  "429":
+    code: rate_limited
+    retry: backoff
+    hint: "Honor Retry-After."

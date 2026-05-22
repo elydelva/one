@@ -1,0 +1,27 @@
+id: pages.archive
+description: Archive a page (sends to trash). Recoverable via pages.restore within the workspace trash retention window.
+permission: pages.write
+side_effects: destructive
+request:
+  method: PATCH
+  path: /v1/pages/{page_id}
+  headers:
+    Notion-Version: "2025-09-03"
+  body: '{"in_trash":true}'
+inputs:
+  - name: page_id
+    type: string
+    required: true
+    location: path
+errors:
+  "401":
+    code: auth_failed
+  "403":
+    code: forbidden
+  "404":
+    code: not_found
+  "409":
+    code: conflict
+  "429":
+    code: rate_limited
+    retry: backoff

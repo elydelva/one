@@ -1,0 +1,26 @@
+id: pages.restore
+description: Restore a previously archived page from trash.
+permission: pages.write
+side_effects: write
+request:
+  method: PATCH
+  path: /v1/pages/{page_id}
+  headers:
+    Notion-Version: "2025-09-03"
+  body: '{"in_trash":false}'
+inputs:
+  - name: page_id
+    type: string
+    required: true
+    location: path
+errors:
+  "401":
+    code: auth_failed
+  "403":
+    code: forbidden
+  "404":
+    code: not_found
+    hint: "Trash retention window may have expired — page permanently deleted."
+  "429":
+    code: rate_limited
+    retry: backoff

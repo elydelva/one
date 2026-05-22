@@ -1,0 +1,16 @@
+id: users.me
+description: Retrieve the bot user associated with the current token. Use this as a connectivity / auth smoke test — it works even with zero shared pages.
+permission: users.read
+side_effects: read
+request:
+  method: GET
+  path: /v1/users/me
+  headers:
+    Notion-Version: "2025-09-03"
+errors:
+  "401":
+    code: auth_failed
+    hint: "Token invalid or revoked. Regenerate in Notion → Integrations."
+  "429":
+    code: rate_limited
+    retry: backoff

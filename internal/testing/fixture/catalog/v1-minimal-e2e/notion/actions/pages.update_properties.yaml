@@ -1,0 +1,63 @@
+id: pages.update_properties
+description: Update a page's JSON properties (DB column values), icon, cover, or in_trash flag. For markdown body edits use pages.update / pages.append / pages.replace.
+permission: pages.write
+side_effects: write
+request:
+  method: PATCH
+  path: /v1/pages/{page_id}
+  headers:
+    Notion-Version: "2025-09-03"
+  body: $inputs
+inputs:
+  - name: page_id
+    type: string
+    required: true
+    location: path
+  - name: properties
+    type: object
+    location: body
+    description: |
+      Map keyed by property NAME (or id). Value shape depends on the DB column type:
+        title:        {title: [{type:"text", text:{content:"New title"}}]}
+        rich_text:    {rich_text: [{type:"text", text:{content:"…"}}]}
+        number:       {number: 42}
+        select:       {select: {name:"Done"}}            # name must exist in schema
+        multi_select: {multi_select: [{name:"a"},{name:"b"}]}
+        status:       {status: {name:"In Progress"}}
+        checkbox:     {checkbox: true}
+        date:         {date: {start:"2026-05-21", end:null}}
+        url/email/phone_number: {<type>: "value"}
+        people:       {people: [{id:"<user-id>"}]}
+        relation:     {relation: [{id:"<related-page-id>"}]}
+        files:        {files: [{type:"file_upload", file_upload:{id:"<id>"}, name:"f.pdf"}]}
+      To CLEAR a property, send the empty form: {rich_text: []}, {number: null}, {select: null}.
+      Property names are case-sensitive and must match the data source schema exactly.
+  - name: icon
+    type: object
+    location: body
+    description: "{type:'emoji', emoji:'🚀'} or {type:'external', external:{url:'...'}}. null to remove."
+  - name: cover
+    type: object
+    location: body
+    description: "{type:'external', external:{url:'...'}}. null to remove."
+  - name: in_trash
+    type: boolean
+    location: body
+    description: "true = archive page (recoverable), false = restore."
+errors:
+  "400":
+    code: validation_failed
+    hint: |
+      Common: property name doesn't exist in schema, type mismatch (e.g. string passed where number expected),
+      select option name not in the schema's option list, relation id not in same DB family.
+  "401":
+    code: auth_failed
+  "403":
+    code: forbidden
+  "404":
+    code: not_found
+  "409":
+    code: conflict
+  "429":
+    code: rate_limited
+    retry: backoff
