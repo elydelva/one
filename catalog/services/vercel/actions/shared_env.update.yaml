@@ -1,0 +1,21 @@
+id: shared_env.update
+description: Update one or more shared env vars
+permission: env.write
+side_effects: write
+request:
+  method: PATCH
+  path: /v1/env
+  body: $inputs
+inputs:
+  - name: updates
+    type: object
+    required: true
+    location: body
+    description: "Map of envVarId -> {value, target, projectIds, comment}"
+  - name: teamId
+    type: string
+    location: query
+errors:
+  "401": {code: auth_failed}
+  "404": {code: not_found}
+  "400": {code: validation_failed}

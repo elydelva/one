@@ -1,0 +1,44 @@
+id: dns_records.create
+description: Create a DNS record in a zone
+permission: dns.write
+side_effects: write
+request:
+  method: POST
+  path: /zones/{zone_id}/dns_records
+  body: $inputs
+inputs:
+  - name: zone_id
+    type: string
+    required: true
+    location: path
+  - name: type
+    type: string
+    required: true
+    location: body
+    description: "A, AAAA, CNAME, TXT, MX, NS, SRV, CAA"
+  - name: name
+    type: string
+    required: true
+    location: body
+  - name: content
+    type: string
+    required: true
+    location: body
+  - name: ttl
+    type: integer
+    location: body
+    description: "1 = automatic, otherwise 60-86400"
+  - name: proxied
+    type: boolean
+    location: body
+  - name: priority
+    type: integer
+    location: body
+    description: "Required for MX records"
+  - name: comment
+    type: string
+    location: body
+errors:
+  "400": {code: validation_failed}
+  "401": {code: auth_failed}
+  "403": {code: forbidden}

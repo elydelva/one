@@ -1,0 +1,21 @@
+id: certs.issue
+description: Issue a new cert for one or more common names
+permission: certs.write
+side_effects: write
+request:
+  method: POST
+  path: /v8/certs
+  body: $inputs
+inputs:
+  - name: cns
+    type: array
+    location: body
+    description: "Common names (domains) the cert should cover"
+  - name: teamId
+    type: string
+    location: query
+errors:
+  "400": {code: validation_failed}
+  "401": {code: auth_failed}
+  "402": {code: payment_required}
+  "449": {code: retry_required, retry: true, hint: "DNS challenge pending; retry after configuring DNS."}

@@ -1,0 +1,20 @@
+id: kv.namespaces.create
+description: Create a Workers KV namespace
+permission: kv.write
+side_effects: write
+request:
+  method: POST
+  path: /accounts/{account_id}/storage/kv/namespaces
+  body: $inputs
+inputs:
+  - name: account_id
+    type: string
+    required: true
+    location: path
+  - name: title
+    type: string
+    required: true
+    location: body
+errors:
+  "400": {code: validation_failed}
+  "401": {code: auth_failed}

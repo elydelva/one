@@ -1,0 +1,17 @@
+id: conversations.setTopic
+description: Set a channel's topic
+permission: channels.write
+side_effects: write
+request:
+  method: POST
+  path: /conversations.setTopic
+  body: $inputs
+inputs:
+  - name: channel
+    type: string
+    required: true
+    location: body
+  - name: topic
+    type: string
+    required: true
+    location: body

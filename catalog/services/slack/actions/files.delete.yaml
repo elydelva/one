@@ -1,0 +1,13 @@
+id: files.delete
+description: Delete a file
+permission: files.write
+side_effects: write
+request:
+  method: POST
+  path: /files.delete
+  body: $inputs
+inputs:
+  - name: file
+    type: string
+    required: true
+    location: body

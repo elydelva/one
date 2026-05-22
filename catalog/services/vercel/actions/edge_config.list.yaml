@@ -1,0 +1,12 @@
+id: edge_config.list
+description: List all Edge Configs
+permission: edge_config.read
+request:
+  method: GET
+  path: /v1/edge-config
+inputs:
+  - name: teamId
+    type: string
+    location: query
+errors:
+  "401": {code: auth_failed}

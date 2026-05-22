@@ -1,0 +1,37 @@
+id: releases.create
+description: Create a new release
+permission: releases.write
+side_effects: write
+request:
+  method: POST
+  path: /organizations/{organization_slug}/releases/
+  body: $inputs
+inputs:
+  - name: organization_slug
+    type: string
+    required: true
+    location: path
+  - name: version
+    type: string
+    required: true
+    location: body
+  - name: ref
+    type: string
+    location: body
+  - name: url
+    type: string
+    location: body
+  - name: projects
+    type: array
+    required: true
+    location: body
+  - name: dateReleased
+    type: string
+    location: body
+  - name: commits
+    type: array
+    location: body
+errors:
+  "401": {code: auth_failed}
+  "400": {code: validation_failed}
+  "409": {code: conflict, hint: "Release version already exists"}

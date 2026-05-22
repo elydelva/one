@@ -1,0 +1,23 @@
+id: conversations.open
+description: Open or resume a direct/multi-person DM
+permission: channels.write
+side_effects: write
+request:
+  method: POST
+  path: /conversations.open
+  body: $inputs
+inputs:
+  - name: users
+    type: string
+    location: body
+    description: "Comma-separated user IDs (1 = DM, 2-8 = MPIM)"
+  - name: channel
+    type: string
+    location: body
+    description: "Existing IM/MPIM channel ID to resume"
+  - name: return_im
+    type: boolean
+    location: body
+  - name: prevent_creation
+    type: boolean
+    location: body

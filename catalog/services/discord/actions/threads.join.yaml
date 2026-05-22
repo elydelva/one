@@ -1,0 +1,18 @@
+id: threads.join
+description: Have the current bot join a thread
+permission: channels.write
+side_effects: write
+request:
+  method: PUT
+  path: /channels/{channel_id}/thread-members/@me
+inputs:
+  - name: channel_id
+    type: string
+    required: true
+    location: path
+    description: "Thread channel id"
+errors:
+  "401": {code: auth_failed}
+  "403": {code: forbidden}
+  "404": {code: not_found}
+  "429": {code: rate_limited, retry: backoff}

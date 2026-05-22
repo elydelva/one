@@ -1,0 +1,27 @@
+id: payment_intents.capture
+description: Capture funds on a PaymentIntent created with capture_method=manual.
+permission: payments.write
+side_effects: write
+request:
+  method: POST
+  path: /v1/payment_intents/{id}/capture
+  headers:
+    Content-Type: application/x-www-form-urlencoded
+  body: '{body_raw}'
+inputs:
+  - name: id
+    type: string
+    required: true
+    location: path
+  - name: body_raw
+    type: string
+    required: true
+    location: body
+    description: 'Form-encoded. Optional: amount_to_capture, application_fee_amount, statement_descriptor.'
+  - name: Idempotency-Key
+    type: string
+    location: header
+errors:
+  "400": {code: validation_failed}
+  "401": {code: auth_failed}
+  "404": {code: not_found}

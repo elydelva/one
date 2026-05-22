@@ -1,0 +1,21 @@
+id: project_versions.delete
+description: Delete a project version
+permission: projects.write
+side_effects: write
+request:
+  method: DELETE
+  path: /rest/api/3/version/{id}
+inputs:
+  - name: id
+    type: string
+    required: true
+    location: path
+  - name: moveFixIssuesTo
+    type: string
+    location: query
+  - name: moveAffectedIssuesTo
+    type: string
+    location: query
+errors:
+  "401": {code: auth_failed}
+  "404": {code: not_found}

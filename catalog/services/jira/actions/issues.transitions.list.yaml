@@ -1,0 +1,18 @@
+id: issues.transitions.list
+description: List available workflow transitions for an issue
+permission: issues.read
+side_effects: read
+request:
+  method: GET
+  path: /rest/api/3/issue/{issueIdOrKey}/transitions
+inputs:
+  - name: issueIdOrKey
+    type: string
+    required: true
+    location: path
+  - name: expand
+    type: string
+    location: query
+errors:
+  "401": {code: auth_failed}
+  "404": {code: not_found}

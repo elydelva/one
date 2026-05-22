@@ -1,0 +1,14 @@
+id: workers.scripts.list
+description: List Worker scripts in an account
+permission: workers.read
+request:
+  method: GET
+  path: /accounts/{account_id}/workers/scripts
+inputs:
+  - name: account_id
+    type: string
+    required: true
+    location: path
+errors:
+  "401": {code: auth_failed}
+  "403": {code: forbidden}

@@ -1,0 +1,32 @@
+id: dns.list
+description: List DNS records for a domain
+permission: dns.read
+request:
+  method: GET
+  path: /v4/domains/{domain}/records
+inputs:
+  - name: domain
+    type: string
+    required: true
+    location: path
+  - name: limit
+    type: integer
+    location: query
+  - name: since
+    type: integer
+    location: query
+  - name: until
+    type: integer
+    location: query
+  - name: teamId
+    type: string
+    location: query
+pagination:
+  style: cursor
+  request_param: until
+  request_location: query
+  response_token: pagination.next
+  max_pages: 10
+errors:
+  "401": {code: auth_failed}
+  "404": {code: not_found}

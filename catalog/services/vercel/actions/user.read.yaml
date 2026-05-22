@@ -1,0 +1,8 @@
+id: user.read
+description: Get the authenticated user
+permission: user.read
+request:
+  method: GET
+  path: /v2/user
+errors:
+  "401": {code: auth_failed}

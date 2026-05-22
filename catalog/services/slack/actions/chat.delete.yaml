@@ -1,0 +1,20 @@
+id: chat.delete
+description: Delete a message
+permission: chat.write
+side_effects: write
+request:
+  method: POST
+  path: /chat.delete
+  body: $inputs
+inputs:
+  - name: channel
+    type: string
+    required: true
+    location: body
+  - name: ts
+    type: string
+    required: true
+    location: body
+  - name: as_user
+    type: boolean
+    location: body

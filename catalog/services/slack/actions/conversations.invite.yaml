@@ -1,0 +1,21 @@
+id: conversations.invite
+description: Invite users to a channel
+permission: channels.write
+side_effects: write
+request:
+  method: POST
+  path: /conversations.invite
+  body: $inputs
+inputs:
+  - name: channel
+    type: string
+    required: true
+    location: body
+  - name: users
+    type: string
+    required: true
+    location: body
+    description: "Comma-separated user IDs (max 1000)"
+  - name: force
+    type: boolean
+    location: body

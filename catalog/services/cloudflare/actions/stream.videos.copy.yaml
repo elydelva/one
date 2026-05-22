@@ -1,0 +1,33 @@
+id: stream.videos.copy
+description: Upload a Stream video from a remote URL
+permission: stream.write
+side_effects: write
+request:
+  method: POST
+  path: /accounts/{account_id}/stream/copy
+  body: $inputs
+inputs:
+  - name: account_id
+    type: string
+    required: true
+    location: path
+  - name: url
+    type: string
+    required: true
+    location: body
+    description: "Publicly accessible source URL"
+  - name: meta
+    type: object
+    location: body
+  - name: creator
+    type: string
+    location: body
+  - name: requireSignedURLs
+    type: boolean
+    location: body
+  - name: thumbnailTimestampPct
+    type: number
+    location: body
+errors:
+  "400": {code: validation_failed}
+  "401": {code: auth_failed}

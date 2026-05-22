@@ -1,0 +1,46 @@
+id: discover.query
+description: Run a Discover events query
+permission: issues.read
+request:
+  method: GET
+  path: /organizations/{organization_slug}/events/
+inputs:
+  - name: organization_slug
+    type: string
+    required: true
+    location: path
+  - name: field
+    type: array
+    required: true
+    location: query
+    description: "Columns, e.g. title, count()"
+  - name: query
+    type: string
+    location: query
+  - name: statsPeriod
+    type: string
+    location: query
+  - name: project
+    type: array
+    location: query
+  - name: environment
+    type: array
+    location: query
+  - name: sort
+    type: string
+    location: query
+  - name: per_page
+    type: integer
+    location: query
+  - name: cursor
+    type: string
+    location: query
+pagination:
+  style: cursor
+  request_param: cursor
+  request_location: query
+  response_token: next_cursor
+  max_pages: 10
+errors:
+  "401": {code: auth_failed}
+  "400": {code: validation_failed, hint: "Check field and query syntax"}

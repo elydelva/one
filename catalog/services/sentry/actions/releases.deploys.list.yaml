@@ -1,0 +1,18 @@
+id: releases.deploys.list
+description: List deploys for a release
+permission: releases.read
+request:
+  method: GET
+  path: /organizations/{organization_slug}/releases/{version}/deploys/
+inputs:
+  - name: organization_slug
+    type: string
+    required: true
+    location: path
+  - name: version
+    type: string
+    required: true
+    location: path
+errors:
+  "401": {code: auth_failed}
+  "404": {code: not_found}

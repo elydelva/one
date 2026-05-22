@@ -1,0 +1,24 @@
+id: teams.list
+description: List all teams the authenticated user belongs to
+permission: teams.read
+request:
+  method: GET
+  path: /v2/teams
+inputs:
+  - name: limit
+    type: integer
+    location: query
+  - name: since
+    type: integer
+    location: query
+  - name: until
+    type: integer
+    location: query
+pagination:
+  style: cursor
+  request_param: until
+  request_location: query
+  response_token: pagination.next
+  max_pages: 10
+errors:
+  "401": {code: auth_failed}

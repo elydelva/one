@@ -1,0 +1,21 @@
+id: subscriptions.cancel
+description: Cancel a subscription immediately.
+permission: subscriptions.write
+side_effects: write
+request:
+  method: DELETE
+  path: /v1/subscriptions/{id}
+inputs:
+  - name: id
+    type: string
+    required: true
+    location: path
+  - name: prorate
+    type: string
+    location: query
+  - name: invoice_now
+    type: string
+    location: query
+errors:
+  "401": {code: auth_failed}
+  "404": {code: not_found}

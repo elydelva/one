@@ -1,0 +1,23 @@
+id: alerts.rules.delete
+description: Delete an issue alert rule
+permission: alerts.write
+side_effects: write
+request:
+  method: DELETE
+  path: /projects/{organization_slug}/{project_slug}/rules/{rule_id}/
+inputs:
+  - name: organization_slug
+    type: string
+    required: true
+    location: path
+  - name: project_slug
+    type: string
+    required: true
+    location: path
+  - name: rule_id
+    type: string
+    required: true
+    location: path
+errors:
+  "401": {code: auth_failed}
+  "404": {code: not_found}

@@ -1,0 +1,25 @@
+id: subscriptions.list
+description: List subscriptions.
+permission: subscriptions.read
+request:
+  method: GET
+  path: /v1/subscriptions
+inputs:
+  - name: customer
+    type: string
+    location: query
+  - name: status
+    type: string
+    location: query
+    enum: [active, past_due, unpaid, canceled, incomplete, incomplete_expired, trialing, all]
+  - name: price
+    type: string
+    location: query
+  - name: limit
+    type: integer
+    location: query
+  - name: starting_after
+    type: string
+    location: query
+errors:
+  "401": {code: auth_failed}

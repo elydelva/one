@@ -1,0 +1,52 @@
+id: webhooks.execute
+description: Execute a webhook (post a message via webhook token)
+permission: webhooks.write
+side_effects: write
+request:
+  method: POST
+  path: /webhooks/{webhook_id}/{webhook_token}
+  body: $inputs
+inputs:
+  - name: webhook_id
+    type: string
+    required: true
+    location: path
+  - name: webhook_token
+    type: string
+    required: true
+    location: path
+  - name: wait
+    type: boolean
+    location: query
+  - name: thread_id
+    type: string
+    location: query
+  - name: content
+    type: string
+    location: body
+  - name: username
+    type: string
+    location: body
+  - name: avatar_url
+    type: string
+    location: body
+  - name: tts
+    type: boolean
+    location: body
+  - name: embeds
+    type: array
+    location: body
+  - name: allowed_mentions
+    type: object
+    location: body
+  - name: components
+    type: array
+    location: body
+  - name: flags
+    type: integer
+    location: body
+errors:
+  "401": {code: auth_failed}
+  "404": {code: not_found}
+  "400": {code: validation_failed}
+  "429": {code: rate_limited, retry: backoff}

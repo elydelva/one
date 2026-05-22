@@ -1,0 +1,17 @@
+id: webhooks.delete
+description: Delete a webhook
+permission: webhooks.write
+side_effects: write
+request:
+  method: DELETE
+  path: /webhooks/{webhook_id}
+inputs:
+  - name: webhook_id
+    type: string
+    required: true
+    location: path
+errors:
+  "401": {code: auth_failed}
+  "403": {code: forbidden}
+  "404": {code: not_found}
+  "429": {code: rate_limited, retry: backoff}

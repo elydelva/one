@@ -1,0 +1,32 @@
+id: issues.search
+description: Search issues using JQL (POST search). Token-paginated via nextPageToken.
+permission: issues.read
+side_effects: read
+request:
+  method: POST
+  path: /rest/api/3/search/jql
+  body: $inputs
+inputs:
+  - name: jql
+    type: string
+    required: true
+    location: body
+    description: "JQL query, e.g. project = ENG AND status = Open"
+  - name: fields
+    type: array
+    location: body
+    description: "Fields to return, e.g. [summary,status,assignee] or [*all]"
+  - name: expand
+    type: array
+    location: body
+  - name: maxResults
+    type: integer
+    location: body
+    default: 50
+  - name: nextPageToken
+    type: string
+    location: body
+errors:
+  "400": {code: validation_failed}
+  "401": {code: auth_failed}
+  "403": {code: forbidden}

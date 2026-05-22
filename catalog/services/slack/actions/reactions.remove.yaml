@@ -1,0 +1,21 @@
+id: reactions.remove
+description: Remove an emoji reaction from a message
+permission: reactions.write
+side_effects: write
+request:
+  method: POST
+  path: /reactions.remove
+  body: $inputs
+inputs:
+  - name: channel
+    type: string
+    required: true
+    location: body
+  - name: timestamp
+    type: string
+    required: true
+    location: body
+  - name: name
+    type: string
+    required: true
+    location: body

@@ -1,0 +1,22 @@
+id: email_routing.rules.list
+description: List Email Routing rules for a zone
+permission: email.read
+request:
+  method: GET
+  path: /zones/{zone_id}/email/routing/rules
+inputs:
+  - name: zone_id
+    type: string
+    required: true
+    location: path
+  - name: enabled
+    type: boolean
+    location: query
+  - name: page
+    type: integer
+    location: query
+  - name: per_page
+    type: integer
+    location: query
+errors:
+  "401": {code: auth_failed}

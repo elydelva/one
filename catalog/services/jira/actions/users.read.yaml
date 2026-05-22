@@ -1,0 +1,18 @@
+id: users.read
+description: Get a user by accountId
+permission: users.read
+side_effects: read
+request:
+  method: GET
+  path: /rest/api/3/user
+inputs:
+  - name: accountId
+    type: string
+    required: true
+    location: query
+  - name: expand
+    type: string
+    location: query
+errors:
+  "401": {code: auth_failed}
+  "404": {code: not_found}

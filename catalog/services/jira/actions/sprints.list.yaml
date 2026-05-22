@@ -1,0 +1,31 @@
+id: sprints.list
+description: List sprints of a board
+permission: boards.read
+side_effects: read
+request:
+  method: GET
+  path: /rest/agile/1.0/board/{boardId}/sprint
+inputs:
+  - name: boardId
+    type: integer
+    required: true
+    location: path
+  - name: state
+    type: string
+    location: query
+    description: "future, active, closed (comma-separated)"
+  - name: startAt
+    type: integer
+    location: query
+  - name: maxResults
+    type: integer
+    location: query
+pagination:
+  style: offset
+  request_param: startAt
+  request_location: query
+  page_size_param: maxResults
+  max_pages: 10
+errors:
+  "401": {code: auth_failed}
+  "404": {code: not_found}

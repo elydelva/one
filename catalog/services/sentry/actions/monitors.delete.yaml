@@ -1,0 +1,19 @@
+id: monitors.delete
+description: Delete a cron monitor
+permission: alerts.write
+side_effects: write
+request:
+  method: DELETE
+  path: /organizations/{organization_slug}/monitors/{monitor_slug}/
+inputs:
+  - name: organization_slug
+    type: string
+    required: true
+    location: path
+  - name: monitor_slug
+    type: string
+    required: true
+    location: path
+errors:
+  "401": {code: auth_failed}
+  "404": {code: not_found}

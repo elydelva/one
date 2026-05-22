@@ -1,0 +1,17 @@
+id: webhooks.list
+description: List webhooks for a channel
+permission: webhooks.write
+side_effects: read
+request:
+  method: GET
+  path: /channels/{channel_id}/webhooks
+inputs:
+  - name: channel_id
+    type: string
+    required: true
+    location: path
+errors:
+  "401": {code: auth_failed}
+  "403": {code: forbidden}
+  "404": {code: not_found}
+  "429": {code: rate_limited, retry: backoff}

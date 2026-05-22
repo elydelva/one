@@ -1,0 +1,51 @@
+id: alerts.rules.create
+description: Create an issue alert rule
+permission: alerts.write
+side_effects: write
+request:
+  method: POST
+  path: /projects/{organization_slug}/{project_slug}/rules/
+  body: $inputs
+inputs:
+  - name: organization_slug
+    type: string
+    required: true
+    location: path
+  - name: project_slug
+    type: string
+    required: true
+    location: path
+  - name: name
+    type: string
+    required: true
+    location: body
+  - name: actionMatch
+    type: string
+    required: true
+    location: body
+    enum: [all, any, none]
+  - name: filterMatch
+    type: string
+    location: body
+    enum: [all, any, none]
+  - name: frequency
+    type: integer
+    required: true
+    location: body
+  - name: conditions
+    type: array
+    required: true
+    location: body
+  - name: actions
+    type: array
+    required: true
+    location: body
+  - name: filters
+    type: array
+    location: body
+  - name: environment
+    type: string
+    location: body
+errors:
+  "401": {code: auth_failed}
+  "400": {code: validation_failed}

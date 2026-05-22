@@ -1,0 +1,30 @@
+id: events.list
+description: List events for a project
+permission: issues.read
+request:
+  method: GET
+  path: /projects/{organization_slug}/{project_slug}/events/
+inputs:
+  - name: organization_slug
+    type: string
+    required: true
+    location: path
+  - name: project_slug
+    type: string
+    required: true
+    location: path
+  - name: full
+    type: boolean
+    location: query
+  - name: cursor
+    type: string
+    location: query
+pagination:
+  style: cursor
+  request_param: cursor
+  request_location: query
+  response_token: next_cursor
+  max_pages: 10
+errors:
+  "401": {code: auth_failed}
+  "404": {code: not_found}

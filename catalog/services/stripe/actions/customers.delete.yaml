@@ -1,0 +1,15 @@
+id: customers.delete
+description: Permanently delete a customer.
+permission: customers.write
+side_effects: write
+request:
+  method: DELETE
+  path: /v1/customers/{id}
+inputs:
+  - name: id
+    type: string
+    required: true
+    location: path
+errors:
+  "401": {code: auth_failed}
+  "404": {code: not_found}

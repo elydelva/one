@@ -1,0 +1,18 @@
+id: workers.scripts.read
+description: Download a Worker script's source
+permission: workers.read
+request:
+  method: GET
+  path: /accounts/{account_id}/workers/scripts/{script_name}
+inputs:
+  - name: account_id
+    type: string
+    required: true
+    location: path
+  - name: script_name
+    type: string
+    required: true
+    location: path
+errors:
+  "401": {code: auth_failed}
+  "404": {code: not_found}

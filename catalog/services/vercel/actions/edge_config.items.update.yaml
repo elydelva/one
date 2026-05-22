@@ -1,0 +1,26 @@
+id: edge_config.items.update
+description: Update Edge Config items in batch (create, update, upsert, delete)
+permission: edge_config.write
+side_effects: write
+request:
+  method: PATCH
+  path: /v1/edge-config/{edgeConfigId}/items
+  body: $inputs
+inputs:
+  - name: edgeConfigId
+    type: string
+    required: true
+    location: path
+  - name: items
+    type: array
+    required: true
+    location: body
+    description: "Array of {operation: create|update|upsert|delete, key, value?}"
+  - name: teamId
+    type: string
+    location: query
+errors:
+  "400": {code: validation_failed}
+  "401": {code: auth_failed}
+  "404": {code: not_found}
+  "412": {code: precondition_failed, hint: "Edge Config digest mismatch; retry after re-fetching."}

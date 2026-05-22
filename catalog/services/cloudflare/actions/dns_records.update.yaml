@@ -1,0 +1,42 @@
+id: dns_records.update
+description: Overwrite a DNS record (PUT, full replacement)
+permission: dns.write
+side_effects: write
+request:
+  method: PUT
+  path: /zones/{zone_id}/dns_records/{dns_record_id}
+  body: $inputs
+inputs:
+  - name: zone_id
+    type: string
+    required: true
+    location: path
+  - name: dns_record_id
+    type: string
+    required: true
+    location: path
+  - name: type
+    type: string
+    required: true
+    location: body
+  - name: name
+    type: string
+    required: true
+    location: body
+  - name: content
+    type: string
+    required: true
+    location: body
+  - name: ttl
+    type: integer
+    location: body
+  - name: proxied
+    type: boolean
+    location: body
+  - name: comment
+    type: string
+    location: body
+errors:
+  "400": {code: validation_failed}
+  "401": {code: auth_failed}
+  "404": {code: not_found}

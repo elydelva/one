@@ -1,0 +1,21 @@
+id: checks.read
+description: Get a single check
+permission: checks.read
+request:
+  method: GET
+  path: /v1/deployments/{deploymentId}/checks/{checkId}
+inputs:
+  - name: deploymentId
+    type: string
+    required: true
+    location: path
+  - name: checkId
+    type: string
+    required: true
+    location: path
+  - name: teamId
+    type: string
+    location: query
+errors:
+  "401": {code: auth_failed}
+  "404": {code: not_found}

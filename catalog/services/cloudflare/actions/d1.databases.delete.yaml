@@ -1,0 +1,19 @@
+id: d1.databases.delete
+description: Delete a D1 database
+permission: d1.write
+side_effects: write
+request:
+  method: DELETE
+  path: /accounts/{account_id}/d1/database/{database_id}
+inputs:
+  - name: account_id
+    type: string
+    required: true
+    location: path
+  - name: database_id
+    type: string
+    required: true
+    location: path
+errors:
+  "401": {code: auth_failed}
+  "404": {code: not_found}

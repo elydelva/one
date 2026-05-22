@@ -1,0 +1,24 @@
+id: transfers.create
+description: Create a Connect transfer to a connected account.
+permission: connect.write
+side_effects: write
+request:
+  method: POST
+  path: /v1/transfers
+  headers:
+    Content-Type: application/x-www-form-urlencoded
+  body: '{body_raw}'
+inputs:
+  - name: body_raw
+    type: string
+    required: true
+    location: body
+    description: |
+      Form-encoded. Required: amount, currency, destination=acct_xxx.
+      Optional: source_transaction, transfer_group, description, metadata[key].
+  - name: Idempotency-Key
+    type: string
+    location: header
+errors:
+  "400": {code: validation_failed}
+  "401": {code: auth_failed}

@@ -1,0 +1,32 @@
+id: worklogs.update
+description: Update a worklog
+permission: issues.write
+side_effects: write
+request:
+  method: PUT
+  path: /rest/api/3/issue/{issueIdOrKey}/worklog/{id}
+  body: $inputs
+inputs:
+  - name: issueIdOrKey
+    type: string
+    required: true
+    location: path
+  - name: id
+    type: string
+    required: true
+    location: path
+  - name: timeSpent
+    type: string
+    location: body
+  - name: timeSpentSeconds
+    type: integer
+    location: body
+  - name: started
+    type: string
+    location: body
+  - name: comment
+    type: object
+    location: body
+errors:
+  "401": {code: auth_failed}
+  "404": {code: not_found}

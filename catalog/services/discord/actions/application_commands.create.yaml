@@ -1,0 +1,41 @@
+id: application_commands.create
+description: Create or overwrite a global application command
+permission: commands.write
+side_effects: write
+request:
+  method: POST
+  path: /applications/{application_id}/commands
+  body: $inputs
+inputs:
+  - name: application_id
+    type: string
+    required: true
+    location: path
+  - name: name
+    type: string
+    required: true
+    location: body
+  - name: description
+    type: string
+    location: body
+  - name: type
+    type: integer
+    location: body
+    description: "1=CHAT_INPUT, 2=USER, 3=MESSAGE"
+  - name: options
+    type: array
+    location: body
+  - name: default_member_permissions
+    type: string
+    location: body
+  - name: dm_permission
+    type: boolean
+    location: body
+  - name: nsfw
+    type: boolean
+    location: body
+errors:
+  "401": {code: auth_failed}
+  "403": {code: forbidden}
+  "400": {code: validation_failed}
+  "429": {code: rate_limited, retry: backoff}

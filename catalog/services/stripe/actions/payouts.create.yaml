@@ -1,0 +1,25 @@
+id: payouts.create
+description: Create a manual payout to your bank.
+permission: payments.write
+side_effects: write
+request:
+  method: POST
+  path: /v1/payouts
+  headers:
+    Content-Type: application/x-www-form-urlencoded
+  body: '{body_raw}'
+inputs:
+  - name: body_raw
+    type: string
+    required: true
+    location: body
+    description: |
+      Form-encoded. Required: amount (cents), currency.
+      Optional: destination, method=standard|instant, source_type=card|bank_account,
+      description, statement_descriptor, metadata[key].
+  - name: Idempotency-Key
+    type: string
+    location: header
+errors:
+  "400": {code: validation_failed}
+  "401": {code: auth_failed}

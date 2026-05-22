@@ -1,0 +1,34 @@
+id: page_rules.update
+description: Replace a page rule
+permission: zone.write
+side_effects: write
+request:
+  method: PUT
+  path: /zones/{zone_id}/pagerules/{rule_id}
+  body: $inputs
+inputs:
+  - name: zone_id
+    type: string
+    required: true
+    location: path
+  - name: rule_id
+    type: string
+    required: true
+    location: path
+  - name: targets
+    type: array
+    required: true
+    location: body
+  - name: actions
+    type: array
+    required: true
+    location: body
+  - name: priority
+    type: integer
+    location: body
+  - name: status
+    type: string
+    location: body
+errors:
+  "401": {code: auth_failed}
+  "404": {code: not_found}

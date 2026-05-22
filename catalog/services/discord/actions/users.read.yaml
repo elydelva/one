@@ -1,0 +1,16 @@
+id: users.read
+description: Get a user by ID
+permission: guilds.read
+side_effects: read
+request:
+  method: GET
+  path: /users/{user_id}
+inputs:
+  - name: user_id
+    type: string
+    required: true
+    location: path
+errors:
+  "401": {code: auth_failed}
+  "404": {code: not_found}
+  "429": {code: rate_limited, retry: backoff}

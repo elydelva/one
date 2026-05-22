@@ -1,0 +1,25 @@
+id: coupons.create
+description: Create a coupon.
+permission: products.write
+side_effects: write
+request:
+  method: POST
+  path: /v1/coupons
+  headers:
+    Content-Type: application/x-www-form-urlencoded
+  body: '{body_raw}'
+inputs:
+  - name: body_raw
+    type: string
+    required: true
+    location: body
+    description: |
+      Form-encoded. One of percent_off or amount_off (with currency) required.
+      Common: duration=once|repeating|forever, duration_in_months, name, id,
+      max_redemptions, redeem_by, applies_to[products][]=prod_x.
+  - name: Idempotency-Key
+    type: string
+    location: header
+errors:
+  "400": {code: validation_failed}
+  "401": {code: auth_failed}

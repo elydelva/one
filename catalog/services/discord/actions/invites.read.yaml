@@ -1,0 +1,24 @@
+id: invites.read
+description: Get an invite by code
+permission: guilds.read
+side_effects: read
+request:
+  method: GET
+  path: /invites/{invite_code}
+inputs:
+  - name: invite_code
+    type: string
+    required: true
+    location: path
+  - name: with_counts
+    type: boolean
+    location: query
+  - name: with_expiration
+    type: boolean
+    location: query
+  - name: guild_scheduled_event_id
+    type: string
+    location: query
+errors:
+  "404": {code: not_found}
+  "429": {code: rate_limited, retry: backoff}

@@ -1,0 +1,17 @@
+id: domains.read
+description: Get information for a single domain
+permission: domains.read
+request:
+  method: GET
+  path: /v5/domains/{domain}
+inputs:
+  - name: domain
+    type: string
+    required: true
+    location: path
+  - name: teamId
+    type: string
+    location: query
+errors:
+  "401": {code: auth_failed}
+  "404": {code: not_found}

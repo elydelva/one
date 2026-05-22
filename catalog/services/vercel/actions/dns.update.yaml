@@ -1,0 +1,42 @@
+id: dns.update
+description: Update a DNS record by ID
+permission: dns.write
+side_effects: write
+request:
+  method: PATCH
+  path: /v1/domains/records/{recordId}
+  body: $inputs
+inputs:
+  - name: recordId
+    type: string
+    required: true
+    location: path
+  - name: name
+    type: string
+    location: body
+  - name: value
+    type: string
+    location: body
+  - name: type
+    type: string
+    location: body
+    enum: [A, AAAA, ALIAS, CAA, CNAME, HTTPS, MX, SRV, TXT, NS]
+  - name: ttl
+    type: integer
+    location: body
+  - name: mxPriority
+    type: integer
+    location: body
+  - name: srv
+    type: object
+    location: body
+  - name: comment
+    type: string
+    location: body
+  - name: teamId
+    type: string
+    location: query
+errors:
+  "400": {code: validation_failed}
+  "401": {code: auth_failed}
+  "404": {code: not_found}

@@ -1,0 +1,38 @@
+id: issues.list
+description: List issues for an organization (filter via query, e.g. is:unresolved)
+permission: issues.read
+request:
+  method: GET
+  path: /organizations/{organization_slug}/issues/
+inputs:
+  - name: organization_slug
+    type: string
+    required: true
+    location: path
+  - name: query
+    type: string
+    location: query
+    description: "Sentry search syntax, e.g. is:unresolved project:web"
+  - name: statsPeriod
+    type: string
+    location: query
+    description: "e.g. 24h, 14d"
+  - name: project
+    type: array
+    location: query
+  - name: sort
+    type: string
+    location: query
+    enum: [date, new, priority, freq, user]
+  - name: cursor
+    type: string
+    location: query
+pagination:
+  style: cursor
+  request_param: cursor
+  request_location: query
+  response_token: next_cursor
+  max_pages: 10
+errors:
+  "401": {code: auth_failed}
+  "429": {code: ratelimited}

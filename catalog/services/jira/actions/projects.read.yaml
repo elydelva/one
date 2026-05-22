@@ -1,0 +1,18 @@
+id: projects.read
+description: Get a project by key or id
+permission: projects.read
+side_effects: read
+request:
+  method: GET
+  path: /rest/api/3/project/{projectIdOrKey}
+inputs:
+  - name: projectIdOrKey
+    type: string
+    required: true
+    location: path
+  - name: expand
+    type: string
+    location: query
+errors:
+  "401": {code: auth_failed}
+  "404": {code: not_found}

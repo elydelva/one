@@ -1,0 +1,16 @@
+id: webhooks.read
+description: Get a webhook by ID
+permission: webhooks.write
+side_effects: read
+request:
+  method: GET
+  path: /webhooks/{webhook_id}
+inputs:
+  - name: webhook_id
+    type: string
+    required: true
+    location: path
+errors:
+  "401": {code: auth_failed}
+  "404": {code: not_found}
+  "429": {code: rate_limited, retry: backoff}

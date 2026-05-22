@@ -1,0 +1,18 @@
+id: teams.read
+description: Retrieve a team by slug
+permission: org.read
+request:
+  method: GET
+  path: /teams/{organization_slug}/{team_slug}/
+inputs:
+  - name: organization_slug
+    type: string
+    required: true
+    location: path
+  - name: team_slug
+    type: string
+    required: true
+    location: path
+errors:
+  "401": {code: auth_failed}
+  "404": {code: not_found}

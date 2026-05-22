@@ -1,0 +1,19 @@
+id: dns_records.delete
+description: Delete a DNS record from a zone
+permission: dns.write
+side_effects: write
+request:
+  method: DELETE
+  path: /zones/{zone_id}/dns_records/{dns_record_id}
+inputs:
+  - name: zone_id
+    type: string
+    required: true
+    location: path
+  - name: dns_record_id
+    type: string
+    required: true
+    location: path
+errors:
+  "401": {code: auth_failed}
+  "404": {code: not_found}

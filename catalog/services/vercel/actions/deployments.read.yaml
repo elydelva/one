@@ -1,0 +1,20 @@
+id: deployments.read
+description: Get a deployment by ID or URL
+permission: deployments.read
+request:
+  method: GET
+  path: /v13/deployments/{idOrUrl}
+inputs:
+  - name: idOrUrl
+    type: string
+    required: true
+    location: path
+  - name: withGitRepoInfo
+    type: boolean
+    location: query
+  - name: teamId
+    type: string
+    location: query
+errors:
+  "401": {code: auth_failed}
+  "404": {code: not_found}

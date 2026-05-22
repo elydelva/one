@@ -1,0 +1,12 @@
+version: 1
+id: slack
+name: Slack
+description: Slack Web API (chat, conversations, users, files, reactions, pins, bookmarks, search)
+base_url: https://slack.com/api
+auth:
+  providers:
+    - pat
+  injection:
+    pat:
+      header: Authorization
+      format: "Bearer {access_token}"

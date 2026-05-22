@@ -1,0 +1,32 @@
+id: dashboards.create
+description: Create a custom dashboard
+permission: org.write
+side_effects: write
+request:
+  method: POST
+  path: /organizations/{organization_slug}/dashboards/
+  body: $inputs
+inputs:
+  - name: organization_slug
+    type: string
+    required: true
+    location: path
+  - name: title
+    type: string
+    required: true
+    location: body
+  - name: widgets
+    type: array
+    location: body
+  - name: projects
+    type: array
+    location: body
+  - name: environment
+    type: array
+    location: body
+  - name: period
+    type: string
+    location: body
+errors:
+  "401": {code: auth_failed}
+  "400": {code: validation_failed}

@@ -1,0 +1,25 @@
+id: workers.routes.create
+description: Create a Worker route in a zone
+permission: workers.write
+side_effects: write
+request:
+  method: POST
+  path: /zones/{zone_id}/workers/routes
+  body: $inputs
+inputs:
+  - name: zone_id
+    type: string
+    required: true
+    location: path
+  - name: pattern
+    type: string
+    required: true
+    location: body
+    description: "URL pattern like example.com/*"
+  - name: script
+    type: string
+    location: body
+    description: "Worker script name to bind"
+errors:
+  "400": {code: validation_failed}
+  "401": {code: auth_failed}

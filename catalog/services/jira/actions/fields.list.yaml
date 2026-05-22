@@ -1,0 +1,10 @@
+id: fields.list
+description: List all system and custom fields
+permission: issues.read
+side_effects: read
+request:
+  method: GET
+  path: /rest/api/3/field
+inputs: []
+errors:
+  "401": {code: auth_failed}

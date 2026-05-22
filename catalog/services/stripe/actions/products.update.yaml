@@ -1,0 +1,24 @@
+id: products.update
+description: Update a product.
+permission: products.write
+side_effects: write
+request:
+  method: POST
+  path: /v1/products/{id}
+  headers:
+    Content-Type: application/x-www-form-urlencoded
+  body: '{body_raw}'
+inputs:
+  - name: id
+    type: string
+    required: true
+    location: path
+  - name: body_raw
+    type: string
+    required: true
+    location: body
+    description: 'Form-encoded. e.g. "name=New&active=false&metadata[v]=2"'
+errors:
+  "400": {code: validation_failed}
+  "401": {code: auth_failed}
+  "404": {code: not_found}

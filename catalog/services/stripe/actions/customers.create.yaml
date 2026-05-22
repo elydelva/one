@@ -1,0 +1,27 @@
+id: customers.create
+description: Create a customer. Body is form-encoded.
+permission: customers.write
+side_effects: write
+request:
+  method: POST
+  path: /v1/customers
+  headers:
+    Content-Type: application/x-www-form-urlencoded
+  body: '{body_raw}'
+inputs:
+  - name: body_raw
+    type: string
+    required: true
+    location: body
+    description: |
+      Form-encoded body. Common keys: email, name, description, phone,
+      payment_method, invoice_settings[default_payment_method],
+      address[line1], address[city], address[country], metadata[key].
+      Example: "email=a@b.co&name=Acme&metadata[plan]=pro"
+  - name: Idempotency-Key
+    type: string
+    location: header
+errors:
+  "400": {code: validation_failed}
+  "401": {code: auth_failed}
+  "429": {code: rate_limited, retry: backoff}

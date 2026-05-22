@@ -1,0 +1,33 @@
+id: files.list
+description: List files visible to the token, with optional filters
+permission: files.read
+request:
+  method: GET
+  path: /files.list
+inputs:
+  - name: user
+    type: string
+    location: query
+  - name: channel
+    type: string
+    location: query
+  - name: ts_from
+    type: string
+    location: query
+  - name: ts_to
+    type: string
+    location: query
+  - name: types
+    type: string
+    location: query
+    description: "Comma list: all,spaces,snippets,images,gdocs,zips,pdfs"
+  - name: count
+    type: integer
+    location: query
+    default: 100
+  - name: page
+    type: integer
+    location: query
+  - name: show_files_hidden_by_limit
+    type: boolean
+    location: query

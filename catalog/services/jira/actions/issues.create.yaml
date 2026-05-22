@@ -1,0 +1,24 @@
+id: issues.create
+description: Create an issue. `fields` must include project, summary, issuetype; description is ADF.
+permission: issues.write
+side_effects: write
+request:
+  method: POST
+  path: /rest/api/3/issue
+  body: $inputs
+inputs:
+  - name: fields
+    type: object
+    required: true
+    location: body
+    description: "{project:{key},summary,issuetype:{name},description:<ADF>,...}"
+  - name: update
+    type: object
+    location: body
+  - name: historyMetadata
+    type: object
+    location: body
+errors:
+  "400": {code: validation_failed}
+  "401": {code: auth_failed}
+  "403": {code: forbidden}

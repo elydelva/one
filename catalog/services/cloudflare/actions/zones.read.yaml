@@ -1,0 +1,14 @@
+id: zones.read
+description: Get details for a single zone
+permission: zone.read
+request:
+  method: GET
+  path: /zones/{zone_id}
+inputs:
+  - name: zone_id
+    type: string
+    required: true
+    location: path
+errors:
+  "401": {code: auth_failed}
+  "404": {code: not_found}

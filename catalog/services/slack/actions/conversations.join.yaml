@@ -1,0 +1,13 @@
+id: conversations.join
+description: Join an existing public channel
+permission: channels.write
+side_effects: write
+request:
+  method: POST
+  path: /conversations.join
+  body: $inputs
+inputs:
+  - name: channel
+    type: string
+    required: true
+    location: body

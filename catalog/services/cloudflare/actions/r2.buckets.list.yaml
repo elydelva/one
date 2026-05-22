@@ -1,0 +1,19 @@
+id: r2.buckets.list
+description: List R2 buckets in an account
+permission: r2.read
+request:
+  method: GET
+  path: /accounts/{account_id}/r2/buckets
+inputs:
+  - name: account_id
+    type: string
+    required: true
+    location: path
+  - name: name_contains
+    type: string
+    location: query
+  - name: per_page
+    type: integer
+    location: query
+errors:
+  "401": {code: auth_failed}

@@ -1,0 +1,38 @@
+id: bookmarks.add
+description: Add a bookmark to a channel
+permission: bookmarks.write
+side_effects: write
+request:
+  method: POST
+  path: /bookmarks.add
+  body: $inputs
+inputs:
+  - name: channel_id
+    type: string
+    required: true
+    location: body
+  - name: title
+    type: string
+    required: true
+    location: body
+  - name: type
+    type: string
+    required: true
+    location: body
+    enum: [link]
+  - name: link
+    type: string
+    location: body
+  - name: emoji
+    type: string
+    location: body
+  - name: entity_id
+    type: string
+    location: body
+  - name: access_level
+    type: string
+    location: body
+    enum: [read, write]
+  - name: parent_id
+    type: string
+    location: body

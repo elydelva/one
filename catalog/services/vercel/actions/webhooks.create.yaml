@@ -1,0 +1,29 @@
+id: webhooks.create
+description: Create a webhook
+permission: webhooks.write
+side_effects: write
+request:
+  method: POST
+  path: /v1/webhooks
+  body: $inputs
+inputs:
+  - name: url
+    type: string
+    required: true
+    location: body
+    description: "HTTPS endpoint to receive event POSTs"
+  - name: events
+    type: array
+    required: true
+    location: body
+    description: "e.g. deployment.created, project.created, deployment.error"
+  - name: projectIds
+    type: array
+    location: body
+  - name: teamId
+    type: string
+    location: query
+errors:
+  "400": {code: validation_failed}
+  "401": {code: auth_failed}
+  "403": {code: forbidden}

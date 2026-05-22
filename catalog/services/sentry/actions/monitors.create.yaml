@@ -1,0 +1,36 @@
+id: monitors.create
+description: Create a cron monitor
+permission: alerts.write
+side_effects: write
+request:
+  method: POST
+  path: /organizations/{organization_slug}/monitors/
+  body: $inputs
+inputs:
+  - name: organization_slug
+    type: string
+    required: true
+    location: path
+  - name: name
+    type: string
+    required: true
+    location: body
+  - name: slug
+    type: string
+    location: body
+  - name: project
+    type: string
+    required: true
+    location: body
+  - name: type
+    type: string
+    location: body
+    enum: [cron_job]
+  - name: config
+    type: object
+    required: true
+    location: body
+    description: "{schedule, schedule_type, checkin_margin, max_runtime, timezone}"
+errors:
+  "401": {code: auth_failed}
+  "400": {code: validation_failed}

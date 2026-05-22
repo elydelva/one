@@ -1,0 +1,12 @@
+version: 1
+id: stripe
+name: Stripe
+description: Stripe REST API (payments, subscriptions, billing, Connect)
+base_url: https://api.stripe.com
+auth:
+  providers:
+    - pat
+  injection:
+    pat:
+      header: Authorization
+      format: "Bearer {access_token}"

@@ -1,0 +1,20 @@
+id: guilds.read
+description: Get a guild by ID
+permission: guilds.read
+side_effects: read
+request:
+  method: GET
+  path: /guilds/{guild_id}
+inputs:
+  - name: guild_id
+    type: string
+    required: true
+    location: path
+  - name: with_counts
+    type: boolean
+    location: query
+errors:
+  "401": {code: auth_failed}
+  "403": {code: forbidden}
+  "404": {code: not_found}
+  "429": {code: rate_limited, retry: backoff}

@@ -1,0 +1,33 @@
+id: page_rules.create
+description: Create a page rule for a zone
+permission: zone.write
+side_effects: write
+request:
+  method: POST
+  path: /zones/{zone_id}/pagerules
+  body: $inputs
+inputs:
+  - name: zone_id
+    type: string
+    required: true
+    location: path
+  - name: targets
+    type: array
+    required: true
+    location: body
+    description: "[{target: 'url', constraint: {operator: 'matches', value: 'https://example.com/*'}}]"
+  - name: actions
+    type: array
+    required: true
+    location: body
+    description: "[{id: 'always_use_https'}, ...]"
+  - name: priority
+    type: integer
+    location: body
+  - name: status
+    type: string
+    location: body
+    enum: [active, disabled]
+errors:
+  "400": {code: validation_failed}
+  "401": {code: auth_failed}

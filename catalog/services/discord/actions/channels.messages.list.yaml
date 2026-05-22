@@ -1,0 +1,38 @@
+id: channels.messages.list
+description: List messages in a channel (snowflake cursor)
+permission: messages.read
+side_effects: read
+request:
+  method: GET
+  path: /channels/{channel_id}/messages
+inputs:
+  - name: channel_id
+    type: string
+    required: true
+    location: path
+  - name: around
+    type: string
+    location: query
+  - name: before
+    type: string
+    location: query
+    description: "Snowflake — fetch messages older than this id"
+  - name: after
+    type: string
+    location: query
+  - name: limit
+    type: integer
+    location: query
+    default: 50
+    description: "1-100"
+pagination:
+  style: cursor
+  request_param: before
+  request_location: query
+  response_token: next_before
+  max_pages: 10
+errors:
+  "401": {code: auth_failed}
+  "403": {code: forbidden}
+  "404": {code: not_found}
+  "429": {code: rate_limited, retry: backoff}

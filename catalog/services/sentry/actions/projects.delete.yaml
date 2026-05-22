@@ -1,0 +1,20 @@
+id: projects.delete
+description: Delete a project
+permission: project.write
+side_effects: write
+request:
+  method: DELETE
+  path: /projects/{organization_slug}/{project_slug}/
+inputs:
+  - name: organization_slug
+    type: string
+    required: true
+    location: path
+  - name: project_slug
+    type: string
+    required: true
+    location: path
+errors:
+  "401": {code: auth_failed}
+  "403": {code: forbidden}
+  "404": {code: not_found}

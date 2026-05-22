@@ -1,0 +1,24 @@
+id: customers.payment_methods.list
+description: List a customer's payment methods.
+permission: customers.read
+request:
+  method: GET
+  path: /v1/customers/{customer}/payment_methods
+inputs:
+  - name: customer
+    type: string
+    required: true
+    location: path
+  - name: type
+    type: string
+    location: query
+    description: "card, us_bank_account, sepa_debit, etc."
+  - name: limit
+    type: integer
+    location: query
+  - name: starting_after
+    type: string
+    location: query
+errors:
+  "401": {code: auth_failed}
+  "404": {code: not_found}

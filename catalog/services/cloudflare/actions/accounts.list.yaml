@@ -1,0 +1,22 @@
+id: accounts.list
+description: List accounts accessible to the token
+permission: account.read
+request:
+  method: GET
+  path: /accounts
+inputs:
+  - name: page
+    type: integer
+    location: query
+  - name: per_page
+    type: integer
+    location: query
+pagination:
+  style: cursor
+  request_param: page
+  request_location: query
+  response_token: result_info.next_page
+  max_pages: 10
+errors:
+  "401": {code: auth_failed}
+  "403": {code: forbidden}

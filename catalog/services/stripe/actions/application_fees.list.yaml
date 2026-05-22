@@ -1,0 +1,21 @@
+id: application_fees.list
+description: List application fees collected by the platform.
+permission: connect.read
+request:
+  method: GET
+  path: /v1/application_fees
+inputs:
+  - name: charge
+    type: string
+    location: query
+  - name: limit
+    type: integer
+    location: query
+  - name: starting_after
+    type: string
+    location: query
+  - name: created
+    type: string
+    location: query
+errors:
+  "401": {code: auth_failed}

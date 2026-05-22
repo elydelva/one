@@ -1,0 +1,26 @@
+id: bookmarks.edit
+description: Edit a bookmark
+permission: bookmarks.write
+side_effects: write
+request:
+  method: POST
+  path: /bookmarks.edit
+  body: $inputs
+inputs:
+  - name: channel_id
+    type: string
+    required: true
+    location: body
+  - name: bookmark_id
+    type: string
+    required: true
+    location: body
+  - name: title
+    type: string
+    location: body
+  - name: link
+    type: string
+    location: body
+  - name: emoji
+    type: string
+    location: body

@@ -1,0 +1,36 @@
+id: chat.update
+description: Update an existing message
+permission: chat.write
+side_effects: write
+request:
+  method: POST
+  path: /chat.update
+  body: $inputs
+inputs:
+  - name: channel
+    type: string
+    required: true
+    location: body
+  - name: ts
+    type: string
+    required: true
+    location: body
+    description: "Timestamp of the message to update"
+  - name: text
+    type: string
+    location: body
+  - name: blocks
+    type: array
+    location: body
+  - name: attachments
+    type: array
+    location: body
+  - name: parse
+    type: string
+    location: body
+  - name: link_names
+    type: boolean
+    location: body
+  - name: metadata
+    type: object
+    location: body

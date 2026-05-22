@@ -1,0 +1,19 @@
+id: issues.watchers.remove
+description: Remove a watcher from an issue
+permission: issues.write
+side_effects: write
+request:
+  method: DELETE
+  path: /rest/api/3/issue/{issueIdOrKey}/watchers
+inputs:
+  - name: issueIdOrKey
+    type: string
+    required: true
+    location: path
+  - name: accountId
+    type: string
+    required: true
+    location: query
+errors:
+  "401": {code: auth_failed}
+  "404": {code: not_found}

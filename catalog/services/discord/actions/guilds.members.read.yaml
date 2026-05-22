@@ -1,0 +1,21 @@
+id: guilds.members.read
+description: Get a guild member
+permission: guilds.read
+side_effects: read
+request:
+  method: GET
+  path: /guilds/{guild_id}/members/{user_id}
+inputs:
+  - name: guild_id
+    type: string
+    required: true
+    location: path
+  - name: user_id
+    type: string
+    required: true
+    location: path
+errors:
+  "401": {code: auth_failed}
+  "403": {code: forbidden}
+  "404": {code: not_found}
+  "429": {code: rate_limited, retry: backoff}

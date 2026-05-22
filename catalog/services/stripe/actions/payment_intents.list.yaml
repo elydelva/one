@@ -1,0 +1,25 @@
+id: payment_intents.list
+description: List PaymentIntents (cursor-paginated).
+permission: payments.read
+request:
+  method: GET
+  path: /v1/payment_intents
+inputs:
+  - name: customer
+    type: string
+    location: query
+  - name: limit
+    type: integer
+    location: query
+  - name: starting_after
+    type: string
+    location: query
+  - name: ending_before
+    type: string
+    location: query
+  - name: created
+    type: string
+    location: query
+errors:
+  "401": {code: auth_failed}
+  "429": {code: rate_limited, retry: backoff}

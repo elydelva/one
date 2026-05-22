@@ -1,0 +1,32 @@
+id: projects.update
+description: Update a project's settings
+permission: project.write
+side_effects: write
+request:
+  method: PUT
+  path: /projects/{organization_slug}/{project_slug}/
+  body: $inputs
+inputs:
+  - name: organization_slug
+    type: string
+    required: true
+    location: path
+  - name: project_slug
+    type: string
+    required: true
+    location: path
+  - name: name
+    type: string
+    location: body
+  - name: slug
+    type: string
+    location: body
+  - name: platform
+    type: string
+    location: body
+  - name: isBookmarked
+    type: boolean
+    location: body
+errors:
+  "401": {code: auth_failed}
+  "404": {code: not_found}

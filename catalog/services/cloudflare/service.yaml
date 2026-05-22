@@ -1,0 +1,12 @@
+version: 1
+id: cloudflare
+name: Cloudflare
+description: Cloudflare API v4 (zones, DNS, Workers, R2, KV, D1, Pages, Tunnels)
+base_url: https://api.cloudflare.com/client/v4
+auth:
+  providers:
+    - pat
+  injection:
+    pat:
+      header: Authorization
+      format: "Bearer {access_token}"

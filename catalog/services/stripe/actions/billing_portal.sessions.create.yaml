@@ -1,0 +1,25 @@
+id: billing_portal.sessions.create
+description: Create a Customer Portal session URL.
+permission: customers.write
+side_effects: write
+request:
+  method: POST
+  path: /v1/billing_portal/sessions
+  headers:
+    Content-Type: application/x-www-form-urlencoded
+  body: '{body_raw}'
+inputs:
+  - name: body_raw
+    type: string
+    required: true
+    location: body
+    description: |
+      Form-encoded. Required: customer.
+      Common: return_url, configuration, locale, flow_data[type]=...
+      Example: "customer=cus_123&return_url=https://app.example.com/account"
+  - name: Idempotency-Key
+    type: string
+    location: header
+errors:
+  "400": {code: validation_failed}
+  "401": {code: auth_failed}

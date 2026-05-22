@@ -1,0 +1,34 @@
+id: project_versions.update
+description: Update a project version (release, archive, dates)
+permission: projects.write
+side_effects: write
+request:
+  method: PUT
+  path: /rest/api/3/version/{id}
+  body: $inputs
+inputs:
+  - name: id
+    type: string
+    required: true
+    location: path
+  - name: name
+    type: string
+    location: body
+  - name: description
+    type: string
+    location: body
+  - name: startDate
+    type: string
+    location: body
+  - name: releaseDate
+    type: string
+    location: body
+  - name: released
+    type: boolean
+    location: body
+  - name: archived
+    type: boolean
+    location: body
+errors:
+  "401": {code: auth_failed}
+  "404": {code: not_found}

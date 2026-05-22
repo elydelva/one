@@ -1,0 +1,24 @@
+id: shared_env.create
+description: Create one or more shared env vars on a team
+permission: env.write
+side_effects: write
+request:
+  method: POST
+  path: /v1/env
+  body: $inputs
+inputs:
+  - name: evs
+    type: array
+    required: true
+    location: body
+    description: "Array of {key, value, type, target, projectIds, comment}"
+  - name: projectsMetadata
+    type: array
+    location: body
+  - name: teamId
+    type: string
+    location: query
+errors:
+  "400": {code: validation_failed}
+  "401": {code: auth_failed}
+  "409": {code: conflict}

@@ -1,0 +1,19 @@
+id: issues.delete
+description: Delete an issue (and optionally subtasks)
+permission: issues.write
+side_effects: write
+request:
+  method: DELETE
+  path: /rest/api/3/issue/{issueIdOrKey}
+inputs:
+  - name: issueIdOrKey
+    type: string
+    required: true
+    location: path
+  - name: deleteSubtasks
+    type: boolean
+    location: query
+errors:
+  "401": {code: auth_failed}
+  "403": {code: forbidden}
+  "404": {code: not_found}

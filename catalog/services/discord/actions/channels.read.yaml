@@ -1,0 +1,17 @@
+id: channels.read
+description: Get a channel by ID
+permission: channels.read
+side_effects: read
+request:
+  method: GET
+  path: /channels/{channel_id}
+inputs:
+  - name: channel_id
+    type: string
+    required: true
+    location: path
+errors:
+  "401": {code: auth_failed}
+  "403": {code: forbidden}
+  "404": {code: not_found}
+  "429": {code: rate_limited, retry: backoff}

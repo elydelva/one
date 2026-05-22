@@ -1,0 +1,15 @@
+id: chat.getPermalink
+description: Get a permalink URL for a specific message
+permission: chat.read
+request:
+  method: GET
+  path: /chat.getPermalink
+inputs:
+  - name: channel
+    type: string
+    required: true
+    location: query
+  - name: message_ts
+    type: string
+    required: true
+    location: query

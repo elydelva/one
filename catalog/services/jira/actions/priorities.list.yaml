@@ -1,0 +1,10 @@
+id: priorities.list
+description: List all issue priorities
+permission: issues.read
+side_effects: read
+request:
+  method: GET
+  path: /rest/api/3/priority
+inputs: []
+errors:
+  "401": {code: auth_failed}

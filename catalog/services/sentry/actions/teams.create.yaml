@@ -1,0 +1,24 @@
+id: teams.create
+description: Create a team in an organization
+permission: org.write
+side_effects: write
+request:
+  method: POST
+  path: /organizations/{organization_slug}/teams/
+  body: $inputs
+inputs:
+  - name: organization_slug
+    type: string
+    required: true
+    location: path
+  - name: name
+    type: string
+    required: true
+    location: body
+  - name: slug
+    type: string
+    location: body
+errors:
+  "401": {code: auth_failed}
+  "403": {code: forbidden}
+  "409": {code: conflict, hint: "Team slug already exists"}

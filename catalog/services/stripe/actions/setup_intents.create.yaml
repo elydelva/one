@@ -1,0 +1,24 @@
+id: setup_intents.create
+description: Create a SetupIntent (collect a payment method for future use).
+permission: payments.write
+side_effects: write
+request:
+  method: POST
+  path: /v1/setup_intents
+  headers:
+    Content-Type: application/x-www-form-urlencoded
+  body: '{body_raw}'
+inputs:
+  - name: body_raw
+    type: string
+    required: true
+    location: body
+    description: |
+      Form-encoded. Optional: customer, payment_method, payment_method_types[]=card,
+      usage=on_session|off_session, confirm=true, automatic_payment_methods[enabled]=true.
+  - name: Idempotency-Key
+    type: string
+    location: header
+errors:
+  "400": {code: validation_failed}
+  "401": {code: auth_failed}

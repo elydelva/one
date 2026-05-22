@@ -1,0 +1,36 @@
+id: domains.add
+description: Add an existing apex domain to Vercel
+permission: domains.write
+side_effects: write
+request:
+  method: POST
+  path: /v7/domains
+  body: $inputs
+inputs:
+  - name: name
+    type: string
+    required: true
+    location: body
+  - name: method
+    type: string
+    location: body
+    enum: [add, move-in]
+  - name: cdnEnabled
+    type: boolean
+    location: body
+  - name: zone
+    type: boolean
+    location: body
+    description: "Create a DNS zone on Vercel (set true if using Vercel nameservers)"
+  - name: token
+    type: string
+    location: body
+    description: "Move-in token (only for method=move-in)"
+  - name: teamId
+    type: string
+    location: query
+errors:
+  "400": {code: validation_failed}
+  "401": {code: auth_failed}
+  "402": {code: payment_required}
+  "409": {code: conflict, hint: "Domain not allowed or already taken."}

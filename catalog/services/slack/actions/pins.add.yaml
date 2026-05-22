@@ -1,0 +1,17 @@
+id: pins.add
+description: Pin a message in a channel
+permission: pins.write
+side_effects: write
+request:
+  method: POST
+  path: /pins.add
+  body: $inputs
+inputs:
+  - name: channel
+    type: string
+    required: true
+    location: body
+  - name: timestamp
+    type: string
+    required: true
+    location: body

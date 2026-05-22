@@ -1,0 +1,34 @@
+id: search.messages
+description: Search messages matching a query (requires user token scope search:read)
+permission: search.read
+request:
+  method: GET
+  path: /search.messages
+inputs:
+  - name: query
+    type: string
+    required: true
+    location: query
+  - name: sort
+    type: string
+    location: query
+    enum: [score, timestamp]
+    default: score
+  - name: sort_dir
+    type: string
+    location: query
+    enum: [asc, desc]
+    default: desc
+  - name: highlight
+    type: boolean
+    location: query
+  - name: count
+    type: integer
+    location: query
+    default: 20
+  - name: page
+    type: integer
+    location: query
+  - name: cursor
+    type: string
+    location: query

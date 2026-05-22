@@ -1,0 +1,9 @@
+id: balance.read
+description: Retrieve your Stripe account balance (available + pending).
+permission: payments.read
+request:
+  method: GET
+  path: /v1/balance
+inputs: []
+errors:
+  "401": {code: auth_failed}

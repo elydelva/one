@@ -1,0 +1,26 @@
+id: prices.create
+description: Create a price for a product.
+permission: products.write
+side_effects: write
+request:
+  method: POST
+  path: /v1/prices
+  headers:
+    Content-Type: application/x-www-form-urlencoded
+  body: '{body_raw}'
+inputs:
+  - name: body_raw
+    type: string
+    required: true
+    location: body
+    description: |
+      Form-encoded. Required: currency, product (or product_data[name]), unit_amount (or tiers).
+      Recurring: recurring[interval]=month|year, recurring[interval_count]=1,
+      recurring[usage_type]=licensed|metered. Tiered: billing_scheme=tiered, tiers[0][...].
+      Example: "currency=usd&product=prod_x&unit_amount=999&recurring[interval]=month"
+  - name: Idempotency-Key
+    type: string
+    location: header
+errors:
+  "400": {code: validation_failed}
+  "401": {code: auth_failed}

@@ -1,0 +1,11 @@
+id: users.lookupByEmail
+description: Find a user by email address
+permission: users.read
+request:
+  method: GET
+  path: /users.lookupByEmail
+inputs:
+  - name: email
+    type: string
+    required: true
+    location: query

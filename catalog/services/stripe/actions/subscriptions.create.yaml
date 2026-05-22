@@ -1,0 +1,28 @@
+id: subscriptions.create
+description: Create a subscription for a customer.
+permission: subscriptions.write
+side_effects: write
+request:
+  method: POST
+  path: /v1/subscriptions
+  headers:
+    Content-Type: application/x-www-form-urlencoded
+  body: '{body_raw}'
+inputs:
+  - name: body_raw
+    type: string
+    required: true
+    location: body
+    description: |
+      Form-encoded. Required: customer, items[0][price].
+      Common: trial_period_days, default_payment_method, collection_method,
+      proration_behavior, items[N][price], items[N][quantity], metadata[key],
+      payment_behavior=default_incomplete, expand[]=latest_invoice.payment_intent.
+      Example: "customer=cus_123&items[0][price]=price_abc&items[0][quantity]=2"
+  - name: Idempotency-Key
+    type: string
+    location: header
+errors:
+  "400": {code: validation_failed}
+  "401": {code: auth_failed}
+  "402": {code: card_declined}

@@ -1,0 +1,19 @@
+id: reactions.get
+description: Get reactions on a message, file, or file comment
+permission: reactions.read
+request:
+  method: GET
+  path: /reactions.get
+inputs:
+  - name: channel
+    type: string
+    location: query
+  - name: timestamp
+    type: string
+    location: query
+  - name: file
+    type: string
+    location: query
+  - name: full
+    type: boolean
+    location: query

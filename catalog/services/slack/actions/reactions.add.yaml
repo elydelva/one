@@ -1,0 +1,22 @@
+id: reactions.add
+description: Add an emoji reaction to a message
+permission: reactions.write
+side_effects: write
+request:
+  method: POST
+  path: /reactions.add
+  body: $inputs
+inputs:
+  - name: channel
+    type: string
+    required: true
+    location: body
+  - name: timestamp
+    type: string
+    required: true
+    location: body
+  - name: name
+    type: string
+    required: true
+    location: body
+    description: "Emoji name without colons, e.g. thumbsup"

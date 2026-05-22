@@ -1,0 +1,40 @@
+id: projects.create
+description: Create a project. Requires leadAccountId, projectTypeKey, key, name.
+permission: projects.write
+side_effects: write
+request:
+  method: POST
+  path: /rest/api/3/project
+  body: $inputs
+inputs:
+  - name: key
+    type: string
+    required: true
+    location: body
+  - name: name
+    type: string
+    required: true
+    location: body
+  - name: projectTypeKey
+    type: string
+    required: true
+    location: body
+    enum: [software, service_desk, business]
+  - name: leadAccountId
+    type: string
+    required: true
+    location: body
+  - name: description
+    type: string
+    location: body
+  - name: assigneeType
+    type: string
+    location: body
+    enum: [PROJECT_LEAD, UNASSIGNED]
+  - name: projectTemplateKey
+    type: string
+    location: body
+errors:
+  "400": {code: validation_failed}
+  "401": {code: auth_failed}
+  "403": {code: forbidden}

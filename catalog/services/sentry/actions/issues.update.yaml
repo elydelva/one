@@ -1,0 +1,37 @@
+id: issues.update
+description: Update an issue (resolve, assign, ignore, bookmark)
+permission: issues.write
+side_effects: write
+request:
+  method: PUT
+  path: /issues/{issue_id}/
+  body: $inputs
+inputs:
+  - name: issue_id
+    type: string
+    required: true
+    location: path
+  - name: status
+    type: string
+    location: body
+    enum: [resolved, resolvedInNextRelease, unresolved, ignored]
+  - name: assignedTo
+    type: string
+    location: body
+    description: "username or team:<slug>"
+  - name: hasSeen
+    type: boolean
+    location: body
+  - name: isBookmarked
+    type: boolean
+    location: body
+  - name: isSubscribed
+    type: boolean
+    location: body
+  - name: isPublic
+    type: boolean
+    location: body
+errors:
+  "401": {code: auth_failed}
+  "403": {code: forbidden}
+  "404": {code: not_found}

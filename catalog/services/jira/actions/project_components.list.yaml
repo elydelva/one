@@ -1,0 +1,15 @@
+id: project_components.list
+description: List components of a project
+permission: projects.read
+side_effects: read
+request:
+  method: GET
+  path: /rest/api/3/project/{projectIdOrKey}/components
+inputs:
+  - name: projectIdOrKey
+    type: string
+    required: true
+    location: path
+errors:
+  "401": {code: auth_failed}
+  "404": {code: not_found}

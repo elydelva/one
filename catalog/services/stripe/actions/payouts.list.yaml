@@ -1,0 +1,22 @@
+id: payouts.list
+description: List payouts to your bank.
+permission: payments.read
+request:
+  method: GET
+  path: /v1/payouts
+inputs:
+  - name: status
+    type: string
+    location: query
+    enum: [pending, paid, failed, canceled, in_transit]
+  - name: destination
+    type: string
+    location: query
+  - name: limit
+    type: integer
+    location: query
+  - name: starting_after
+    type: string
+    location: query
+errors:
+  "401": {code: auth_failed}

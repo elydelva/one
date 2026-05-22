@@ -1,0 +1,18 @@
+id: integrations.list
+description: List integrations installed on the organization
+permission: org.read
+request:
+  method: GET
+  path: /organizations/{organization_slug}/integrations/
+inputs:
+  - name: organization_slug
+    type: string
+    required: true
+    location: path
+  - name: provider_key
+    type: string
+    location: query
+    description: "e.g. github, slack, jira"
+errors:
+  "401": {code: auth_failed}
+  "404": {code: not_found}

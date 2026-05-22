@@ -1,0 +1,19 @@
+id: access.apps.list
+description: List Cloudflare Access applications
+permission: access.read
+request:
+  method: GET
+  path: /accounts/{account_id}/access/apps
+inputs:
+  - name: account_id
+    type: string
+    required: true
+    location: path
+  - name: page
+    type: integer
+    location: query
+  - name: per_page
+    type: integer
+    location: query
+errors:
+  "401": {code: auth_failed}

@@ -1,0 +1,25 @@
+id: webhook_endpoints.create
+description: Create a webhook endpoint. Response includes the signing secret (whsec_...).
+permission: webhooks.write
+side_effects: write
+request:
+  method: POST
+  path: /v1/webhook_endpoints
+  headers:
+    Content-Type: application/x-www-form-urlencoded
+  body: '{body_raw}'
+inputs:
+  - name: body_raw
+    type: string
+    required: true
+    location: body
+    description: |
+      Form-encoded. Required: url, enabled_events[]=event.type (or []=*).
+      Optional: description, api_version, connect=true, metadata[key].
+      Example: "url=https://app.x/hooks&enabled_events[]=invoice.paid&enabled_events[]=customer.subscription.deleted"
+  - name: Idempotency-Key
+    type: string
+    location: header
+errors:
+  "400": {code: validation_failed}
+  "401": {code: auth_failed}

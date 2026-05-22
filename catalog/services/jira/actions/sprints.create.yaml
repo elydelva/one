@@ -1,0 +1,30 @@
+id: sprints.create
+description: Create a sprint on a board
+permission: sprints.write
+side_effects: write
+request:
+  method: POST
+  path: /rest/agile/1.0/sprint
+  body: $inputs
+inputs:
+  - name: name
+    type: string
+    required: true
+    location: body
+  - name: originBoardId
+    type: integer
+    required: true
+    location: body
+  - name: goal
+    type: string
+    location: body
+  - name: startDate
+    type: string
+    location: body
+  - name: endDate
+    type: string
+    location: body
+errors:
+  "400": {code: validation_failed}
+  "401": {code: auth_failed}
+  "403": {code: forbidden}

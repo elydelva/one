@@ -1,0 +1,27 @@
+id: disputes.update
+description: Update dispute evidence and optionally submit.
+permission: payments.write
+side_effects: write
+request:
+  method: POST
+  path: /v1/disputes/{id}
+  headers:
+    Content-Type: application/x-www-form-urlencoded
+  body: '{body_raw}'
+inputs:
+  - name: id
+    type: string
+    required: true
+    location: path
+  - name: body_raw
+    type: string
+    required: true
+    location: body
+    description: |
+      Form-encoded. Common: submit=true, evidence[customer_email_address],
+      evidence[product_description], evidence[receipt]=file_xxx,
+      evidence[shipping_carrier], evidence[uncategorized_text], metadata[key].
+errors:
+  "400": {code: validation_failed}
+  "401": {code: auth_failed}
+  "404": {code: not_found}

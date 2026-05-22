@@ -1,0 +1,24 @@
+id: files.getUploadURLExternal
+description: Step 1 of upload — request an upload URL and file ID. Then POST bytes to upload_url and call files.completeUploadExternal.
+permission: files.write
+side_effects: write
+request:
+  method: POST
+  path: /files.getUploadURLExternal
+  body: $inputs
+inputs:
+  - name: filename
+    type: string
+    required: true
+    location: body
+  - name: length
+    type: integer
+    required: true
+    location: body
+    description: "File size in bytes"
+  - name: alt_txt
+    type: string
+    location: body
+  - name: snippet_type
+    type: string
+    location: body

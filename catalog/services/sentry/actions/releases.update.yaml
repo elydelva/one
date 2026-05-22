@@ -1,0 +1,32 @@
+id: releases.update
+description: Update a release's metadata
+permission: releases.write
+side_effects: write
+request:
+  method: PUT
+  path: /organizations/{organization_slug}/releases/{version}/
+  body: $inputs
+inputs:
+  - name: organization_slug
+    type: string
+    required: true
+    location: path
+  - name: version
+    type: string
+    required: true
+    location: path
+  - name: ref
+    type: string
+    location: body
+  - name: url
+    type: string
+    location: body
+  - name: dateReleased
+    type: string
+    location: body
+  - name: commits
+    type: array
+    location: body
+errors:
+  "401": {code: auth_failed}
+  "404": {code: not_found}

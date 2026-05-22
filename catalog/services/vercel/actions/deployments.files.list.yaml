@@ -1,0 +1,17 @@
+id: deployments.files.list
+description: List files for a deployment
+permission: deployments.read
+request:
+  method: GET
+  path: /v6/deployments/{id}/files
+inputs:
+  - name: id
+    type: string
+    required: true
+    location: path
+  - name: teamId
+    type: string
+    location: query
+errors:
+  "401": {code: auth_failed}
+  "404": {code: not_found}

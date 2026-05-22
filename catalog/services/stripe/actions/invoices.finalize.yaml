@@ -1,0 +1,24 @@
+id: invoices.finalize
+description: Finalize a draft invoice (moves to open).
+permission: invoices.write
+side_effects: write
+request:
+  method: POST
+  path: /v1/invoices/{id}/finalize
+  headers:
+    Content-Type: application/x-www-form-urlencoded
+  body: '{body_raw}'
+inputs:
+  - name: id
+    type: string
+    required: true
+    location: path
+  - name: body_raw
+    type: string
+    required: true
+    location: body
+    description: 'Form-encoded. Optional: auto_advance=true|false.'
+errors:
+  "400": {code: validation_failed}
+  "401": {code: auth_failed}
+  "404": {code: not_found}

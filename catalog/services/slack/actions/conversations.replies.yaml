@@ -1,0 +1,39 @@
+id: conversations.replies
+description: Fetch replies to a specific thread
+permission: channels.read
+request:
+  method: GET
+  path: /conversations.replies
+inputs:
+  - name: channel
+    type: string
+    required: true
+    location: query
+  - name: ts
+    type: string
+    required: true
+    location: query
+    description: "Parent message timestamp"
+  - name: latest
+    type: string
+    location: query
+  - name: oldest
+    type: string
+    location: query
+  - name: inclusive
+    type: boolean
+    location: query
+  - name: limit
+    type: integer
+    location: query
+    default: 100
+  - name: cursor
+    type: string
+    location: query
+pagination:
+  style: cursor
+  request_param: cursor
+  request_location: query
+  response_token: response_metadata.next_cursor
+  response_items: messages
+  max_pages: 10

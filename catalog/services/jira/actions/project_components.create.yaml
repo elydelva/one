@@ -1,0 +1,32 @@
+id: project_components.create
+description: Create a project component
+permission: projects.write
+side_effects: write
+request:
+  method: POST
+  path: /rest/api/3/component
+  body: $inputs
+inputs:
+  - name: name
+    type: string
+    required: true
+    location: body
+  - name: project
+    type: string
+    required: true
+    location: body
+    description: "Project key"
+  - name: description
+    type: string
+    location: body
+  - name: leadAccountId
+    type: string
+    location: body
+  - name: assigneeType
+    type: string
+    location: body
+    enum: [PROJECT_DEFAULT, COMPONENT_LEAD, PROJECT_LEAD, UNASSIGNED]
+errors:
+  "400": {code: validation_failed}
+  "401": {code: auth_failed}
+  "404": {code: not_found}

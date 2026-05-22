@@ -1,0 +1,19 @@
+id: comments.delete
+description: Delete a comment from an issue
+permission: comments.write
+side_effects: write
+request:
+  method: DELETE
+  path: /rest/api/3/issue/{issueIdOrKey}/comment/{id}
+inputs:
+  - name: issueIdOrKey
+    type: string
+    required: true
+    location: path
+  - name: id
+    type: string
+    required: true
+    location: path
+errors:
+  "401": {code: auth_failed}
+  "404": {code: not_found}

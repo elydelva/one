@@ -1,0 +1,21 @@
+id: domains.config
+description: Get a domain's DNS configuration status
+permission: domains.read
+request:
+  method: GET
+  path: /v6/domains/{domain}/config
+inputs:
+  - name: domain
+    type: string
+    required: true
+    location: path
+  - name: strict
+    type: string
+    location: query
+    enum: ["true", "false"]
+  - name: teamId
+    type: string
+    location: query
+errors:
+  "401": {code: auth_failed}
+  "404": {code: not_found}

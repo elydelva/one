@@ -1,0 +1,14 @@
+id: disputes.read
+description: Retrieve a dispute.
+permission: payments.read
+request:
+  method: GET
+  path: /v1/disputes/{id}
+inputs:
+  - name: id
+    type: string
+    required: true
+    location: path
+errors:
+  "401": {code: auth_failed}
+  "404": {code: not_found}

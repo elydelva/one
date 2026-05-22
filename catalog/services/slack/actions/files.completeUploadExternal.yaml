@@ -1,0 +1,24 @@
+id: files.completeUploadExternal
+description: Step 3 of upload — finalize and optionally share the uploaded file
+permission: files.write
+side_effects: write
+request:
+  method: POST
+  path: /files.completeUploadExternal
+  body: $inputs
+inputs:
+  - name: files
+    type: array
+    required: true
+    location: body
+    description: "Array of {id, title} objects from files.getUploadURLExternal"
+  - name: channel_id
+    type: string
+    location: body
+    description: "Channel to share the file into"
+  - name: initial_comment
+    type: string
+    location: body
+  - name: thread_ts
+    type: string
+    location: body

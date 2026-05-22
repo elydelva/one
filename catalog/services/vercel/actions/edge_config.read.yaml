@@ -1,0 +1,17 @@
+id: edge_config.read
+description: Get an Edge Config by ID
+permission: edge_config.read
+request:
+  method: GET
+  path: /v1/edge-config/{edgeConfigId}
+inputs:
+  - name: edgeConfigId
+    type: string
+    required: true
+    location: path
+  - name: teamId
+    type: string
+    location: query
+errors:
+  "401": {code: auth_failed}
+  "404": {code: not_found}

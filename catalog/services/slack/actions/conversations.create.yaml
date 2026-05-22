@@ -1,0 +1,20 @@
+id: conversations.create
+description: Create a public or private channel
+permission: channels.write
+side_effects: write
+request:
+  method: POST
+  path: /conversations.create
+  body: $inputs
+inputs:
+  - name: name
+    type: string
+    required: true
+    location: body
+    description: "Channel name; lowercase, no spaces"
+  - name: is_private
+    type: boolean
+    location: body
+  - name: team_id
+    type: string
+    location: body

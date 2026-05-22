@@ -1,0 +1,36 @@
+id: project_versions.create
+description: Create a project version
+permission: projects.write
+side_effects: write
+request:
+  method: POST
+  path: /rest/api/3/version
+  body: $inputs
+inputs:
+  - name: name
+    type: string
+    required: true
+    location: body
+  - name: projectId
+    type: integer
+    required: true
+    location: body
+  - name: description
+    type: string
+    location: body
+  - name: startDate
+    type: string
+    location: body
+  - name: releaseDate
+    type: string
+    location: body
+  - name: released
+    type: boolean
+    location: body
+  - name: archived
+    type: boolean
+    location: body
+errors:
+  "400": {code: validation_failed}
+  "401": {code: auth_failed}
+  "404": {code: not_found}

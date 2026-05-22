@@ -1,0 +1,25 @@
+id: invoices.create
+description: Create a draft invoice for a customer.
+permission: invoices.write
+side_effects: write
+request:
+  method: POST
+  path: /v1/invoices
+  headers:
+    Content-Type: application/x-www-form-urlencoded
+  body: '{body_raw}'
+inputs:
+  - name: body_raw
+    type: string
+    required: true
+    location: body
+    description: |
+      Form-encoded. Required: customer.
+      Common: auto_advance=true, collection_method=charge_automatically|send_invoice,
+      days_until_due, description, footer, default_payment_method, metadata[key].
+  - name: Idempotency-Key
+    type: string
+    location: header
+errors:
+  "400": {code: validation_failed}
+  "401": {code: auth_failed}

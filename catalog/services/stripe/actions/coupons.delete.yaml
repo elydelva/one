@@ -1,0 +1,15 @@
+id: coupons.delete
+description: Delete a coupon.
+permission: products.write
+side_effects: write
+request:
+  method: DELETE
+  path: /v1/coupons/{id}
+inputs:
+  - name: id
+    type: string
+    required: true
+    location: path
+errors:
+  "401": {code: auth_failed}
+  "404": {code: not_found}

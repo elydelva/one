@@ -1,0 +1,28 @@
+id: invoices.pay
+description: Pay an open invoice now.
+permission: invoices.write
+side_effects: write
+request:
+  method: POST
+  path: /v1/invoices/{id}/pay
+  headers:
+    Content-Type: application/x-www-form-urlencoded
+  body: '{body_raw}'
+inputs:
+  - name: id
+    type: string
+    required: true
+    location: path
+  - name: body_raw
+    type: string
+    required: true
+    location: body
+    description: 'Form-encoded. Optional: payment_method, source, off_session=true, paid_out_of_band=true.'
+  - name: Idempotency-Key
+    type: string
+    location: header
+errors:
+  "400": {code: validation_failed}
+  "401": {code: auth_failed}
+  "402": {code: card_declined}
+  "404": {code: not_found}

@@ -1,0 +1,58 @@
+id: chat.postMessage
+description: Post a message to a channel, DM, or thread
+permission: chat.write
+side_effects: write
+request:
+  method: POST
+  path: /chat.postMessage
+  body: $inputs
+inputs:
+  - name: channel
+    type: string
+    required: true
+    location: body
+    description: "Channel ID (C…/D…/G…) or name"
+  - name: text
+    type: string
+    location: body
+    description: "Fallback text; required if blocks/attachments omitted"
+  - name: blocks
+    type: array
+    location: body
+  - name: attachments
+    type: array
+    location: body
+  - name: thread_ts
+    type: string
+    location: body
+  - name: reply_broadcast
+    type: boolean
+    location: body
+  - name: unfurl_links
+    type: boolean
+    location: body
+  - name: unfurl_media
+    type: boolean
+    location: body
+  - name: mrkdwn
+    type: boolean
+    location: body
+  - name: parse
+    type: string
+    location: body
+    enum: [none, full]
+  - name: link_names
+    type: boolean
+    location: body
+  - name: icon_emoji
+    type: string
+    location: body
+  - name: icon_url
+    type: string
+    location: body
+  - name: username
+    type: string
+    location: body
+  - name: metadata
+    type: object
+    location: body

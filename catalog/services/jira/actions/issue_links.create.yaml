@@ -1,0 +1,30 @@
+id: issue_links.create
+description: Create a link between two issues
+permission: issues.write
+side_effects: write
+request:
+  method: POST
+  path: /rest/api/3/issueLink
+  body: $inputs
+inputs:
+  - name: type
+    type: object
+    required: true
+    location: body
+    description: "{name: 'Blocks'}"
+  - name: inwardIssue
+    type: object
+    required: true
+    location: body
+    description: "{key: 'ENG-1'}"
+  - name: outwardIssue
+    type: object
+    required: true
+    location: body
+  - name: comment
+    type: object
+    location: body
+errors:
+  "400": {code: validation_failed}
+  "401": {code: auth_failed}
+  "404": {code: not_found}

@@ -1,0 +1,17 @@
+id: teams.read
+description: Get team information
+permission: teams.read
+request:
+  method: GET
+  path: /v2/teams/{teamId}
+inputs:
+  - name: teamId
+    type: string
+    required: true
+    location: path
+  - name: slug
+    type: string
+    location: query
+errors:
+  "401": {code: auth_failed}
+  "404": {code: not_found}

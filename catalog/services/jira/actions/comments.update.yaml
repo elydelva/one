@@ -1,0 +1,27 @@
+id: comments.update
+description: Update a comment. `body` is ADF.
+permission: comments.write
+side_effects: write
+request:
+  method: PUT
+  path: /rest/api/3/issue/{issueIdOrKey}/comment/{id}
+  body: $inputs
+inputs:
+  - name: issueIdOrKey
+    type: string
+    required: true
+    location: path
+  - name: id
+    type: string
+    required: true
+    location: path
+  - name: body
+    type: object
+    required: true
+    location: body
+  - name: visibility
+    type: object
+    location: body
+errors:
+  "401": {code: auth_failed}
+  "404": {code: not_found}

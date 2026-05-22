@@ -1,0 +1,17 @@
+id: invites.delete
+description: Revoke an invite
+permission: guilds.write
+side_effects: write
+request:
+  method: DELETE
+  path: /invites/{invite_code}
+inputs:
+  - name: invite_code
+    type: string
+    required: true
+    location: path
+errors:
+  "401": {code: auth_failed}
+  "403": {code: forbidden}
+  "404": {code: not_found}
+  "429": {code: rate_limited, retry: backoff}

@@ -1,0 +1,29 @@
+id: hyperdrive.configs.create
+description: Create a Hyperdrive config (Postgres connection pool)
+permission: hyperdrive.write
+side_effects: write
+request:
+  method: POST
+  path: /accounts/{account_id}/hyperdrive/configs
+  body: $inputs
+inputs:
+  - name: account_id
+    type: string
+    required: true
+    location: path
+  - name: name
+    type: string
+    required: true
+    location: body
+  - name: origin
+    type: object
+    required: true
+    location: body
+    description: "{scheme, host, port, database, user, password}"
+  - name: caching
+    type: object
+    location: body
+    description: "{disabled?: bool, max_age?: int, stale_while_revalidate?: int}"
+errors:
+  "400": {code: validation_failed}
+  "401": {code: auth_failed}

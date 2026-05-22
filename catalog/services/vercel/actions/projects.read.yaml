@@ -1,0 +1,17 @@
+id: projects.read
+description: Get a project by ID or name
+permission: projects.read
+request:
+  method: GET
+  path: /v9/projects/{idOrName}
+inputs:
+  - name: idOrName
+    type: string
+    required: true
+    location: path
+  - name: teamId
+    type: string
+    location: query
+errors:
+  "401": {code: auth_failed}
+  "404": {code: not_found}

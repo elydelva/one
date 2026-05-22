@@ -1,0 +1,25 @@
+id: kv.namespaces.list
+description: List Workers KV namespaces
+permission: kv.read
+request:
+  method: GET
+  path: /accounts/{account_id}/storage/kv/namespaces
+inputs:
+  - name: account_id
+    type: string
+    required: true
+    location: path
+  - name: page
+    type: integer
+    location: query
+  - name: per_page
+    type: integer
+    location: query
+pagination:
+  style: cursor
+  request_param: page
+  request_location: query
+  response_token: result_info.next_page
+  max_pages: 10
+errors:
+  "401": {code: auth_failed}

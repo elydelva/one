@@ -1,0 +1,21 @@
+id: transfers.list
+description: List Connect transfers.
+permission: connect.read
+request:
+  method: GET
+  path: /v1/transfers
+inputs:
+  - name: destination
+    type: string
+    location: query
+  - name: transfer_group
+    type: string
+    location: query
+  - name: limit
+    type: integer
+    location: query
+  - name: starting_after
+    type: string
+    location: query
+errors:
+  "401": {code: auth_failed}

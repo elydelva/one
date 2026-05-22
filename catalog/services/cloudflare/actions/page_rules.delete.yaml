@@ -1,0 +1,19 @@
+id: page_rules.delete
+description: Delete a page rule
+permission: zone.write
+side_effects: write
+request:
+  method: DELETE
+  path: /zones/{zone_id}/pagerules/{rule_id}
+inputs:
+  - name: zone_id
+    type: string
+    required: true
+    location: path
+  - name: rule_id
+    type: string
+    required: true
+    location: path
+errors:
+  "401": {code: auth_failed}
+  "404": {code: not_found}

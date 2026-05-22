@@ -1,0 +1,29 @@
+id: subscriptions.update
+description: Update a subscription (price change, qty, cancel_at_period_end, ...).
+permission: subscriptions.write
+side_effects: write
+request:
+  method: POST
+  path: /v1/subscriptions/{id}
+  headers:
+    Content-Type: application/x-www-form-urlencoded
+  body: '{body_raw}'
+inputs:
+  - name: id
+    type: string
+    required: true
+    location: path
+  - name: body_raw
+    type: string
+    required: true
+    location: body
+    description: |
+      Form-encoded. Common: cancel_at_period_end=true, proration_behavior,
+      items[0][id]=si_xxx&items[0][price]=price_new, default_payment_method, metadata[k].
+  - name: Idempotency-Key
+    type: string
+    location: header
+errors:
+  "400": {code: validation_failed}
+  "401": {code: auth_failed}
+  "404": {code: not_found}

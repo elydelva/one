@@ -1,0 +1,29 @@
+id: r2.buckets.create
+description: Create an R2 bucket
+permission: r2.write
+side_effects: write
+request:
+  method: POST
+  path: /accounts/{account_id}/r2/buckets
+  body: $inputs
+inputs:
+  - name: account_id
+    type: string
+    required: true
+    location: path
+  - name: name
+    type: string
+    required: true
+    location: body
+  - name: locationHint
+    type: string
+    location: body
+    enum: [apac, eeur, enam, weur, wnam, oc]
+  - name: storageClass
+    type: string
+    location: body
+    enum: [Standard, InfrequentAccess]
+errors:
+  "400": {code: validation_failed}
+  "401": {code: auth_failed}
+  "409": {code: conflict, hint: "Bucket name already exists"}

@@ -1,0 +1,31 @@
+id: d1.databases.query
+description: Run a SQL query against a D1 database
+permission: d1.write
+side_effects: write
+request:
+  method: POST
+  path: /accounts/{account_id}/d1/database/{database_id}/query
+  body: $inputs
+inputs:
+  - name: account_id
+    type: string
+    required: true
+    location: path
+  - name: database_id
+    type: string
+    required: true
+    location: path
+  - name: sql
+    type: string
+    required: true
+    location: body
+    description: "SQL statement; supports multiple semicolon-separated statements"
+  - name: params
+    type: array
+    location: body
+    description: "Positional bind parameters for ? placeholders"
+errors:
+  "400":
+    code: validation_failed
+    hint: "Check SQL syntax and param count."
+  "401": {code: auth_failed}

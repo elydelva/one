@@ -1,0 +1,17 @@
+id: conversations.kick
+description: Remove a user from a channel
+permission: channels.write
+side_effects: write
+request:
+  method: POST
+  path: /conversations.kick
+  body: $inputs
+inputs:
+  - name: channel
+    type: string
+    required: true
+    location: body
+  - name: user
+    type: string
+    required: true
+    location: body

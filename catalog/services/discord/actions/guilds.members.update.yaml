@@ -1,0 +1,43 @@
+id: guilds.members.update
+description: Modify a guild member (roles, nick, mute, deaf, timeout)
+permission: members.write
+side_effects: write
+request:
+  method: PATCH
+  path: /guilds/{guild_id}/members/{user_id}
+  body: $inputs
+inputs:
+  - name: guild_id
+    type: string
+    required: true
+    location: path
+  - name: user_id
+    type: string
+    required: true
+    location: path
+  - name: nick
+    type: string
+    location: body
+  - name: roles
+    type: array
+    location: body
+    description: "Array of role snowflake IDs"
+  - name: mute
+    type: boolean
+    location: body
+  - name: deaf
+    type: boolean
+    location: body
+  - name: channel_id
+    type: string
+    location: body
+    description: "Voice channel to move user to"
+  - name: communication_disabled_until
+    type: string
+    location: body
+    description: "ISO 8601 timeout expiry"
+errors:
+  "401": {code: auth_failed}
+  "403": {code: forbidden}
+  "404": {code: not_found}
+  "429": {code: rate_limited, retry: backoff}

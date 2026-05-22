@@ -1,0 +1,29 @@
+id: aliases.assign
+description: Assign an alias to a deployment
+permission: aliases.write
+side_effects: write
+request:
+  method: POST
+  path: /v2/deployments/{id}/aliases
+  body: $inputs
+inputs:
+  - name: id
+    type: string
+    required: true
+    location: path
+    description: "Deployment ID or URL"
+  - name: alias
+    type: string
+    location: body
+    description: "The alias to assign (e.g. my-app.com)"
+  - name: redirect
+    type: string
+    location: body
+  - name: teamId
+    type: string
+    location: query
+errors:
+  "400": {code: validation_failed, hint: "Deployment not READY, alias invalid, or cert not ready."}
+  "401": {code: auth_failed}
+  "404": {code: not_found}
+  "409": {code: conflict, hint: "Alias already assigned to this deployment."}

@@ -1,0 +1,25 @@
+id: invoices.list
+description: List invoices.
+permission: invoices.read
+request:
+  method: GET
+  path: /v1/invoices
+inputs:
+  - name: customer
+    type: string
+    location: query
+  - name: status
+    type: string
+    location: query
+    enum: [draft, open, paid, uncollectible, void]
+  - name: subscription
+    type: string
+    location: query
+  - name: limit
+    type: integer
+    location: query
+  - name: starting_after
+    type: string
+    location: query
+errors:
+  "401": {code: auth_failed}

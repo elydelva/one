@@ -1,0 +1,18 @@
+id: certs.delete
+description: Remove a cert by ID
+permission: certs.write
+side_effects: write
+request:
+  method: DELETE
+  path: /v7/certs/{id}
+inputs:
+  - name: id
+    type: string
+    required: true
+    location: path
+  - name: teamId
+    type: string
+    location: query
+errors:
+  "401": {code: auth_failed}
+  "404": {code: not_found}

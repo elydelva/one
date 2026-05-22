@@ -1,0 +1,39 @@
+id: alerts.rules.update
+description: Update an issue alert rule
+permission: alerts.write
+side_effects: write
+request:
+  method: PUT
+  path: /projects/{organization_slug}/{project_slug}/rules/{rule_id}/
+  body: $inputs
+inputs:
+  - name: organization_slug
+    type: string
+    required: true
+    location: path
+  - name: project_slug
+    type: string
+    required: true
+    location: path
+  - name: rule_id
+    type: string
+    required: true
+    location: path
+  - name: name
+    type: string
+    location: body
+  - name: conditions
+    type: array
+    location: body
+  - name: actions
+    type: array
+    location: body
+  - name: filters
+    type: array
+    location: body
+  - name: frequency
+    type: integer
+    location: body
+errors:
+  "401": {code: auth_failed}
+  "404": {code: not_found}

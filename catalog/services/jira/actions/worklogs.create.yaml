@@ -1,0 +1,33 @@
+id: worklogs.create
+description: Add a worklog. `timeSpent` (e.g. "1h 30m") or `timeSpentSeconds`. `comment` is ADF.
+permission: issues.write
+side_effects: write
+request:
+  method: POST
+  path: /rest/api/3/issue/{issueIdOrKey}/worklog
+  body: $inputs
+inputs:
+  - name: issueIdOrKey
+    type: string
+    required: true
+    location: path
+  - name: timeSpent
+    type: string
+    location: body
+  - name: timeSpentSeconds
+    type: integer
+    location: body
+  - name: started
+    type: string
+    location: body
+    description: "ISO 8601, e.g. 2024-01-15T10:00:00.000+0000"
+  - name: comment
+    type: object
+    location: body
+  - name: visibility
+    type: object
+    location: body
+errors:
+  "400": {code: validation_failed}
+  "401": {code: auth_failed}
+  "404": {code: not_found}

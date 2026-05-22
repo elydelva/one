@@ -1,0 +1,22 @@
+id: dns.delete
+description: Delete a DNS record
+permission: dns.write
+side_effects: write
+request:
+  method: DELETE
+  path: /v2/domains/{domain}/records/{recordId}
+inputs:
+  - name: domain
+    type: string
+    required: true
+    location: path
+  - name: recordId
+    type: string
+    required: true
+    location: path
+  - name: teamId
+    type: string
+    location: query
+errors:
+  "401": {code: auth_failed}
+  "404": {code: not_found}

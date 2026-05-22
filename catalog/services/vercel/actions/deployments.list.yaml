@@ -1,0 +1,43 @@
+id: deployments.list
+description: List deployments (filterable by project, state, branch, sha)
+permission: deployments.read
+request:
+  method: GET
+  path: /v6/deployments
+inputs:
+  - name: projectId
+    type: string
+    location: query
+  - name: target
+    type: string
+    location: query
+    enum: [production, preview]
+  - name: state
+    type: string
+    location: query
+    description: "BUILDING, ERROR, INITIALIZING, QUEUED, READY, CANCELED"
+  - name: branch
+    type: string
+    location: query
+  - name: sha
+    type: string
+    location: query
+  - name: limit
+    type: integer
+    location: query
+  - name: until
+    type: integer
+    location: query
+    description: "Timestamp cursor for previous page"
+  - name: teamId
+    type: string
+    location: query
+pagination:
+  style: cursor
+  request_param: until
+  request_location: query
+  response_token: pagination.next
+  max_pages: 10
+errors:
+  "401": {code: auth_failed}
+  "403": {code: forbidden}

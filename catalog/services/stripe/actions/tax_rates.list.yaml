@@ -1,0 +1,21 @@
+id: tax_rates.list
+description: List tax rates.
+permission: products.read
+request:
+  method: GET
+  path: /v1/tax_rates
+inputs:
+  - name: active
+    type: string
+    location: query
+  - name: inclusive
+    type: string
+    location: query
+  - name: limit
+    type: integer
+    location: query
+  - name: starting_after
+    type: string
+    location: query
+errors:
+  "401": {code: auth_failed}

@@ -1,0 +1,18 @@
+id: aliases.delete
+description: Delete an alias
+permission: aliases.write
+side_effects: write
+request:
+  method: DELETE
+  path: /v2/aliases/{aliasId}
+inputs:
+  - name: aliasId
+    type: string
+    required: true
+    location: path
+  - name: teamId
+    type: string
+    location: query
+errors:
+  "401": {code: auth_failed}
+  "404": {code: not_found}

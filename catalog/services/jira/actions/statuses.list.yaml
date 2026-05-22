@@ -1,0 +1,10 @@
+id: statuses.list
+description: List all issue statuses
+permission: issues.read
+side_effects: read
+request:
+  method: GET
+  path: /rest/api/3/status
+inputs: []
+errors:
+  "401": {code: auth_failed}

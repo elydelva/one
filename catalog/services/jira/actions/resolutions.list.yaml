@@ -1,0 +1,10 @@
+id: resolutions.list
+description: List all resolutions
+permission: issues.read
+side_effects: read
+request:
+  method: GET
+  path: /rest/api/3/resolution
+inputs: []
+errors:
+  "401": {code: auth_failed}

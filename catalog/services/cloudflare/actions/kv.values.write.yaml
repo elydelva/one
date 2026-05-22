@@ -1,0 +1,37 @@
+id: kv.values.write
+description: Write a value to a KV key (raw body)
+permission: kv.write
+side_effects: write
+request:
+  method: PUT
+  path: /accounts/{account_id}/storage/kv/namespaces/{namespace_id}/values/{key}
+  body: $input:value
+inputs:
+  - name: account_id
+    type: string
+    required: true
+    location: path
+  - name: namespace_id
+    type: string
+    required: true
+    location: path
+  - name: key
+    type: string
+    required: true
+    location: path
+  - name: value
+    type: string
+    required: true
+    location: body
+    description: "Raw value body, sent as-is"
+  - name: expiration
+    type: integer
+    location: query
+    description: "Unix epoch seconds for absolute expiration"
+  - name: expiration_ttl
+    type: integer
+    location: query
+    description: "TTL in seconds (>=60)"
+errors:
+  "400": {code: validation_failed}
+  "401": {code: auth_failed}

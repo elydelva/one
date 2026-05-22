@@ -1,0 +1,24 @@
+id: channels.messages.bulk_delete
+description: Bulk-delete 2-100 messages (must be <14 days old)
+permission: messages.write
+side_effects: write
+request:
+  method: POST
+  path: /channels/{channel_id}/messages/bulk-delete
+  body: $inputs
+inputs:
+  - name: channel_id
+    type: string
+    required: true
+    location: path
+  - name: messages
+    type: array
+    required: true
+    location: body
+    description: "Array of message snowflake IDs (2-100)"
+errors:
+  "401": {code: auth_failed}
+  "403": {code: forbidden}
+  "404": {code: not_found}
+  "400": {code: validation_failed}
+  "429": {code: rate_limited, retry: backoff}

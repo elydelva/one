@@ -1,0 +1,22 @@
+id: products.list
+description: List products.
+permission: products.read
+request:
+  method: GET
+  path: /v1/products
+inputs:
+  - name: active
+    type: string
+    location: query
+  - name: ids
+    type: string
+    location: query
+    description: "Repeat ids[]=prod_x&ids[]=prod_y via this single string."
+  - name: limit
+    type: integer
+    location: query
+  - name: starting_after
+    type: string
+    location: query
+errors:
+  "401": {code: auth_failed}

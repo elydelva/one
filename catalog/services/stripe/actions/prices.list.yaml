@@ -1,0 +1,28 @@
+id: prices.list
+description: List prices.
+permission: products.read
+request:
+  method: GET
+  path: /v1/prices
+inputs:
+  - name: product
+    type: string
+    location: query
+  - name: active
+    type: string
+    location: query
+  - name: currency
+    type: string
+    location: query
+  - name: type
+    type: string
+    location: query
+    enum: [one_time, recurring]
+  - name: limit
+    type: integer
+    location: query
+  - name: starting_after
+    type: string
+    location: query
+errors:
+  "401": {code: auth_failed}

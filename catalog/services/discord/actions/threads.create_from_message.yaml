@@ -1,0 +1,33 @@
+id: threads.create_from_message
+description: Start a thread anchored to an existing message
+permission: channels.write
+side_effects: write
+request:
+  method: POST
+  path: /channels/{channel_id}/messages/{message_id}/threads
+  body: $inputs
+inputs:
+  - name: channel_id
+    type: string
+    required: true
+    location: path
+  - name: message_id
+    type: string
+    required: true
+    location: path
+  - name: name
+    type: string
+    required: true
+    location: body
+  - name: auto_archive_duration
+    type: integer
+    location: body
+    description: "60, 1440, 4320, or 10080 minutes"
+  - name: rate_limit_per_user
+    type: integer
+    location: body
+errors:
+  "401": {code: auth_failed}
+  "403": {code: forbidden}
+  "404": {code: not_found}
+  "429": {code: rate_limited, retry: backoff}

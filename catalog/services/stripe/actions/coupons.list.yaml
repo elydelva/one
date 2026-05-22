@@ -1,0 +1,15 @@
+id: coupons.list
+description: List coupons.
+permission: products.read
+request:
+  method: GET
+  path: /v1/coupons
+inputs:
+  - name: limit
+    type: integer
+    location: query
+  - name: starting_after
+    type: string
+    location: query
+errors:
+  "401": {code: auth_failed}

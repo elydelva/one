@@ -1,0 +1,33 @@
+id: zones.list
+description: List zones owned by the account
+permission: zone.read
+request:
+  method: GET
+  path: /zones
+inputs:
+  - name: name
+    type: string
+    location: query
+    description: "Filter by domain name"
+  - name: status
+    type: string
+    location: query
+    enum: [active, pending, initializing, moved, deleted, deactivated]
+  - name: account.id
+    type: string
+    location: query
+  - name: page
+    type: integer
+    location: query
+  - name: per_page
+    type: integer
+    location: query
+pagination:
+  style: cursor
+  request_param: page
+  request_location: query
+  response_token: result_info.next_page
+  max_pages: 10
+errors:
+  "401": {code: auth_failed}
+  "403": {code: forbidden}

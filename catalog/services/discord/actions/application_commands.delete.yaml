@@ -1,0 +1,21 @@
+id: application_commands.delete
+description: Delete a global application command
+permission: commands.write
+side_effects: write
+request:
+  method: DELETE
+  path: /applications/{application_id}/commands/{command_id}
+inputs:
+  - name: application_id
+    type: string
+    required: true
+    location: path
+  - name: command_id
+    type: string
+    required: true
+    location: path
+errors:
+  "401": {code: auth_failed}
+  "403": {code: forbidden}
+  "404": {code: not_found}
+  "429": {code: rate_limited, retry: backoff}

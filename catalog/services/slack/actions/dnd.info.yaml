@@ -1,0 +1,13 @@
+id: dnd.info
+description: Get a user's Do-Not-Disturb status
+permission: dnd.read
+request:
+  method: GET
+  path: /dnd.info
+inputs:
+  - name: user
+    type: string
+    location: query
+  - name: team_id
+    type: string
+    location: query

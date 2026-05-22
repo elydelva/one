@@ -1,0 +1,18 @@
+id: dns_records.read
+description: Get a single DNS record
+permission: dns.read
+request:
+  method: GET
+  path: /zones/{zone_id}/dns_records/{dns_record_id}
+inputs:
+  - name: zone_id
+    type: string
+    required: true
+    location: path
+  - name: dns_record_id
+    type: string
+    required: true
+    location: path
+errors:
+  "401": {code: auth_failed}
+  "404": {code: not_found}

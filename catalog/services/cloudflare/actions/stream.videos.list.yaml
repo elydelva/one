@@ -1,0 +1,27 @@
+id: stream.videos.list
+description: List Stream videos
+permission: stream.read
+request:
+  method: GET
+  path: /accounts/{account_id}/stream
+inputs:
+  - name: account_id
+    type: string
+    required: true
+    location: path
+  - name: search
+    type: string
+    location: query
+  - name: status
+    type: string
+    location: query
+    enum: [queued, inprogress, ready, error]
+  - name: start
+    type: string
+    location: query
+    description: "RFC3339 timestamp"
+  - name: end
+    type: string
+    location: query
+errors:
+  "401": {code: auth_failed}

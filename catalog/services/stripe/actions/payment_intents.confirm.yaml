@@ -1,0 +1,30 @@
+id: payment_intents.confirm
+description: Confirm a PaymentIntent. Initiates charge.
+permission: payments.write
+side_effects: write
+request:
+  method: POST
+  path: /v1/payment_intents/{id}/confirm
+  headers:
+    Content-Type: application/x-www-form-urlencoded
+  body: '{body_raw}'
+inputs:
+  - name: id
+    type: string
+    required: true
+    location: path
+  - name: body_raw
+    type: string
+    required: true
+    location: body
+    description: |
+      Form-encoded. Often empty string "". Optional: payment_method,
+      return_url, off_session=true, mandate_data[...].
+  - name: Idempotency-Key
+    type: string
+    location: header
+errors:
+  "400": {code: validation_failed}
+  "401": {code: auth_failed}
+  "402": {code: card_declined}
+  "404": {code: not_found}

@@ -1,0 +1,49 @@
+id: deployments.create
+description: Create a new deployment (from files or by redeploying)
+permission: deployments.write
+side_effects: write
+request:
+  method: POST
+  path: /v13/deployments
+  body: $inputs
+inputs:
+  - name: name
+    type: string
+    required: true
+    location: body
+  - name: project
+    type: string
+    location: body
+    description: "Project ID or name"
+  - name: deploymentId
+    type: string
+    location: body
+    description: "Redeploy an existing deployment by ID"
+  - name: files
+    type: array
+    location: body
+  - name: gitSource
+    type: object
+    location: body
+  - name: target
+    type: string
+    location: body
+    enum: [production, staging]
+  - name: meta
+    type: object
+    location: body
+  - name: projectSettings
+    type: object
+    location: body
+  - name: forceNew
+    type: integer
+    location: query
+    enum: [0, 1]
+  - name: teamId
+    type: string
+    location: query
+errors:
+  "400": {code: validation_failed}
+  "401": {code: auth_failed}
+  "402": {code: payment_required, hint: "Update payment method."}
+  "403": {code: forbidden}

@@ -1,0 +1,38 @@
+id: deployments.events
+description: Get build/runtime events for a deployment
+permission: deployments.read
+request:
+  method: GET
+  path: /v3/deployments/{idOrUrl}/events
+inputs:
+  - name: idOrUrl
+    type: string
+    required: true
+    location: path
+  - name: builds
+    type: integer
+    location: query
+    enum: [0, 1]
+  - name: direction
+    type: string
+    location: query
+    enum: [backward, forward]
+  - name: follow
+    type: integer
+    location: query
+    enum: [0, 1]
+  - name: limit
+    type: integer
+    location: query
+  - name: since
+    type: integer
+    location: query
+  - name: until
+    type: integer
+    location: query
+  - name: teamId
+    type: string
+    location: query
+errors:
+  "401": {code: auth_failed}
+  "404": {code: not_found}

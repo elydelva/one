@@ -1,0 +1,27 @@
+id: payment_methods.attach
+description: Attach a payment method to a customer.
+permission: customers.write
+side_effects: write
+request:
+  method: POST
+  path: /v1/payment_methods/{id}/attach
+  headers:
+    Content-Type: application/x-www-form-urlencoded
+  body: '{body_raw}'
+inputs:
+  - name: id
+    type: string
+    required: true
+    location: path
+  - name: body_raw
+    type: string
+    required: true
+    location: body
+    description: 'Form-encoded. Required: customer=cus_xxx.'
+  - name: Idempotency-Key
+    type: string
+    location: header
+errors:
+  "400": {code: validation_failed}
+  "401": {code: auth_failed}
+  "404": {code: not_found}

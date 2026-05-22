@@ -1,0 +1,10 @@
+id: users.me
+description: Get the current bot user
+permission: guilds.read
+side_effects: read
+request:
+  method: GET
+  path: /users/@me
+errors:
+  "401": {code: auth_failed}
+  "429": {code: rate_limited, retry: backoff}

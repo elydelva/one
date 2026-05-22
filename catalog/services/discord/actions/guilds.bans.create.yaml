@@ -1,0 +1,26 @@
+id: guilds.bans.create
+description: Ban a user from a guild
+permission: members.write
+side_effects: write
+request:
+  method: PUT
+  path: /guilds/{guild_id}/bans/{user_id}
+  body: $inputs
+inputs:
+  - name: guild_id
+    type: string
+    required: true
+    location: path
+  - name: user_id
+    type: string
+    required: true
+    location: path
+  - name: delete_message_seconds
+    type: integer
+    location: body
+    description: "0-604800; messages newer than this are purged"
+errors:
+  "401": {code: auth_failed}
+  "403": {code: forbidden}
+  "404": {code: not_found}
+  "429": {code: rate_limited, retry: backoff}

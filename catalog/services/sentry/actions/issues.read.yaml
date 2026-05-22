@@ -1,0 +1,14 @@
+id: issues.read
+description: Retrieve a single issue by ID
+permission: issues.read
+request:
+  method: GET
+  path: /issues/{issue_id}/
+inputs:
+  - name: issue_id
+    type: string
+    required: true
+    location: path
+errors:
+  "401": {code: auth_failed}
+  "404": {code: not_found}

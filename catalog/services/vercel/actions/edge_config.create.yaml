@@ -1,0 +1,23 @@
+id: edge_config.create
+description: Create an Edge Config
+permission: edge_config.write
+side_effects: write
+request:
+  method: POST
+  path: /v1/edge-config
+  body: $inputs
+inputs:
+  - name: slug
+    type: string
+    required: true
+    location: body
+  - name: items
+    type: object
+    location: body
+  - name: teamId
+    type: string
+    location: query
+errors:
+  "400": {code: validation_failed}
+  "401": {code: auth_failed}
+  "402": {code: payment_required}

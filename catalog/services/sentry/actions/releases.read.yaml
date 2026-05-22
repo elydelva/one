@@ -1,0 +1,18 @@
+id: releases.read
+description: Retrieve a release by version
+permission: releases.read
+request:
+  method: GET
+  path: /organizations/{organization_slug}/releases/{version}/
+inputs:
+  - name: organization_slug
+    type: string
+    required: true
+    location: path
+  - name: version
+    type: string
+    required: true
+    location: path
+errors:
+  "401": {code: auth_failed}
+  "404": {code: not_found}

@@ -1,0 +1,23 @@
+id: workers.scripts.delete
+description: Delete a Worker script
+permission: workers.write
+side_effects: write
+request:
+  method: DELETE
+  path: /accounts/{account_id}/workers/scripts/{script_name}
+inputs:
+  - name: account_id
+    type: string
+    required: true
+    location: path
+  - name: script_name
+    type: string
+    required: true
+    location: path
+  - name: force
+    type: boolean
+    location: query
+    description: "Force delete even if bindings reference it"
+errors:
+  "401": {code: auth_failed}
+  "404": {code: not_found}

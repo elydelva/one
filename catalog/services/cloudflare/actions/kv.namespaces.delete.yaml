@@ -1,0 +1,19 @@
+id: kv.namespaces.delete
+description: Delete a Workers KV namespace
+permission: kv.write
+side_effects: write
+request:
+  method: DELETE
+  path: /accounts/{account_id}/storage/kv/namespaces/{namespace_id}
+inputs:
+  - name: account_id
+    type: string
+    required: true
+    location: path
+  - name: namespace_id
+    type: string
+    required: true
+    location: path
+errors:
+  "401": {code: auth_failed}
+  "404": {code: not_found}

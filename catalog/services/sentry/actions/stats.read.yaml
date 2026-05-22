@@ -1,0 +1,35 @@
+id: stats.read
+description: Retrieve event count stats for an organization
+permission: org.read
+request:
+  method: GET
+  path: /organizations/{organization_slug}/stats_v2/
+inputs:
+  - name: organization_slug
+    type: string
+    required: true
+    location: path
+  - name: field
+    type: array
+    required: true
+    location: query
+    description: "e.g. sum(quantity)"
+  - name: statsPeriod
+    type: string
+    location: query
+  - name: interval
+    type: string
+    location: query
+  - name: groupBy
+    type: array
+    location: query
+  - name: category
+    type: array
+    location: query
+    description: "error, transaction, attachment, replay"
+  - name: project
+    type: array
+    location: query
+errors:
+  "401": {code: auth_failed}
+  "400": {code: validation_failed}

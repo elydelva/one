@@ -1,0 +1,28 @@
+id: tunnels.create
+description: Create a Cloudflare Tunnel
+permission: tunnel.write
+side_effects: write
+request:
+  method: POST
+  path: /accounts/{account_id}/cfd_tunnel
+  body: $inputs
+inputs:
+  - name: account_id
+    type: string
+    required: true
+    location: path
+  - name: name
+    type: string
+    required: true
+    location: body
+  - name: tunnel_secret
+    type: string
+    location: body
+    description: "Base64-encoded 32-byte secret; auto-generated if omitted"
+  - name: config_src
+    type: string
+    location: body
+    enum: [local, cloudflare]
+errors:
+  "400": {code: validation_failed}
+  "401": {code: auth_failed}

@@ -1,0 +1,15 @@
+id: boards.read
+description: Get a board by id
+permission: boards.read
+side_effects: read
+request:
+  method: GET
+  path: /rest/agile/1.0/board/{boardId}
+inputs:
+  - name: boardId
+    type: integer
+    required: true
+    location: path
+errors:
+  "401": {code: auth_failed}
+  "404": {code: not_found}

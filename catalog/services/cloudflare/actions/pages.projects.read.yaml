@@ -1,0 +1,18 @@
+id: pages.projects.read
+description: Get a Pages project
+permission: pages.read
+request:
+  method: GET
+  path: /accounts/{account_id}/pages/projects/{project_name}
+inputs:
+  - name: account_id
+    type: string
+    required: true
+    location: path
+  - name: project_name
+    type: string
+    required: true
+    location: path
+errors:
+  "401": {code: auth_failed}
+  "404": {code: not_found}

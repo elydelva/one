@@ -1,0 +1,20 @@
+id: shared_env.delete
+description: Delete one or more shared env vars
+permission: env.write
+side_effects: write
+request:
+  method: DELETE
+  path: /v1/env
+  body: $inputs
+inputs:
+  - name: ids
+    type: array
+    required: true
+    location: body
+    description: "Array of shared env var IDs to delete"
+  - name: teamId
+    type: string
+    location: query
+errors:
+  "401": {code: auth_failed}
+  "404": {code: not_found}

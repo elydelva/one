@@ -1,0 +1,37 @@
+id: channels.messages.update
+description: Edit a previously sent message
+permission: messages.write
+side_effects: write
+request:
+  method: PATCH
+  path: /channels/{channel_id}/messages/{message_id}
+  body: $inputs
+inputs:
+  - name: channel_id
+    type: string
+    required: true
+    location: path
+  - name: message_id
+    type: string
+    required: true
+    location: path
+  - name: content
+    type: string
+    location: body
+  - name: embeds
+    type: array
+    location: body
+  - name: allowed_mentions
+    type: object
+    location: body
+  - name: components
+    type: array
+    location: body
+  - name: flags
+    type: integer
+    location: body
+errors:
+  "401": {code: auth_failed}
+  "403": {code: forbidden}
+  "404": {code: not_found}
+  "429": {code: rate_limited, retry: backoff}

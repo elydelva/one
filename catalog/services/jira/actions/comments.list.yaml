@@ -1,0 +1,32 @@
+id: comments.list
+description: List comments on an issue
+permission: issues.read
+side_effects: read
+request:
+  method: GET
+  path: /rest/api/3/issue/{issueIdOrKey}/comment
+inputs:
+  - name: issueIdOrKey
+    type: string
+    required: true
+    location: path
+  - name: startAt
+    type: integer
+    location: query
+  - name: maxResults
+    type: integer
+    location: query
+    default: 50
+  - name: orderBy
+    type: string
+    location: query
+    enum: [created, "-created", "+created"]
+pagination:
+  style: offset
+  request_param: startAt
+  request_location: query
+  page_size_param: maxResults
+  max_pages: 10
+errors:
+  "401": {code: auth_failed}
+  "404": {code: not_found}

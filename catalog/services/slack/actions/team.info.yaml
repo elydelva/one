@@ -1,0 +1,13 @@
+id: team.info
+description: Get info about the current workspace
+permission: team.read
+request:
+  method: GET
+  path: /team.info
+inputs:
+  - name: team
+    type: string
+    location: query
+  - name: domain
+    type: string
+    location: query

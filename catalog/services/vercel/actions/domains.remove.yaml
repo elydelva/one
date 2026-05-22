@@ -1,0 +1,18 @@
+id: domains.remove
+description: Remove a domain by name
+permission: domains.write
+side_effects: write
+request:
+  method: DELETE
+  path: /v6/domains/{domain}
+inputs:
+  - name: domain
+    type: string
+    required: true
+    location: path
+  - name: teamId
+    type: string
+    location: query
+errors:
+  "401": {code: auth_failed}
+  "404": {code: not_found}

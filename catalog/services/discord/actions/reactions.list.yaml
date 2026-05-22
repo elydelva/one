@@ -1,0 +1,33 @@
+id: reactions.list
+description: List users who reacted to a message with a given emoji
+permission: messages.read
+side_effects: read
+request:
+  method: GET
+  path: /channels/{channel_id}/messages/{message_id}/reactions/{emoji}
+inputs:
+  - name: channel_id
+    type: string
+    required: true
+    location: path
+  - name: message_id
+    type: string
+    required: true
+    location: path
+  - name: emoji
+    type: string
+    required: true
+    location: path
+  - name: after
+    type: string
+    location: query
+  - name: limit
+    type: integer
+    location: query
+    default: 25
+    description: "1-100"
+errors:
+  "401": {code: auth_failed}
+  "403": {code: forbidden}
+  "404": {code: not_found}
+  "429": {code: rate_limited, retry: backoff}

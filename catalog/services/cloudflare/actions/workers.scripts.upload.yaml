@@ -1,0 +1,30 @@
+id: workers.scripts.upload
+description: Upload or overwrite a Worker script (single ES module)
+permission: workers.write
+side_effects: write
+request:
+  method: PUT
+  path: /accounts/{account_id}/workers/scripts/{script_name}
+  headers:
+    Content-Type: "application/javascript+module"
+  body: $input:script
+inputs:
+  - name: account_id
+    type: string
+    required: true
+    location: path
+  - name: script_name
+    type: string
+    required: true
+    location: path
+  - name: script
+    type: string
+    required: true
+    location: body
+    description: "Raw ES module source. For multipart bindings, use the multipart upload variant."
+errors:
+  "400":
+    code: validation_failed
+    hint: "Syntax error or missing exported default fetch handler."
+  "401": {code: auth_failed}
+  "413": {code: payload_too_large}

@@ -1,0 +1,19 @@
+id: stream.videos.delete
+description: Delete a Stream video
+permission: stream.write
+side_effects: write
+request:
+  method: DELETE
+  path: /accounts/{account_id}/stream/{video_uid}
+inputs:
+  - name: account_id
+    type: string
+    required: true
+    location: path
+  - name: video_uid
+    type: string
+    required: true
+    location: path
+errors:
+  "401": {code: auth_failed}
+  "404": {code: not_found}

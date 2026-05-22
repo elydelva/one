@@ -1,0 +1,13 @@
+id: shared_env.list
+description: List shared (team-scoped) env vars
+permission: env.read
+request:
+  method: GET
+  path: /v1/env
+inputs:
+  - name: teamId
+    type: string
+    location: query
+errors:
+  "401": {code: auth_failed}
+  "403": {code: forbidden}

@@ -1,0 +1,32 @@
+id: projects.create
+description: Create a project under a team
+permission: project.write
+side_effects: write
+request:
+  method: POST
+  path: /teams/{organization_slug}/{team_slug}/projects/
+  body: $inputs
+inputs:
+  - name: organization_slug
+    type: string
+    required: true
+    location: path
+  - name: team_slug
+    type: string
+    required: true
+    location: path
+  - name: name
+    type: string
+    required: true
+    location: body
+  - name: slug
+    type: string
+    location: body
+  - name: platform
+    type: string
+    location: body
+    description: "e.g. python, javascript-react, go"
+errors:
+  "401": {code: auth_failed}
+  "403": {code: forbidden}
+  "409": {code: conflict}

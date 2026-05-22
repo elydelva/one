@@ -1,0 +1,22 @@
+id: dashboards.list
+description: List custom dashboards
+permission: org.read
+request:
+  method: GET
+  path: /organizations/{organization_slug}/dashboards/
+inputs:
+  - name: organization_slug
+    type: string
+    required: true
+    location: path
+  - name: cursor
+    type: string
+    location: query
+pagination:
+  style: cursor
+  request_param: cursor
+  request_location: query
+  response_token: next_cursor
+  max_pages: 10
+errors:
+  "401": {code: auth_failed}

@@ -1,0 +1,28 @@
+id: customers.list
+description: List customers (cursor-paginated). Filters via query params.
+permission: customers.read
+request:
+  method: GET
+  path: /v1/customers
+inputs:
+  - name: limit
+    type: integer
+    location: query
+    description: "1-100. Default 10."
+  - name: starting_after
+    type: string
+    location: query
+    description: "Customer id; returns the page after this id."
+  - name: ending_before
+    type: string
+    location: query
+  - name: email
+    type: string
+    location: query
+  - name: created
+    type: string
+    location: query
+    description: "Unix ts, or bracket form e.g. created[gte]=1700000000."
+errors:
+  "401": {code: auth_failed}
+  "429": {code: rate_limited, retry: backoff}

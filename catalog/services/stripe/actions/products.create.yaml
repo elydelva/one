@@ -1,0 +1,26 @@
+id: products.create
+description: Create a product.
+permission: products.write
+side_effects: write
+request:
+  method: POST
+  path: /v1/products
+  headers:
+    Content-Type: application/x-www-form-urlencoded
+  body: '{body_raw}'
+inputs:
+  - name: body_raw
+    type: string
+    required: true
+    location: body
+    description: |
+      Form-encoded. Required: name.
+      Common: description, active=true, images[]=https://...,
+      default_price_data[currency], default_price_data[unit_amount],
+      metadata[key], tax_code, unit_label.
+  - name: Idempotency-Key
+    type: string
+    location: header
+errors:
+  "400": {code: validation_failed}
+  "401": {code: auth_failed}

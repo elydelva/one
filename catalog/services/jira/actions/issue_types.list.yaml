@@ -1,0 +1,10 @@
+id: issue_types.list
+description: List all issue types visible to the user
+permission: issues.read
+side_effects: read
+request:
+  method: GET
+  path: /rest/api/3/issuetype
+inputs: []
+errors:
+  "401": {code: auth_failed}

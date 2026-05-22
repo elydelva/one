@@ -1,0 +1,28 @@
+id: issues.transition
+description: Transition an issue. `transition.id` is required; `fields`/`update` for screen fields.
+permission: issues.write
+side_effects: write
+request:
+  method: POST
+  path: /rest/api/3/issue/{issueIdOrKey}/transitions
+  body: $inputs
+inputs:
+  - name: issueIdOrKey
+    type: string
+    required: true
+    location: path
+  - name: transition
+    type: object
+    required: true
+    location: body
+    description: "{id: '31'}"
+  - name: fields
+    type: object
+    location: body
+  - name: update
+    type: object
+    location: body
+errors:
+  "400": {code: validation_failed}
+  "401": {code: auth_failed}
+  "404": {code: not_found}

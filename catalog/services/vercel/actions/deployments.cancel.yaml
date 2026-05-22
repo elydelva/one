@@ -1,0 +1,19 @@
+id: deployments.cancel
+description: Cancel an in-progress deployment
+permission: deployments.write
+side_effects: write
+request:
+  method: PATCH
+  path: /v12/deployments/{id}/cancel
+inputs:
+  - name: id
+    type: string
+    required: true
+    location: path
+  - name: teamId
+    type: string
+    location: query
+errors:
+  "401": {code: auth_failed}
+  "403": {code: forbidden, hint: "Deployment is already done or not yours."}
+  "404": {code: not_found}

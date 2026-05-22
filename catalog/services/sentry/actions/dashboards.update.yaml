@@ -1,0 +1,26 @@
+id: dashboards.update
+description: Update a custom dashboard
+permission: org.write
+side_effects: write
+request:
+  method: PUT
+  path: /organizations/{organization_slug}/dashboards/{dashboard_id}/
+  body: $inputs
+inputs:
+  - name: organization_slug
+    type: string
+    required: true
+    location: path
+  - name: dashboard_id
+    type: string
+    required: true
+    location: path
+  - name: title
+    type: string
+    location: body
+  - name: widgets
+    type: array
+    location: body
+errors:
+  "401": {code: auth_failed}
+  "404": {code: not_found}

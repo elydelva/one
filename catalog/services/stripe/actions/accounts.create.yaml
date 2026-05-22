@@ -1,0 +1,25 @@
+id: accounts.create
+description: Create a connected account (Express, Standard, or Custom).
+permission: connect.write
+side_effects: write
+request:
+  method: POST
+  path: /v1/accounts
+  headers:
+    Content-Type: application/x-www-form-urlencoded
+  body: '{body_raw}'
+inputs:
+  - name: body_raw
+    type: string
+    required: true
+    location: body
+    description: |
+      Form-encoded. Common: type=express|standard|custom, country, email,
+      capabilities[card_payments][requested]=true, capabilities[transfers][requested]=true,
+      business_type=individual|company, metadata[key].
+  - name: Idempotency-Key
+    type: string
+    location: header
+errors:
+  "400": {code: validation_failed}
+  "401": {code: auth_failed}

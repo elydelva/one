@@ -1,0 +1,33 @@
+id: conversations.list
+description: List channels (public, private, DMs, MPIMs) visible to the token
+permission: channels.read
+request:
+  method: GET
+  path: /conversations.list
+inputs:
+  - name: types
+    type: string
+    location: query
+    description: "Comma list: public_channel,private_channel,mpim,im"
+    default: public_channel
+  - name: exclude_archived
+    type: boolean
+    location: query
+    default: true
+  - name: limit
+    type: integer
+    location: query
+    default: 100
+  - name: cursor
+    type: string
+    location: query
+  - name: team_id
+    type: string
+    location: query
+pagination:
+  style: cursor
+  request_param: cursor
+  request_location: query
+  response_token: response_metadata.next_cursor
+  response_items: channels
+  max_pages: 10

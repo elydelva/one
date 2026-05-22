@@ -1,0 +1,31 @@
+id: chat.scheduledMessages.list
+description: List pending scheduled messages
+permission: chat.read
+request:
+  method: POST
+  path: /chat.scheduledMessages.list
+  body: $inputs
+inputs:
+  - name: channel
+    type: string
+    location: body
+  - name: latest
+    type: string
+    location: body
+  - name: oldest
+    type: string
+    location: body
+  - name: limit
+    type: integer
+    location: body
+    default: 100
+  - name: cursor
+    type: string
+    location: body
+pagination:
+  style: cursor
+  request_param: cursor
+  request_location: body
+  response_token: response_metadata.next_cursor
+  response_items: scheduled_messages
+  max_pages: 10

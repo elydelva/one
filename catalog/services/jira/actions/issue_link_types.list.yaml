@@ -1,0 +1,10 @@
+id: issue_link_types.list
+description: List all issue link types (Blocks, Relates, etc.)
+permission: issues.read
+side_effects: read
+request:
+  method: GET
+  path: /rest/api/3/issueLinkType
+inputs: []
+errors:
+  "401": {code: auth_failed}

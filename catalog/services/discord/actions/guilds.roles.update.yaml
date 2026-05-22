@@ -1,0 +1,37 @@
+id: guilds.roles.update
+description: Modify a role
+permission: roles.write
+side_effects: write
+request:
+  method: PATCH
+  path: /guilds/{guild_id}/roles/{role_id}
+  body: $inputs
+inputs:
+  - name: guild_id
+    type: string
+    required: true
+    location: path
+  - name: role_id
+    type: string
+    required: true
+    location: path
+  - name: name
+    type: string
+    location: body
+  - name: permissions
+    type: string
+    location: body
+  - name: color
+    type: integer
+    location: body
+  - name: hoist
+    type: boolean
+    location: body
+  - name: mentionable
+    type: boolean
+    location: body
+errors:
+  "401": {code: auth_failed}
+  "403": {code: forbidden}
+  "404": {code: not_found}
+  "429": {code: rate_limited, retry: backoff}

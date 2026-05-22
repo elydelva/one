@@ -1,0 +1,19 @@
+id: hyperdrive.configs.delete
+description: Delete a Hyperdrive config
+permission: hyperdrive.write
+side_effects: write
+request:
+  method: DELETE
+  path: /accounts/{account_id}/hyperdrive/configs/{hyperdrive_id}
+inputs:
+  - name: account_id
+    type: string
+    required: true
+    location: path
+  - name: hyperdrive_id
+    type: string
+    required: true
+    location: path
+errors:
+  "401": {code: auth_failed}
+  "404": {code: not_found}

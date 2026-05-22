@@ -1,0 +1,36 @@
+id: aliases.list
+description: List aliases (filterable by domain or deployment)
+permission: aliases.read
+request:
+  method: GET
+  path: /v4/aliases
+inputs:
+  - name: domain
+    type: string
+    location: query
+  - name: deploymentId
+    type: string
+    location: query
+  - name: projectId
+    type: string
+    location: query
+  - name: limit
+    type: integer
+    location: query
+  - name: since
+    type: integer
+    location: query
+  - name: until
+    type: integer
+    location: query
+  - name: teamId
+    type: string
+    location: query
+pagination:
+  style: cursor
+  request_param: until
+  request_location: query
+  response_token: pagination.next
+  max_pages: 10
+errors:
+  "401": {code: auth_failed}

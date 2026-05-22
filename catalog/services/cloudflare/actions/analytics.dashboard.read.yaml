@@ -1,0 +1,24 @@
+id: analytics.dashboard.read
+description: Read zone analytics dashboard (totals + timeseries)
+permission: zone.read
+request:
+  method: GET
+  path: /zones/{zone_id}/analytics/dashboard
+inputs:
+  - name: zone_id
+    type: string
+    required: true
+    location: path
+  - name: since
+    type: string
+    location: query
+    description: "RFC3339 or relative like -1440 (minutes)"
+  - name: until
+    type: string
+    location: query
+  - name: continuous
+    type: boolean
+    location: query
+errors:
+  "401": {code: auth_failed}
+  "404": {code: not_found}

@@ -1,0 +1,18 @@
+id: edge_config.delete
+description: Delete an Edge Config
+permission: edge_config.write
+side_effects: write
+request:
+  method: DELETE
+  path: /v1/edge-config/{edgeConfigId}
+inputs:
+  - name: edgeConfigId
+    type: string
+    required: true
+    location: path
+  - name: teamId
+    type: string
+    location: query
+errors:
+  "401": {code: auth_failed}
+  "404": {code: not_found}

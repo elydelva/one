@@ -1,0 +1,12 @@
+version: 1
+id: sentry
+name: Sentry
+description: Sentry error monitoring and performance API
+base_url: https://sentry.io/api/0
+auth:
+  providers:
+    - pat
+  injection:
+    pat:
+      header: Authorization
+      format: "Bearer {access_token}"

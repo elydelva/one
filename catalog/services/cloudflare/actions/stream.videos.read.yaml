@@ -1,0 +1,18 @@
+id: stream.videos.read
+description: Get a Stream video's details
+permission: stream.read
+request:
+  method: GET
+  path: /accounts/{account_id}/stream/{video_uid}
+inputs:
+  - name: account_id
+    type: string
+    required: true
+    location: path
+  - name: video_uid
+    type: string
+    required: true
+    location: path
+errors:
+  "401": {code: auth_failed}
+  "404": {code: not_found}

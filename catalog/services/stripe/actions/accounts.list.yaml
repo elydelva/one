@@ -1,0 +1,18 @@
+id: accounts.list
+description: List connected accounts (Connect platforms).
+permission: connect.read
+request:
+  method: GET
+  path: /v1/accounts
+inputs:
+  - name: limit
+    type: integer
+    location: query
+  - name: starting_after
+    type: string
+    location: query
+  - name: created
+    type: string
+    location: query
+errors:
+  "401": {code: auth_failed}

@@ -1,0 +1,37 @@
+id: sessions.read
+description: Retrieve release-health session stats for an organization
+permission: project.read
+request:
+  method: GET
+  path: /organizations/{organization_slug}/sessions/
+inputs:
+  - name: organization_slug
+    type: string
+    required: true
+    location: path
+  - name: field
+    type: array
+    required: true
+    location: query
+    description: "e.g. sum(session), count_unique(user)"
+  - name: project
+    type: array
+    location: query
+  - name: environment
+    type: array
+    location: query
+  - name: statsPeriod
+    type: string
+    location: query
+  - name: interval
+    type: string
+    location: query
+  - name: groupBy
+    type: array
+    location: query
+  - name: query
+    type: string
+    location: query
+errors:
+  "401": {code: auth_failed}
+  "400": {code: validation_failed}

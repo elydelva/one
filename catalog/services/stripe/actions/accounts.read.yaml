@@ -1,0 +1,14 @@
+id: accounts.read
+description: Retrieve a connected account (or your own if id omitted via /account endpoint).
+permission: connect.read
+request:
+  method: GET
+  path: /v1/accounts/{id}
+inputs:
+  - name: id
+    type: string
+    required: true
+    location: path
+errors:
+  "401": {code: auth_failed}
+  "404": {code: not_found}

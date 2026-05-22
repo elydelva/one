@@ -1,0 +1,23 @@
+id: issues.events.list
+description: List events tied to an issue
+permission: issues.read
+request:
+  method: GET
+  path: /issues/{issue_id}/events/
+inputs:
+  - name: issue_id
+    type: string
+    required: true
+    location: path
+  - name: cursor
+    type: string
+    location: query
+pagination:
+  style: cursor
+  request_param: cursor
+  request_location: query
+  response_token: next_cursor
+  max_pages: 10
+errors:
+  "401": {code: auth_failed}
+  "404": {code: not_found}

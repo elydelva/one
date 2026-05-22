@@ -1,0 +1,29 @@
+id: aliases.read
+description: Get an alias by ID or alias name
+permission: aliases.read
+request:
+  method: GET
+  path: /v4/aliases/{idOrAlias}
+inputs:
+  - name: idOrAlias
+    type: string
+    required: true
+    location: path
+  - name: from
+    type: integer
+    location: query
+  - name: projectId
+    type: string
+    location: query
+  - name: since
+    type: integer
+    location: query
+  - name: until
+    type: integer
+    location: query
+  - name: teamId
+    type: string
+    location: query
+errors:
+  "401": {code: auth_failed}
+  "404": {code: not_found}

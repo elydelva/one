@@ -1,0 +1,27 @@
+id: workers.routes.update
+description: Update a Worker route
+permission: workers.write
+side_effects: write
+request:
+  method: PUT
+  path: /zones/{zone_id}/workers/routes/{route_id}
+  body: $inputs
+inputs:
+  - name: zone_id
+    type: string
+    required: true
+    location: path
+  - name: route_id
+    type: string
+    required: true
+    location: path
+  - name: pattern
+    type: string
+    required: true
+    location: body
+  - name: script
+    type: string
+    location: body
+errors:
+  "401": {code: auth_failed}
+  "404": {code: not_found}

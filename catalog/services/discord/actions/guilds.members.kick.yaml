@@ -1,0 +1,21 @@
+id: guilds.members.kick
+description: Remove a member from a guild
+permission: members.write
+side_effects: write
+request:
+  method: DELETE
+  path: /guilds/{guild_id}/members/{user_id}
+inputs:
+  - name: guild_id
+    type: string
+    required: true
+    location: path
+  - name: user_id
+    type: string
+    required: true
+    location: path
+errors:
+  "401": {code: auth_failed}
+  "403": {code: forbidden}
+  "404": {code: not_found}
+  "429": {code: rate_limited, retry: backoff}

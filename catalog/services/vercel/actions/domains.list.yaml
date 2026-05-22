@@ -1,0 +1,27 @@
+id: domains.list
+description: List all domains
+permission: domains.read
+request:
+  method: GET
+  path: /v5/domains
+inputs:
+  - name: limit
+    type: integer
+    location: query
+  - name: since
+    type: integer
+    location: query
+  - name: until
+    type: integer
+    location: query
+  - name: teamId
+    type: string
+    location: query
+pagination:
+  style: cursor
+  request_param: until
+  request_location: query
+  response_token: pagination.next
+  max_pages: 10
+errors:
+  "401": {code: auth_failed}

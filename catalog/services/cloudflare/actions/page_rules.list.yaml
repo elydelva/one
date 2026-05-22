@@ -1,0 +1,17 @@
+id: page_rules.list
+description: List page rules for a zone
+permission: zone.read
+request:
+  method: GET
+  path: /zones/{zone_id}/pagerules
+inputs:
+  - name: zone_id
+    type: string
+    required: true
+    location: path
+  - name: status
+    type: string
+    location: query
+    enum: [active, disabled]
+errors:
+  "401": {code: auth_failed}

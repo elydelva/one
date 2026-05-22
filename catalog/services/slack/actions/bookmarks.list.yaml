@@ -1,0 +1,12 @@
+id: bookmarks.list
+description: List bookmarks pinned to a channel
+permission: bookmarks.read
+request:
+  method: POST
+  path: /bookmarks.list
+  body: $inputs
+inputs:
+  - name: channel_id
+    type: string
+    required: true
+    location: body

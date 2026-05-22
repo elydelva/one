@@ -1,0 +1,33 @@
+id: projects.list
+description: Search projects (paginated)
+permission: projects.read
+side_effects: read
+request:
+  method: GET
+  path: /rest/api/3/project/search
+inputs:
+  - name: startAt
+    type: integer
+    location: query
+  - name: maxResults
+    type: integer
+    location: query
+    default: 50
+  - name: query
+    type: string
+    location: query
+  - name: orderBy
+    type: string
+    location: query
+  - name: typeKey
+    type: string
+    location: query
+    enum: [business, service_desk, software]
+pagination:
+  style: offset
+  request_param: startAt
+  request_location: query
+  page_size_param: maxResults
+  max_pages: 10
+errors:
+  "401": {code: auth_failed}

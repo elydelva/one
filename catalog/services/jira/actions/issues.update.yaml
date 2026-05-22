@@ -1,0 +1,26 @@
+id: issues.update
+description: Edit an issue (fields/update). 204 on success.
+permission: issues.write
+side_effects: write
+request:
+  method: PUT
+  path: /rest/api/3/issue/{issueIdOrKey}
+  body: $inputs
+inputs:
+  - name: issueIdOrKey
+    type: string
+    required: true
+    location: path
+  - name: fields
+    type: object
+    location: body
+  - name: update
+    type: object
+    location: body
+  - name: notifyUsers
+    type: boolean
+    location: query
+errors:
+  "400": {code: validation_failed}
+  "401": {code: auth_failed}
+  "404": {code: not_found}

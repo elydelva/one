@@ -1,0 +1,12 @@
+version: 1
+id: vercel
+name: Vercel
+description: Vercel REST API
+base_url: https://api.vercel.com
+auth:
+  providers:
+    - pat
+  injection:
+    pat:
+      header: Authorization
+      format: "Bearer {access_token}"

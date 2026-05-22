@@ -1,0 +1,32 @@
+id: boards.list
+description: List Agile boards (Scrum/Kanban)
+permission: boards.read
+side_effects: read
+request:
+  method: GET
+  path: /rest/agile/1.0/board
+inputs:
+  - name: startAt
+    type: integer
+    location: query
+  - name: maxResults
+    type: integer
+    location: query
+  - name: type
+    type: string
+    location: query
+    enum: [scrum, kanban, simple]
+  - name: name
+    type: string
+    location: query
+  - name: projectKeyOrId
+    type: string
+    location: query
+pagination:
+  style: offset
+  request_param: startAt
+  request_location: query
+  page_size_param: maxResults
+  max_pages: 10
+errors:
+  "401": {code: auth_failed}

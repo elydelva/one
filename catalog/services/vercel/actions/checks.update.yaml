@@ -1,0 +1,47 @@
+id: checks.update
+description: Update a check's status, conclusion, and output
+permission: checks.write
+side_effects: write
+request:
+  method: PATCH
+  path: /v1/deployments/{deploymentId}/checks/{checkId}
+  body: $inputs
+inputs:
+  - name: deploymentId
+    type: string
+    required: true
+    location: path
+  - name: checkId
+    type: string
+    required: true
+    location: path
+  - name: name
+    type: string
+    location: body
+  - name: path
+    type: string
+    location: body
+  - name: status
+    type: string
+    location: body
+    enum: [running, completed]
+  - name: conclusion
+    type: string
+    location: body
+    enum: [canceled, failed, neutral, succeeded, skipped, stale]
+  - name: detailsUrl
+    type: string
+    location: body
+  - name: externalId
+    type: string
+    location: body
+  - name: output
+    type: object
+    location: body
+  - name: teamId
+    type: string
+    location: query
+errors:
+  "400": {code: validation_failed}
+  "401": {code: auth_failed}
+  "404": {code: not_found}

@@ -1,0 +1,13 @@
+id: conversations.leave
+description: Leave a conversation
+permission: channels.write
+side_effects: write
+request:
+  method: POST
+  path: /conversations.leave
+  body: $inputs
+inputs:
+  - name: channel
+    type: string
+    required: true
+    location: body

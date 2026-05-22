@@ -1,0 +1,17 @@
+id: ssl_certificates.list
+description: List SSL certificate packs for a zone
+permission: ssl.read
+request:
+  method: GET
+  path: /zones/{zone_id}/ssl/certificate_packs
+inputs:
+  - name: zone_id
+    type: string
+    required: true
+    location: path
+  - name: status
+    type: string
+    location: query
+    enum: [all, initializing, pending_validation, pending_issuance, pending_deployment, pending_deletion, pending_expiration, expired, active, initializing_timed_out, validation_timed_out, issuance_timed_out, deployment_timed_out, deletion_timed_out, expiration_timed_out, deleted, deactivating, inactive]
+errors:
+  "401": {code: auth_failed}

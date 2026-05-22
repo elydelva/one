@@ -1,0 +1,16 @@
+id: issues.delete
+description: Permanently delete an issue
+permission: issues.write
+side_effects: write
+request:
+  method: DELETE
+  path: /issues/{issue_id}/
+inputs:
+  - name: issue_id
+    type: string
+    required: true
+    location: path
+errors:
+  "401": {code: auth_failed}
+  "403": {code: forbidden}
+  "404": {code: not_found}

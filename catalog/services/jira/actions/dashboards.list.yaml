@@ -1,0 +1,26 @@
+id: dashboards.list
+description: List dashboards
+permission: projects.read
+side_effects: read
+request:
+  method: GET
+  path: /rest/api/3/dashboard
+inputs:
+  - name: filter
+    type: string
+    location: query
+    enum: [my, favourite]
+  - name: startAt
+    type: integer
+    location: query
+  - name: maxResults
+    type: integer
+    location: query
+pagination:
+  style: offset
+  request_param: startAt
+  request_location: query
+  page_size_param: maxResults
+  max_pages: 5
+errors:
+  "401": {code: auth_failed}

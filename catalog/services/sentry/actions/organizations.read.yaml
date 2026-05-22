@@ -1,0 +1,15 @@
+id: organizations.read
+description: Retrieve a single organization by slug
+permission: org.read
+request:
+  method: GET
+  path: /organizations/{organization_slug}/
+inputs:
+  - name: organization_slug
+    type: string
+    required: true
+    location: path
+errors:
+  "401": {code: auth_failed}
+  "403": {code: forbidden}
+  "404": {code: not_found}

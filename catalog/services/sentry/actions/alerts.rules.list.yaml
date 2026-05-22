@@ -1,0 +1,18 @@
+id: alerts.rules.list
+description: List issue alert rules for a project
+permission: alerts.read
+request:
+  method: GET
+  path: /projects/{organization_slug}/{project_slug}/rules/
+inputs:
+  - name: organization_slug
+    type: string
+    required: true
+    location: path
+  - name: project_slug
+    type: string
+    required: true
+    location: path
+errors:
+  "401": {code: auth_failed}
+  "404": {code: not_found}

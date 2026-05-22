@@ -1,0 +1,32 @@
+id: guilds.members.list
+description: List members of a guild (snowflake cursor, max 1000/call)
+permission: guilds.read
+side_effects: read
+request:
+  method: GET
+  path: /guilds/{guild_id}/members
+inputs:
+  - name: guild_id
+    type: string
+    required: true
+    location: path
+  - name: limit
+    type: integer
+    location: query
+    default: 100
+    description: "1-1000"
+  - name: after
+    type: string
+    location: query
+    description: "Snowflake of highest user id in previous page"
+pagination:
+  style: cursor
+  request_param: after
+  request_location: query
+  response_token: next_after
+  max_pages: 10
+errors:
+  "401": {code: auth_failed}
+  "403": {code: forbidden}
+  "404": {code: not_found}
+  "429": {code: rate_limited, retry: backoff}

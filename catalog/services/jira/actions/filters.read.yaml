@@ -1,0 +1,18 @@
+id: filters.read
+description: Get a filter by id
+permission: issues.read
+side_effects: read
+request:
+  method: GET
+  path: /rest/api/3/filter/{id}
+inputs:
+  - name: id
+    type: string
+    required: true
+    location: path
+  - name: expand
+    type: string
+    location: query
+errors:
+  "401": {code: auth_failed}
+  "404": {code: not_found}

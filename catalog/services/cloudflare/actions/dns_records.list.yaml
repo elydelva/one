@@ -1,0 +1,36 @@
+id: dns_records.list
+description: List DNS records for a zone
+permission: dns.read
+request:
+  method: GET
+  path: /zones/{zone_id}/dns_records
+inputs:
+  - name: zone_id
+    type: string
+    required: true
+    location: path
+  - name: type
+    type: string
+    location: query
+    description: "A, AAAA, CNAME, TXT, MX, NS, SRV, CAA, ..."
+  - name: name
+    type: string
+    location: query
+  - name: content
+    type: string
+    location: query
+  - name: page
+    type: integer
+    location: query
+  - name: per_page
+    type: integer
+    location: query
+pagination:
+  style: cursor
+  request_param: page
+  request_location: query
+  response_token: result_info.next_page
+  max_pages: 20
+errors:
+  "401": {code: auth_failed}
+  "404": {code: not_found}

@@ -1,0 +1,46 @@
+id: dns.create
+description: Create a DNS record on a domain
+permission: dns.write
+side_effects: write
+request:
+  method: POST
+  path: /v2/domains/{domain}/records
+  body: $inputs
+inputs:
+  - name: domain
+    type: string
+    required: true
+    location: path
+  - name: type
+    type: string
+    required: true
+    location: body
+    enum: [A, AAAA, ALIAS, CAA, CNAME, HTTPS, MX, SRV, TXT, NS]
+  - name: name
+    type: string
+    location: body
+    description: "Subdomain or empty string for apex"
+  - name: value
+    type: string
+    location: body
+  - name: ttl
+    type: integer
+    location: body
+  - name: srv
+    type: object
+    location: body
+    description: "{priority, weight, port, target} for SRV records"
+  - name: mxPriority
+    type: integer
+    location: body
+  - name: comment
+    type: string
+    location: body
+  - name: teamId
+    type: string
+    location: query
+errors:
+  "400": {code: validation_failed}
+  "401": {code: auth_failed}
+  "404": {code: not_found}
+  "409": {code: conflict}

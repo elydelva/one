@@ -1,0 +1,29 @@
+id: payment_intents.create
+description: Create a PaymentIntent. Body form-encoded.
+permission: payments.write
+side_effects: write
+request:
+  method: POST
+  path: /v1/payment_intents
+  headers:
+    Content-Type: application/x-www-form-urlencoded
+  body: '{body_raw}'
+inputs:
+  - name: body_raw
+    type: string
+    required: true
+    location: body
+    description: |
+      Form-encoded. Required: amount (cents), currency.
+      Common: customer, payment_method, confirm=true, off_session=true,
+      automatic_payment_methods[enabled]=true, capture_method=manual,
+      description, receipt_email, metadata[key]=val, transfer_data[destination].
+      Example: "amount=2000&currency=usd&customer=cus_123&automatic_payment_methods[enabled]=true"
+  - name: Idempotency-Key
+    type: string
+    location: header
+errors:
+  "400": {code: validation_failed}
+  "401": {code: auth_failed}
+  "402": {code: card_declined, hint: "Check decline_code on the error body."}
+  "429": {code: rate_limited, retry: backoff}

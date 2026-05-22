@@ -1,0 +1,22 @@
+id: events.read
+description: Retrieve a single event for a project
+permission: issues.read
+request:
+  method: GET
+  path: /projects/{organization_slug}/{project_slug}/events/{event_id}/
+inputs:
+  - name: organization_slug
+    type: string
+    required: true
+    location: path
+  - name: project_slug
+    type: string
+    required: true
+    location: path
+  - name: event_id
+    type: string
+    required: true
+    location: path
+errors:
+  "401": {code: auth_failed}
+  "404": {code: not_found}

@@ -1,0 +1,30 @@
+id: monitors.update
+description: Update a cron monitor
+permission: alerts.write
+side_effects: write
+request:
+  method: PUT
+  path: /organizations/{organization_slug}/monitors/{monitor_slug}/
+  body: $inputs
+inputs:
+  - name: organization_slug
+    type: string
+    required: true
+    location: path
+  - name: monitor_slug
+    type: string
+    required: true
+    location: path
+  - name: name
+    type: string
+    location: body
+  - name: config
+    type: object
+    location: body
+  - name: status
+    type: string
+    location: body
+    enum: [active, disabled]
+errors:
+  "401": {code: auth_failed}
+  "404": {code: not_found}

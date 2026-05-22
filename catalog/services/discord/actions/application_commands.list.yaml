@@ -1,0 +1,20 @@
+id: application_commands.list
+description: List global application (slash) commands
+permission: commands.write
+side_effects: read
+request:
+  method: GET
+  path: /applications/{application_id}/commands
+inputs:
+  - name: application_id
+    type: string
+    required: true
+    location: path
+  - name: with_localizations
+    type: boolean
+    location: query
+errors:
+  "401": {code: auth_failed}
+  "403": {code: forbidden}
+  "404": {code: not_found}
+  "429": {code: rate_limited, retry: backoff}

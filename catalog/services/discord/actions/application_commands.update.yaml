@@ -1,0 +1,34 @@
+id: application_commands.update
+description: Edit a global application command
+permission: commands.write
+side_effects: write
+request:
+  method: PATCH
+  path: /applications/{application_id}/commands/{command_id}
+  body: $inputs
+inputs:
+  - name: application_id
+    type: string
+    required: true
+    location: path
+  - name: command_id
+    type: string
+    required: true
+    location: path
+  - name: name
+    type: string
+    location: body
+  - name: description
+    type: string
+    location: body
+  - name: options
+    type: array
+    location: body
+  - name: default_member_permissions
+    type: string
+    location: body
+errors:
+  "401": {code: auth_failed}
+  "403": {code: forbidden}
+  "404": {code: not_found}
+  "429": {code: rate_limited, retry: backoff}

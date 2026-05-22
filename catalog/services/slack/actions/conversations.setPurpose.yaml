@@ -1,0 +1,17 @@
+id: conversations.setPurpose
+description: Set a channel's purpose
+permission: channels.write
+side_effects: write
+request:
+  method: POST
+  path: /conversations.setPurpose
+  body: $inputs
+inputs:
+  - name: channel
+    type: string
+    required: true
+    location: body
+  - name: purpose
+    type: string
+    required: true
+    location: body

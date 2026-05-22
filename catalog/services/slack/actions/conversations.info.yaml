@@ -1,0 +1,17 @@
+id: conversations.info
+description: Get metadata about a conversation
+permission: channels.read
+request:
+  method: GET
+  path: /conversations.info
+inputs:
+  - name: channel
+    type: string
+    required: true
+    location: query
+  - name: include_locale
+    type: boolean
+    location: query
+  - name: include_num_members
+    type: boolean
+    location: query

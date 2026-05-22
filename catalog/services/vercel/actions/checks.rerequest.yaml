@@ -1,0 +1,22 @@
+id: checks.rerequest
+description: Rerequest a check (re-run)
+permission: checks.write
+side_effects: write
+request:
+  method: POST
+  path: /v1/deployments/{deploymentId}/checks/{checkId}/rerequest
+inputs:
+  - name: deploymentId
+    type: string
+    required: true
+    location: path
+  - name: checkId
+    type: string
+    required: true
+    location: path
+  - name: teamId
+    type: string
+    location: query
+errors:
+  "401": {code: auth_failed}
+  "404": {code: not_found}

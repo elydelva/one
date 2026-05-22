@@ -1,0 +1,34 @@
+id: cache.purge
+description: Purge cached files (by URL, tag, host, or everything)
+permission: cache.write
+side_effects: write
+request:
+  method: POST
+  path: /zones/{zone_id}/purge_cache
+  body: $inputs
+inputs:
+  - name: zone_id
+    type: string
+    required: true
+    location: path
+  - name: purge_everything
+    type: boolean
+    location: body
+  - name: files
+    type: array
+    location: body
+    description: "Array of URLs or {url, headers} objects"
+  - name: tags
+    type: array
+    location: body
+    description: "Enterprise: cache tags to purge"
+  - name: hosts
+    type: array
+    location: body
+  - name: prefixes
+    type: array
+    location: body
+errors:
+  "400": {code: validation_failed}
+  "401": {code: auth_failed}
+  "429": {code: rate_limited}

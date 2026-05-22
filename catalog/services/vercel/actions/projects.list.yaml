@@ -1,0 +1,34 @@
+id: projects.list
+description: List projects (cursor-paginated)
+permission: projects.read
+request:
+  method: GET
+  path: /v10/projects
+inputs:
+  - name: search
+    type: string
+    location: query
+  - name: gitForkProtection
+    type: string
+    location: query
+  - name: repoUrl
+    type: string
+    location: query
+  - name: limit
+    type: integer
+    location: query
+  - name: until
+    type: integer
+    location: query
+  - name: teamId
+    type: string
+    location: query
+pagination:
+  style: cursor
+  request_param: until
+  request_location: query
+  response_token: pagination.next
+  max_pages: 10
+errors:
+  "401": {code: auth_failed}
+  "403": {code: forbidden}

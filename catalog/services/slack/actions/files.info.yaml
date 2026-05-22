@@ -1,0 +1,23 @@
+id: files.info
+description: Get info about a file (and optionally its comments)
+permission: files.read
+request:
+  method: GET
+  path: /files.info
+inputs:
+  - name: file
+    type: string
+    required: true
+    location: query
+  - name: count
+    type: integer
+    location: query
+  - name: page
+    type: integer
+    location: query
+  - name: limit
+    type: integer
+    location: query
+  - name: cursor
+    type: string
+    location: query

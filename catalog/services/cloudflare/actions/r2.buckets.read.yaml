@@ -1,0 +1,18 @@
+id: r2.buckets.read
+description: Get details for an R2 bucket
+permission: r2.read
+request:
+  method: GET
+  path: /accounts/{account_id}/r2/buckets/{bucket_name}
+inputs:
+  - name: account_id
+    type: string
+    required: true
+    location: path
+  - name: bucket_name
+    type: string
+    required: true
+    location: path
+errors:
+  "401": {code: auth_failed}
+  "404": {code: not_found}

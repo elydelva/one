@@ -1,0 +1,18 @@
+id: d1.databases.read
+description: Get a D1 database's details
+permission: d1.read
+request:
+  method: GET
+  path: /accounts/{account_id}/d1/database/{database_id}
+inputs:
+  - name: account_id
+    type: string
+    required: true
+    location: path
+  - name: database_id
+    type: string
+    required: true
+    location: path
+errors:
+  "401": {code: auth_failed}
+  "404": {code: not_found}

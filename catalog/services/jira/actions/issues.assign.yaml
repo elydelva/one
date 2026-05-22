@@ -1,0 +1,19 @@
+id: issues.assign
+description: Assign an issue. Use accountId, or -1 for default assignee, or null to unassign.
+permission: issues.write
+side_effects: write
+request:
+  method: PUT
+  path: /rest/api/3/issue/{issueIdOrKey}/assignee
+  body: $inputs
+inputs:
+  - name: issueIdOrKey
+    type: string
+    required: true
+    location: path
+  - name: accountId
+    type: string
+    location: body
+errors:
+  "401": {code: auth_failed}
+  "404": {code: not_found}

@@ -1,0 +1,13 @@
+id: hyperdrive.configs.list
+description: List Hyperdrive configs
+permission: hyperdrive.read
+request:
+  method: GET
+  path: /accounts/{account_id}/hyperdrive/configs
+inputs:
+  - name: account_id
+    type: string
+    required: true
+    location: path
+errors:
+  "401": {code: auth_failed}

@@ -1,0 +1,25 @@
+id: conversations.members
+description: List user IDs in a conversation
+permission: channels.read
+request:
+  method: GET
+  path: /conversations.members
+inputs:
+  - name: channel
+    type: string
+    required: true
+    location: query
+  - name: limit
+    type: integer
+    location: query
+    default: 100
+  - name: cursor
+    type: string
+    location: query
+pagination:
+  style: cursor
+  request_param: cursor
+  request_location: query
+  response_token: response_metadata.next_cursor
+  response_items: members
+  max_pages: 10

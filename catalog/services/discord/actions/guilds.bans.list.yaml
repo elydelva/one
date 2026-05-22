@@ -1,0 +1,27 @@
+id: guilds.bans.list
+description: List bans for a guild
+permission: guilds.read
+side_effects: read
+request:
+  method: GET
+  path: /guilds/{guild_id}/bans
+inputs:
+  - name: guild_id
+    type: string
+    required: true
+    location: path
+  - name: limit
+    type: integer
+    location: query
+    default: 1000
+  - name: before
+    type: string
+    location: query
+  - name: after
+    type: string
+    location: query
+errors:
+  "401": {code: auth_failed}
+  "403": {code: forbidden}
+  "404": {code: not_found}
+  "429": {code: rate_limited, retry: backoff}

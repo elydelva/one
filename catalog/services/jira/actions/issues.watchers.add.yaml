@@ -1,0 +1,20 @@
+id: issues.watchers.add
+description: Add a watcher to an issue. Body is the accountId string (JSON-encoded).
+permission: issues.write
+side_effects: write
+request:
+  method: POST
+  path: /rest/api/3/issue/{issueIdOrKey}/watchers
+  body: $inputs
+inputs:
+  - name: issueIdOrKey
+    type: string
+    required: true
+    location: path
+  - name: accountId
+    type: string
+    required: true
+    location: body
+errors:
+  "401": {code: auth_failed}
+  "404": {code: not_found}

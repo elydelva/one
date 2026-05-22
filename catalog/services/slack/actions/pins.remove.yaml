@@ -1,0 +1,17 @@
+id: pins.remove
+description: Unpin a message
+permission: pins.write
+side_effects: write
+request:
+  method: POST
+  path: /pins.remove
+  body: $inputs
+inputs:
+  - name: channel
+    type: string
+    required: true
+    location: body
+  - name: timestamp
+    type: string
+    required: true
+    location: body

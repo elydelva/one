@@ -1,0 +1,27 @@
+id: payment_intents.update
+description: Update a PaymentIntent (only before confirmation for most fields).
+permission: payments.write
+side_effects: write
+request:
+  method: POST
+  path: /v1/payment_intents/{id}
+  headers:
+    Content-Type: application/x-www-form-urlencoded
+  body: '{body_raw}'
+inputs:
+  - name: id
+    type: string
+    required: true
+    location: path
+  - name: body_raw
+    type: string
+    required: true
+    location: body
+    description: 'Form-encoded. e.g. "amount=2500&metadata[note]=updated"'
+  - name: Idempotency-Key
+    type: string
+    location: header
+errors:
+  "400": {code: validation_failed}
+  "401": {code: auth_failed}
+  "404": {code: not_found}

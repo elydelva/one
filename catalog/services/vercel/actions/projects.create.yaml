@@ -1,0 +1,48 @@
+id: projects.create
+description: Create a project
+permission: projects.write
+side_effects: write
+request:
+  method: POST
+  path: /v11/projects
+  body: $inputs
+inputs:
+  - name: name
+    type: string
+    required: true
+    location: body
+  - name: framework
+    type: string
+    location: body
+  - name: buildCommand
+    type: string
+    location: body
+  - name: devCommand
+    type: string
+    location: body
+  - name: installCommand
+    type: string
+    location: body
+  - name: outputDirectory
+    type: string
+    location: body
+  - name: rootDirectory
+    type: string
+    location: body
+  - name: gitRepository
+    type: object
+    location: body
+    description: "{type, repo} where type is github|gitlab|bitbucket"
+  - name: publicSource
+    type: boolean
+    location: body
+  - name: environmentVariables
+    type: array
+    location: body
+  - name: teamId
+    type: string
+    location: query
+errors:
+  "400": {code: validation_failed}
+  "401": {code: auth_failed}
+  "409": {code: conflict, hint: "Project name already exists."}

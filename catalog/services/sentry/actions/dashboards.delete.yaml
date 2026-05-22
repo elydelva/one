@@ -1,0 +1,19 @@
+id: dashboards.delete
+description: Delete a custom dashboard
+permission: org.write
+side_effects: write
+request:
+  method: DELETE
+  path: /organizations/{organization_slug}/dashboards/{dashboard_id}/
+inputs:
+  - name: organization_slug
+    type: string
+    required: true
+    location: path
+  - name: dashboard_id
+    type: string
+    required: true
+    location: path
+errors:
+  "401": {code: auth_failed}
+  "404": {code: not_found}

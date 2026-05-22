@@ -1,0 +1,22 @@
+id: kv.values.read
+description: Read a value by key from a KV namespace
+permission: kv.read
+request:
+  method: GET
+  path: /accounts/{account_id}/storage/kv/namespaces/{namespace_id}/values/{key}
+inputs:
+  - name: account_id
+    type: string
+    required: true
+    location: path
+  - name: namespace_id
+    type: string
+    required: true
+    location: path
+  - name: key
+    type: string
+    required: true
+    location: path
+errors:
+  "401": {code: auth_failed}
+  "404": {code: not_found}

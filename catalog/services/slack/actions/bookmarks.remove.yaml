@@ -1,0 +1,17 @@
+id: bookmarks.remove
+description: Remove a bookmark from a channel
+permission: bookmarks.write
+side_effects: write
+request:
+  method: POST
+  path: /bookmarks.remove
+  body: $inputs
+inputs:
+  - name: channel_id
+    type: string
+    required: true
+    location: body
+  - name: bookmark_id
+    type: string
+    required: true
+    location: body

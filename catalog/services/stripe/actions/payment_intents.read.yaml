@@ -1,0 +1,17 @@
+id: payment_intents.read
+description: Retrieve a PaymentIntent.
+permission: payments.read
+request:
+  method: GET
+  path: /v1/payment_intents/{id}
+inputs:
+  - name: id
+    type: string
+    required: true
+    location: path
+  - name: client_secret
+    type: string
+    location: query
+errors:
+  "401": {code: auth_failed}
+  "404": {code: not_found}

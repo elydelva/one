@@ -1,0 +1,13 @@
+id: workers.routes.list
+description: List Worker routes for a zone
+permission: workers.read
+request:
+  method: GET
+  path: /zones/{zone_id}/workers/routes
+inputs:
+  - name: zone_id
+    type: string
+    required: true
+    location: path
+errors:
+  "401": {code: auth_failed}

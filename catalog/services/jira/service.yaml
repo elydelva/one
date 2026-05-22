@@ -1,0 +1,12 @@
+version: 1
+id: jira
+name: Jira
+description: Jira Cloud Platform REST API v3 + Agile (Boards/Sprints) v1.0
+base_url: https://your-site.atlassian.net
+auth:
+  providers:
+    - pat
+  injection:
+    pat:
+      header: Authorization
+      format: "Basic {access_token}"

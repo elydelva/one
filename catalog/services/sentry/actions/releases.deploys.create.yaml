@@ -1,0 +1,36 @@
+id: releases.deploys.create
+description: Create a deploy for a release
+permission: releases.write
+side_effects: write
+request:
+  method: POST
+  path: /organizations/{organization_slug}/releases/{version}/deploys/
+  body: $inputs
+inputs:
+  - name: organization_slug
+    type: string
+    required: true
+    location: path
+  - name: version
+    type: string
+    required: true
+    location: path
+  - name: environment
+    type: string
+    required: true
+    location: body
+  - name: name
+    type: string
+    location: body
+  - name: url
+    type: string
+    location: body
+  - name: dateStarted
+    type: string
+    location: body
+  - name: dateFinished
+    type: string
+    location: body
+errors:
+  "401": {code: auth_failed}
+  "404": {code: not_found}

@@ -1,0 +1,27 @@
+id: refunds.create
+description: Refund a charge or PaymentIntent (full or partial).
+permission: payments.write
+side_effects: write
+request:
+  method: POST
+  path: /v1/refunds
+  headers:
+    Content-Type: application/x-www-form-urlencoded
+  body: '{body_raw}'
+inputs:
+  - name: body_raw
+    type: string
+    required: true
+    location: body
+    description: |
+      Form-encoded. One of charge or payment_intent required.
+      Optional: amount (cents, omit for full), reason=duplicate|fraudulent|requested_by_customer,
+      refund_application_fee, reverse_transfer, metadata[key].
+      Example: "payment_intent=pi_123&amount=500&reason=requested_by_customer"
+  - name: Idempotency-Key
+    type: string
+    location: header
+errors:
+  "400": {code: validation_failed}
+  "401": {code: auth_failed}
+  "404": {code: not_found}

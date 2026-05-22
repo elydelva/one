@@ -1,0 +1,36 @@
+id: teams.members.list
+description: List team members
+permission: teams.read
+request:
+  method: GET
+  path: /v2/teams/{teamId}/members
+inputs:
+  - name: teamId
+    type: string
+    required: true
+    location: path
+  - name: limit
+    type: integer
+    location: query
+  - name: since
+    type: integer
+    location: query
+  - name: until
+    type: integer
+    location: query
+  - name: role
+    type: string
+    location: query
+    enum: [OWNER, MEMBER, DEVELOPER, BILLING, VIEWER, CONTRIBUTOR]
+  - name: search
+    type: string
+    location: query
+pagination:
+  style: cursor
+  request_param: until
+  request_location: query
+  response_token: pagination.next
+  max_pages: 10
+errors:
+  "401": {code: auth_failed}
+  "404": {code: not_found}

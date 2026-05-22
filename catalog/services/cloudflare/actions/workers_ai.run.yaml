@@ -1,0 +1,38 @@
+id: workers_ai.run
+description: Run inference against a Workers AI model
+permission: ai.write
+side_effects: write
+request:
+  method: POST
+  path: /accounts/{account_id}/ai/run/{model}
+  body: $inputs
+inputs:
+  - name: account_id
+    type: string
+    required: true
+    location: path
+  - name: model
+    type: string
+    required: true
+    location: path
+    description: "e.g. @cf/meta/llama-3.1-8b-instruct"
+  - name: prompt
+    type: string
+    location: body
+  - name: messages
+    type: array
+    location: body
+    description: "Chat-style [{role, content}] messages"
+  - name: max_tokens
+    type: integer
+    location: body
+  - name: temperature
+    type: number
+    location: body
+  - name: stream
+    type: boolean
+    location: body
+errors:
+  "400": {code: validation_failed}
+  "401": {code: auth_failed}
+  "404": {code: not_found, hint: "Unknown model slug"}

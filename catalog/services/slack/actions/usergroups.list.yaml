@@ -1,0 +1,19 @@
+id: usergroups.list
+description: List user groups (subteams) in the workspace
+permission: usergroups.read
+request:
+  method: GET
+  path: /usergroups.list
+inputs:
+  - name: include_disabled
+    type: boolean
+    location: query
+  - name: include_count
+    type: boolean
+    location: query
+  - name: include_users
+    type: boolean
+    location: query
+  - name: team_id
+    type: string
+    location: query

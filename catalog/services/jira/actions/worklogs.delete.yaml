@@ -1,0 +1,23 @@
+id: worklogs.delete
+description: Delete a worklog
+permission: issues.write
+side_effects: write
+request:
+  method: DELETE
+  path: /rest/api/3/issue/{issueIdOrKey}/worklog/{id}
+inputs:
+  - name: issueIdOrKey
+    type: string
+    required: true
+    location: path
+  - name: id
+    type: string
+    required: true
+    location: path
+  - name: adjustEstimate
+    type: string
+    location: query
+    enum: [new, leave, manual, auto]
+errors:
+  "401": {code: auth_failed}
+  "404": {code: not_found}

@@ -1,0 +1,14 @@
+id: users.info
+description: Get info about a specific user
+permission: users.read
+request:
+  method: GET
+  path: /users.info
+inputs:
+  - name: user
+    type: string
+    required: true
+    location: query
+  - name: include_locale
+    type: boolean
+    location: query

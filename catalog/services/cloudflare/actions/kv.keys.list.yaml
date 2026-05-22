@@ -1,0 +1,33 @@
+id: kv.keys.list
+description: List keys in a KV namespace (cursor-paginated)
+permission: kv.read
+request:
+  method: GET
+  path: /accounts/{account_id}/storage/kv/namespaces/{namespace_id}/keys
+inputs:
+  - name: account_id
+    type: string
+    required: true
+    location: path
+  - name: namespace_id
+    type: string
+    required: true
+    location: path
+  - name: prefix
+    type: string
+    location: query
+  - name: limit
+    type: integer
+    location: query
+    description: "Max 1000"
+  - name: cursor
+    type: string
+    location: query
+pagination:
+  style: cursor
+  request_param: cursor
+  request_location: query
+  response_token: result_info.cursor
+  max_pages: 20
+errors:
+  "401": {code: auth_failed}

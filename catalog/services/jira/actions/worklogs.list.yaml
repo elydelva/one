@@ -1,0 +1,27 @@
+id: worklogs.list
+description: List worklogs for an issue
+permission: issues.read
+side_effects: read
+request:
+  method: GET
+  path: /rest/api/3/issue/{issueIdOrKey}/worklog
+inputs:
+  - name: issueIdOrKey
+    type: string
+    required: true
+    location: path
+  - name: startAt
+    type: integer
+    location: query
+  - name: maxResults
+    type: integer
+    location: query
+pagination:
+  style: offset
+  request_param: startAt
+  request_location: query
+  page_size_param: maxResults
+  max_pages: 10
+errors:
+  "401": {code: auth_failed}
+  "404": {code: not_found}

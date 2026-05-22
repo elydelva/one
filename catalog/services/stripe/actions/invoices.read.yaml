@@ -1,0 +1,14 @@
+id: invoices.read
+description: Retrieve an invoice.
+permission: invoices.read
+request:
+  method: GET
+  path: /v1/invoices/{id}
+inputs:
+  - name: id
+    type: string
+    required: true
+    location: path
+errors:
+  "401": {code: auth_failed}
+  "404": {code: not_found}

@@ -1,0 +1,37 @@
+id: conversations.history
+description: Fetch a conversation's recent messages
+permission: channels.read
+request:
+  method: GET
+  path: /conversations.history
+inputs:
+  - name: channel
+    type: string
+    required: true
+    location: query
+  - name: latest
+    type: string
+    location: query
+  - name: oldest
+    type: string
+    location: query
+  - name: inclusive
+    type: boolean
+    location: query
+  - name: limit
+    type: integer
+    location: query
+    default: 100
+  - name: cursor
+    type: string
+    location: query
+  - name: include_all_metadata
+    type: boolean
+    location: query
+pagination:
+  style: cursor
+  request_param: cursor
+  request_location: query
+  response_token: response_metadata.next_cursor
+  response_items: messages
+  max_pages: 10

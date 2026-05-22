@@ -1,0 +1,19 @@
+id: tunnels.delete
+description: Delete a Cloudflare Tunnel
+permission: tunnel.write
+side_effects: write
+request:
+  method: DELETE
+  path: /accounts/{account_id}/cfd_tunnel/{tunnel_id}
+inputs:
+  - name: account_id
+    type: string
+    required: true
+    location: path
+  - name: tunnel_id
+    type: string
+    required: true
+    location: path
+errors:
+  "401": {code: auth_failed}
+  "404": {code: not_found}

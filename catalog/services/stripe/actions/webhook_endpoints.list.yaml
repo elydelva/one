@@ -1,0 +1,15 @@
+id: webhook_endpoints.list
+description: List webhook endpoints.
+permission: webhooks.read
+request:
+  method: GET
+  path: /v1/webhook_endpoints
+inputs:
+  - name: limit
+    type: integer
+    location: query
+  - name: starting_after
+    type: string
+    location: query
+errors:
+  "401": {code: auth_failed}

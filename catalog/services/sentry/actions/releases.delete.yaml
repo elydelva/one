@@ -1,0 +1,19 @@
+id: releases.delete
+description: Delete a release
+permission: releases.write
+side_effects: write
+request:
+  method: DELETE
+  path: /organizations/{organization_slug}/releases/{version}/
+inputs:
+  - name: organization_slug
+    type: string
+    required: true
+    location: path
+  - name: version
+    type: string
+    required: true
+    location: path
+errors:
+  "401": {code: auth_failed}
+  "404": {code: not_found}

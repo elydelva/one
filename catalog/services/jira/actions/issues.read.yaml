@@ -1,0 +1,22 @@
+id: issues.read
+description: Get an issue by key or id
+permission: issues.read
+side_effects: read
+request:
+  method: GET
+  path: /rest/api/3/issue/{issueIdOrKey}
+inputs:
+  - name: issueIdOrKey
+    type: string
+    required: true
+    location: path
+  - name: fields
+    type: string
+    location: query
+    description: "Comma-separated list of fields"
+  - name: expand
+    type: string
+    location: query
+errors:
+  "401": {code: auth_failed}
+  "404": {code: not_found}

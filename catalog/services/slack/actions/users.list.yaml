@@ -1,0 +1,27 @@
+id: users.list
+description: List all users in the workspace
+permission: users.read
+request:
+  method: GET
+  path: /users.list
+inputs:
+  - name: limit
+    type: integer
+    location: query
+    default: 100
+  - name: cursor
+    type: string
+    location: query
+  - name: include_locale
+    type: boolean
+    location: query
+  - name: team_id
+    type: string
+    location: query
+pagination:
+  style: cursor
+  request_param: cursor
+  request_location: query
+  response_token: response_metadata.next_cursor
+  response_items: members
+  max_pages: 10

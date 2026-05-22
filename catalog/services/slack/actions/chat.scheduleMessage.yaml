@@ -1,0 +1,48 @@
+id: chat.scheduleMessage
+description: Schedule a message to be sent later
+permission: chat.write
+side_effects: write
+request:
+  method: POST
+  path: /chat.scheduleMessage
+  body: $inputs
+inputs:
+  - name: channel
+    type: string
+    required: true
+    location: body
+  - name: post_at
+    type: integer
+    required: true
+    location: body
+    description: "Unix epoch seconds when message should be sent"
+  - name: text
+    type: string
+    location: body
+  - name: blocks
+    type: array
+    location: body
+  - name: attachments
+    type: array
+    location: body
+  - name: thread_ts
+    type: string
+    location: body
+  - name: reply_broadcast
+    type: boolean
+    location: body
+  - name: unfurl_links
+    type: boolean
+    location: body
+  - name: unfurl_media
+    type: boolean
+    location: body
+  - name: parse
+    type: string
+    location: body
+  - name: link_names
+    type: boolean
+    location: body
+  - name: metadata
+    type: object
+    location: body
