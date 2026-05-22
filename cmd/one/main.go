@@ -33,7 +33,7 @@ func main() {
 	log := newLogger()
 
 	// Adapters
-	tapOps := app.NewTapOps(tapRoot(), tap.New(), tapAllowedHosts()...)
+	tapOps := app.NewTapOps(tapRoot(), tap.New(), tapAllowedHosts()...).WithVerifier(tap.NewVerifier())
 	cat := buildCatalog(clk, http, tapOps)
 
 	// Auth providers (built after catalog: OAuth providers resolve endpoints from it).

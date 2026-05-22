@@ -17,6 +17,7 @@ require (
 )
 
 require (
+	aead.dev/minisign v0.3.0 // indirect
 	filippo.io/hpke v0.4.0 // indirect
 	github.com/alecthomas/chroma/v2 v2.20.0 // indirect
 	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect

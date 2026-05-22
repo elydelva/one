@@ -31,26 +31,57 @@ func newTapCommand(uc *app.TapOps) *cobra.Command {
 }
 
 func tapAddCmd(uc *app.TapOps) *cobra.Command {
-	var yes bool
+	var (
+		yes        bool
+		verifyKey  string
+		verifyFile string
+	)
 	cmd := &cobra.Command{
-		Use:   "add <user>/<repo>",
-		Short: "Add a tap from a GitHub repository (TOFU consent)",
+		Use:   "add <user>/<repo>|<https-url>",
+		Short: "Add a tap, optionally verified by a minisign public key",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			consent := consentPrompt(cmd, yes)
-			entry, err := uc.Add(cmd.Context(), args[0], consent)
+			key, err := resolveVerifyKey(verifyKey, verifyFile)
+			if err != nil {
+				return err
+			}
+			entry, err := uc.AddWith(cmd.Context(), args[0], app.AddOptions{VerifyKey: key}, consent)
 			if errors.Is(err, errConsentDeclined) {
 				return fmt.Errorf("tap add: declined")
 			}
 			if err != nil {
 				return err
 			}
-			fmt.Fprintf(cmd.OutOrStdout(), "tap %s pinned at %s\n", entry.Name, shortSHA(entry.SHA))
+			w := cmd.OutOrStdout()
+			if entry.PublicKey != "" {
+				fmt.Fprintf(w, "tap %s pinned at %s (signed)\n", entry.Name, shortSHA(entry.SHA))
+			} else {
+				fmt.Fprintf(w, "tap %s pinned at %s\n", entry.Name, shortSHA(entry.SHA))
+			}
 			return nil
 		},
 	}
 	cmd.Flags().BoolVarP(&yes, "yes", "y", false, "accept TOFU consent without prompting")
+	cmd.Flags().StringVar(&verifyKey, "verify-key", "", "minisign public key (literal, one line)")
+	cmd.Flags().StringVar(&verifyFile, "verify-key-file", "", "path to minisign public key file")
+	cmd.MarkFlagsMutuallyExclusive("verify-key", "verify-key-file")
 	return cmd
+}
+
+// resolveVerifyKey returns the public key text (or empty when no flag set).
+func resolveVerifyKey(literal, file string) (string, error) {
+	if literal != "" {
+		return strings.TrimSpace(literal), nil
+	}
+	if file == "" {
+		return "", nil
+	}
+	raw, err := os.ReadFile(file)
+	if err != nil {
+		return "", fmt.Errorf("read verify-key-file: %w", err)
+	}
+	return strings.TrimSpace(string(raw)), nil
 }
 
 func tapRemoveCmd(uc *app.TapOps) *cobra.Command {

@@ -205,6 +205,91 @@ func TestTapOps_AddRejectsBadSchemes(t *testing.T) {
 	}
 }
 
+// fakeVerifier records calls and returns scripted error.
+type fakeVerifier struct {
+	err    error
+	called int
+	lastPK string
+}
+
+func (f *fakeVerifier) Verify(_ , publicKey string) error {
+	f.called++
+	f.lastPK = publicKey
+	return f.err
+}
+
+func TestTapOps_AddWithVerifyKey_Success(t *testing.T) {
+	root := t.TempDir()
+	v := &fakeVerifier{}
+	uc := NewTapOps(root, &fakeFetcher{cloneSHA: "abc"}).WithVerifier(v)
+	entry, err := uc.AddWith(context.Background(), "a/b", AddOptions{VerifyKey: "pubkey-XYZ"}, acceptAll)
+	if err != nil {
+		t.Fatalf("add: %v", err)
+	}
+	if entry.PublicKey != "pubkey-XYZ" {
+		t.Errorf("pubkey not persisted: %q", entry.PublicKey)
+	}
+	if v.called != 1 || v.lastPK != "pubkey-XYZ" {
+		t.Errorf("verifier not called correctly: %+v", v)
+	}
+}
+
+func TestTapOps_AddWithVerifyKey_Failure(t *testing.T) {
+	root := t.TempDir()
+	v := &fakeVerifier{err: errors.New("bad sig")}
+	uc := NewTapOps(root, &fakeFetcher{cloneSHA: "abc"}).WithVerifier(v)
+	_, err := uc.AddWith(context.Background(), "a/b", AddOptions{VerifyKey: "pk"}, acceptAll)
+	if err == nil {
+		t.Fatal("expected verify error")
+	}
+	taps, _ := uc.List(context.Background())
+	if len(taps) != 0 {
+		t.Errorf("failed-verify tap was persisted: %+v", taps)
+	}
+}
+
+func TestTapOps_AddWithVerifyKey_NoVerifier(t *testing.T) {
+	uc := NewTapOps(t.TempDir(), &fakeFetcher{cloneSHA: "abc"}) // no WithVerifier
+	_, err := uc.AddWith(context.Background(), "a/b", AddOptions{VerifyKey: "pk"}, acceptAll)
+	if err == nil {
+		t.Fatal("expected error: verifier not configured")
+	}
+}
+
+func TestTapOps_UpdateReverifiesPersistedKey(t *testing.T) {
+	v := &fakeVerifier{}
+	uc := NewTapOps(t.TempDir(), &fakeFetcher{cloneSHA: "abc", updateSHA: "def"}).WithVerifier(v)
+	if _, err := uc.AddWith(context.Background(), "a/b", AddOptions{VerifyKey: "pk"}, acceptAll); err != nil {
+		t.Fatalf("add: %v", err)
+	}
+	if v.called != 1 {
+		t.Fatalf("verifier called %d times after add", v.called)
+	}
+	if _, err := uc.Update(context.Background(), "a/b", acceptAll); err != nil {
+		t.Fatalf("update: %v", err)
+	}
+	if v.called != 2 {
+		t.Errorf("verifier not called on update (calls=%d)", v.called)
+	}
+}
+
+func TestTapOps_UpdateAbortsOnSignatureBreak(t *testing.T) {
+	v := &fakeVerifier{}
+	uc := NewTapOps(t.TempDir(), &fakeFetcher{cloneSHA: "abc", updateSHA: "def"}).WithVerifier(v)
+	if _, err := uc.AddWith(context.Background(), "a/b", AddOptions{VerifyKey: "pk"}, acceptAll); err != nil {
+		t.Fatalf("add: %v", err)
+	}
+	// Next verify call fails.
+	v.err = errors.New("checksum mismatch")
+	if _, err := uc.Update(context.Background(), "a/b", acceptAll); err == nil {
+		t.Fatal("expected update error")
+	}
+	taps, _ := uc.List(context.Background())
+	if taps[0].SHA != "abc" {
+		t.Errorf("SHA rebound despite broken sig: %s", taps[0].SHA)
+	}
+}
+
 func TestTapOps_ListEmpty(t *testing.T) {
 	uc := NewTapOps(t.TempDir(), &fakeFetcher{})
 	taps, err := uc.List(context.Background())

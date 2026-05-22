@@ -24,11 +24,16 @@ import (
 )
 
 // TapEntry is one registered tap with its pinned upstream commit.
+//
+// PublicKey, when non-empty, is a minisign public key bound to the tap at
+// add time. Subsequent updates verify the tap's CATALOG.minisig against this
+// key and fail if signature verification breaks.
 type TapEntry struct {
-	Name    string    `json:"name"`            // "user/repo"
-	URL     string    `json:"url"`             // https clone URL
-	SHA     string    `json:"sha"`             // pinned commit SHA (full)
-	AddedAt time.Time `json:"added_at"`
+	Name      string    `json:"name"`                  // "user/repo" or "host/owner/.../repo"
+	URL       string    `json:"url"`                   // https clone URL
+	SHA       string    `json:"sha"`                   // pinned commit SHA (full)
+	PublicKey string    `json:"public_key,omitempty"`  // minisign public key (empty = unsigned tap, TOFU only)
+	AddedAt   time.Time `json:"added_at"`
 }
 
 // tapRegistry is the on-disk shape of registry.json.
@@ -48,6 +53,14 @@ type TapFetcher interface {
 	FetchHead(ctx context.Context, dir string) (string, error)
 }
 
+// CatalogVerifier verifies that the catalog at dir matches the given public
+// key's signature. Production wires the minisign-backed implementation in
+// adapters/tap; tests inject a fake. A nil verifier means signature
+// verification is unavailable and any --verify-key request fails.
+type CatalogVerifier interface {
+	Verify(dir, publicKey string) error
+}
+
 // ConsentFunc is called by Add and Update to gate trust decisions. It returns
 // nil if the user accepts, an error otherwise.
 type ConsentFunc func(prompt string) error
@@ -56,6 +69,7 @@ type ConsentFunc func(prompt string) error
 type TapOps struct {
 	root         string // tap home (default ~/.one/taps)
 	fetcher      TapFetcher
+	verifier     CatalogVerifier
 	allowedHosts []string // lowercase; empty means default {github.com}
 }
 
@@ -75,6 +89,12 @@ func NewTapOps(root string, fetcher TapFetcher, allowedHosts ...string) *TapOps 
 		hosts = []string{"github.com"}
 	}
 	return &TapOps{root: root, fetcher: fetcher, allowedHosts: hosts}
+}
+
+// WithVerifier attaches a CatalogVerifier; required to use --verify-key.
+func (uc *TapOps) WithVerifier(v CatalogVerifier) *TapOps {
+	uc.verifier = v
+	return uc
 }
 
 // hostAllowed reports whether host is in the allowlist.
@@ -112,10 +132,22 @@ func (uc *TapOps) CloneDir(name string) string {
 	return filepath.Join(append([]string{uc.root}, res.dirSegments...)...)
 }
 
-// Add clones a new tap, prompts for consent, and persists it. Returns the
-// resulting entry or an error if consent is declined, the name is invalid,
-// the host is not on the allowlist, or the clone fails.
+// AddOptions configures the Add use case. Zero value disables signature
+// verification (TOFU-on-SHA only, as before).
+type AddOptions struct {
+	// VerifyKey is the minisign public key the tap's CATALOG.minisig must
+	// verify against. Empty disables signature verification.
+	VerifyKey string
+}
+
+// Add clones a new tap, optionally verifies its signature, prompts for
+// consent, and persists it. Returns the resulting entry or an error.
 func (uc *TapOps) Add(ctx context.Context, name string, consent ConsentFunc) (*TapEntry, error) {
+	return uc.AddWith(ctx, name, AddOptions{}, consent)
+}
+
+// AddWith is the same as Add but accepts options (e.g. a verify key).
+func (uc *TapOps) AddWith(ctx context.Context, name string, opts AddOptions, consent ConsentFunc) (*TapEntry, error) {
 	target, err := resolveTapTarget(name)
 	if err != nil {
 		return nil, err
@@ -149,15 +181,30 @@ func (uc *TapOps) Add(ctx context.Context, name string, consent ConsentFunc) (*T
 		return nil, fmt.Errorf("tap add: clone %s: %w", cloneURL, err)
 	}
 
+	if opts.VerifyKey != "" {
+		if uc.verifier == nil {
+			_ = os.RemoveAll(dir)
+			return nil, fmt.Errorf("tap add: --verify-key supplied but no signature verifier configured")
+		}
+		if err := uc.verifier.Verify(dir, opts.VerifyKey); err != nil {
+			_ = os.RemoveAll(dir)
+			return nil, fmt.Errorf("tap add: %w", err)
+		}
+	}
+
 	if consent != nil {
 		prompt := fmt.Sprintf("Tap %s pinned to commit %s. Trust this tap?", target.canonical, shortSHA(sha))
+		if opts.VerifyKey != "" {
+			prompt = fmt.Sprintf("Tap %s pinned to commit %s and verified by key %s. Trust this tap?",
+				target.canonical, shortSHA(sha), shortKey(opts.VerifyKey))
+		}
 		if err := consent(prompt); err != nil {
 			_ = os.RemoveAll(dir)
 			return nil, err
 		}
 	}
 
-	entry := TapEntry{Name: target.canonical, URL: cloneURL, SHA: sha, AddedAt: time.Now().UTC()}
+	entry := TapEntry{Name: target.canonical, URL: cloneURL, SHA: sha, PublicKey: opts.VerifyKey, AddedAt: time.Now().UTC()}
 	reg.Taps = append(reg.Taps, entry)
 	if err := uc.save(reg); err != nil {
 		_ = os.RemoveAll(dir)
@@ -226,6 +273,14 @@ func (uc *TapOps) Update(ctx context.Context, name string, consent ConsentFunc) 
 	newSHA, err := uc.fetcher.FetchHead(ctx, dir)
 	if err != nil {
 		return nil, fmt.Errorf("tap update: %w", err)
+	}
+	if pk := reg.Taps[idx].PublicKey; pk != "" {
+		if uc.verifier == nil {
+			return nil, fmt.Errorf("tap update: tap is signed but no signature verifier configured")
+		}
+		if err := uc.verifier.Verify(dir, pk); err != nil {
+			return nil, fmt.Errorf("tap update: %w", err)
+		}
 	}
 	old := reg.Taps[idx].SHA
 	res := &UpdateResult{Name: name, OldSHA: old, NewSHA: newSHA, Changed: newSHA != old}
@@ -370,4 +425,14 @@ func shortSHA(sha string) string {
 		return sha
 	}
 	return sha[:12]
+}
+
+// shortKey returns a 16-char prefix of the minisign public key for display.
+// Public keys are not secret; the truncation is purely for readability.
+func shortKey(k string) string {
+	k = strings.TrimSpace(k)
+	if len(k) <= 16 {
+		return k
+	}
+	return k[:16] + "…"
 }
