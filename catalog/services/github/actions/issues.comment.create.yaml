@@ -1,0 +1,29 @@
+id: issues.comment.create
+description: Add a comment to an issue or PR
+permission: issues.write
+side_effects: write
+request:
+  method: POST
+  path: /repos/{owner}/{repo}/issues/{issue_number}/comments
+  body: $inputs
+inputs:
+  - name: owner
+    type: string
+    required: true
+    location: path
+  - name: repo
+    type: string
+    required: true
+    location: path
+  - name: issue_number
+    type: integer
+    required: true
+    location: path
+  - name: body
+    type: string
+    required: true
+    location: body
+errors:
+  "401": {code: auth_failed}
+  "404": {code: not_found}
+  "422": {code: validation_failed}

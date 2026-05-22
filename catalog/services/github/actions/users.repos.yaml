@@ -1,0 +1,40 @@
+id: users.repos
+description: List a user's public repositories
+permission: user.read
+side_effects: read
+request:
+  method: GET
+  path: /users/{username}/repos
+inputs:
+  - name: username
+    type: string
+    required: true
+    location: path
+  - name: type
+    type: string
+    location: query
+    enum: [all, owner, member]
+    default: owner
+  - name: sort
+    type: string
+    location: query
+    enum: [created, updated, pushed, full_name]
+  - name: direction
+    type: string
+    location: query
+    enum: [asc, desc]
+  - name: page
+    type: integer
+    location: query
+  - name: per_page
+    type: integer
+    location: query
+    default: 30
+pagination:
+  style: cursor
+  request_param: page
+  request_location: query
+  response_token: next_page
+  max_pages: 10
+errors:
+  "404": {code: not_found}

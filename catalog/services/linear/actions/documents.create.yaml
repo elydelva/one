@@ -1,0 +1,18 @@
+id: documents.create
+description: Create a document
+permission: documents.write
+side_effects: write
+request:
+  method: POST
+  path: /graphql
+  headers:
+    Content-Type: application/json
+  body: '{"query":"mutation($input: DocumentCreateInput!){ documentCreate(input:$input){ success document { id title url } } }","variables":{"input":{input|json}}}'
+inputs:
+  - name: input
+    type: object
+    required: true
+    location: body
+    description: "DocumentCreateInput. Required: title. Optional: content, projectId, icon, color."
+errors:
+  "401": {code: auth_failed}

@@ -1,0 +1,29 @@
+id: issues.labels.replace
+description: Replace all labels on an issue
+permission: issues.write
+side_effects: write
+request:
+  method: PUT
+  path: /repos/{owner}/{repo}/issues/{issue_number}/labels
+  body: $inputs
+inputs:
+  - name: owner
+    type: string
+    required: true
+    location: path
+  - name: repo
+    type: string
+    required: true
+    location: path
+  - name: issue_number
+    type: integer
+    required: true
+    location: path
+  - name: labels
+    type: array
+    required: true
+    location: body
+errors:
+  "401": {code: auth_failed}
+  "404": {code: not_found}
+  "422": {code: validation_failed}

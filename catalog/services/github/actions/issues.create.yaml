@@ -1,0 +1,39 @@
+id: issues.create
+description: Create an issue in a repository
+permission: issues.write
+side_effects: write
+request:
+  method: POST
+  path: /repos/{owner}/{repo}/issues
+  body: $inputs
+inputs:
+  - name: owner
+    type: string
+    required: true
+    location: path
+  - name: repo
+    type: string
+    required: true
+    location: path
+  - name: title
+    type: string
+    required: true
+    location: body
+  - name: body
+    type: string
+    location: body
+  - name: assignees
+    type: array
+    location: body
+    description: "GitHub usernames"
+  - name: labels
+    type: array
+    location: body
+  - name: milestone
+    type: integer
+    location: body
+errors:
+  "401": {code: auth_failed}
+  "403": {code: forbidden}
+  "404": {code: not_found}
+  "422": {code: validation_failed}

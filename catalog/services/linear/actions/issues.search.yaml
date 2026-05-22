@@ -1,0 +1,31 @@
+id: issues.search
+description: Full-text search across issues (title + description)
+permission: issues.read
+side_effects: read
+request:
+  method: POST
+  path: /graphql
+  headers:
+    Content-Type: application/json
+  body: '{"query":"query($term: String!, $first: Int, $after: String){ searchIssues(term:$term, first:$first, after:$after){ nodes { id identifier title state { name } } pageInfo { hasNextPage endCursor } } }","variables":{"term":{term|json},"first":{first|json},"after":{after|json}}}'
+inputs:
+  - name: term
+    type: string
+    required: true
+    location: body
+  - name: first
+    type: integer
+    location: body
+    default: 50
+  - name: after
+    type: string
+    location: body
+pagination:
+  style: cursor
+  request_param: after
+  request_location: body
+  response_token: endCursor
+  response_items: data.searchIssues.nodes
+  max_pages: 10
+errors:
+  "401": {code: auth_failed}

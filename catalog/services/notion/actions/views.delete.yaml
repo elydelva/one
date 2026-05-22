@@ -1,0 +1,17 @@
+id: views.delete
+description: Delete a view
+permission: databases.write
+side_effects: write
+request:
+  method: DELETE
+  path: /v1/views/{view_id}
+  headers:
+    Notion-Version: "2026-04-01"
+inputs:
+  - name: view_id
+    type: string
+    required: true
+    location: path
+errors:
+  "401": {code: auth_failed}
+  "404": {code: not_found}

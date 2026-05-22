@@ -1,0 +1,46 @@
+id: pulls.create
+description: Open a pull request
+permission: pulls.write
+side_effects: write
+request:
+  method: POST
+  path: /repos/{owner}/{repo}/pulls
+  body: $inputs
+inputs:
+  - name: owner
+    type: string
+    required: true
+    location: path
+  - name: repo
+    type: string
+    required: true
+    location: path
+  - name: title
+    type: string
+    required: true
+    location: body
+  - name: head
+    type: string
+    required: true
+    location: body
+    description: "Branch with changes (user:branch for cross-repo)"
+  - name: base
+    type: string
+    required: true
+    location: body
+    description: "Target branch in this repo"
+  - name: body
+    type: string
+    location: body
+  - name: draft
+    type: boolean
+    location: body
+    default: false
+  - name: maintainer_can_modify
+    type: boolean
+    location: body
+errors:
+  "401": {code: auth_failed}
+  "403": {code: forbidden}
+  "404": {code: not_found}
+  "422": {code: validation_failed, hint: "Branch missing, no diff between head/base, or PR already exists."}

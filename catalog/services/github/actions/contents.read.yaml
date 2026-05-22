@@ -1,0 +1,27 @@
+id: contents.read
+description: Read file or directory contents (base64-encoded for files)
+permission: repo.read
+side_effects: read
+request:
+  method: GET
+  path: /repos/{owner}/{repo}/contents/{path}
+inputs:
+  - name: owner
+    type: string
+    required: true
+    location: path
+  - name: repo
+    type: string
+    required: true
+    location: path
+  - name: path
+    type: string
+    required: true
+    location: path
+  - name: ref
+    type: string
+    location: query
+    description: "Branch, tag, or SHA (defaults to default branch)"
+errors:
+  "401": {code: auth_failed}
+  "404": {code: not_found}

@@ -1,0 +1,35 @@
+id: actions.workflow.dispatch
+description: Trigger a workflow via workflow_dispatch event
+permission: actions.write
+side_effects: write
+request:
+  method: POST
+  path: /repos/{owner}/{repo}/actions/workflows/{workflow_id}/dispatches
+  body: $inputs
+inputs:
+  - name: owner
+    type: string
+    required: true
+    location: path
+  - name: repo
+    type: string
+    required: true
+    location: path
+  - name: workflow_id
+    type: string
+    required: true
+    location: path
+    description: "Workflow file name (e.g. ci.yml) or numeric ID"
+  - name: ref
+    type: string
+    required: true
+    location: body
+    description: "Branch or tag to run the workflow on"
+  - name: inputs
+    type: object
+    location: body
+    description: "Inputs declared on the workflow's workflow_dispatch trigger"
+errors:
+  "401": {code: auth_failed}
+  "404": {code: not_found, hint: "Workflow file missing or not configured with workflow_dispatch trigger."}
+  "422": {code: validation_failed}

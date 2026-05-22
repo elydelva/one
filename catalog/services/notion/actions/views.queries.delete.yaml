@@ -1,0 +1,21 @@
+id: views.queries.delete
+description: Delete a saved view query
+permission: databases.write
+side_effects: write
+request:
+  method: DELETE
+  path: /v1/views/{view_id}/queries/{query_id}
+  headers:
+    Notion-Version: "2026-04-01"
+inputs:
+  - name: view_id
+    type: string
+    required: true
+    location: path
+  - name: query_id
+    type: string
+    required: true
+    location: path
+errors:
+  "401": {code: auth_failed}
+  "404": {code: not_found}

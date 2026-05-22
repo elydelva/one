@@ -1,0 +1,23 @@
+id: projects.update
+description: Update a project
+permission: projects.write
+side_effects: write
+request:
+  method: POST
+  path: /graphql
+  headers:
+    Content-Type: application/json
+  body: '{"query":"mutation($id: String!, $input: ProjectUpdateInput!){ projectUpdate(id:$id, input:$input){ success project { id name state } } }","variables":{"id":{id|json},"input":{input|json}}}'
+inputs:
+  - name: id
+    type: string
+    required: true
+    location: body
+  - name: input
+    type: object
+    required: true
+    location: body
+    description: "ProjectUpdateInput fields: name, description, state, leadId, startDate, targetDate, color, icon."
+errors:
+  "401": {code: auth_failed}
+  "404": {code: not_found}

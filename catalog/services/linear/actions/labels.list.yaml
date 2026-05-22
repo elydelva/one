@@ -1,0 +1,30 @@
+id: labels.list
+description: List issue labels — resolve label name → ID
+permission: labels.read
+side_effects: read
+request:
+  method: POST
+  path: /graphql
+  headers:
+    Content-Type: application/json
+  body: '{"query":"query($filter: IssueLabelFilter, $first: Int, $after: String){ issueLabels(filter:$filter, first:$first, after:$after){ nodes { id name color team { id key } } pageInfo { hasNextPage endCursor } } }","variables":{"filter":{filter|json},"first":{first|json},"after":{after|json}}}'
+inputs:
+  - name: filter
+    type: object
+    location: body
+  - name: first
+    type: integer
+    location: body
+    default: 100
+  - name: after
+    type: string
+    location: body
+pagination:
+  style: cursor
+  request_param: after
+  request_location: body
+  response_token: endCursor
+  response_items: data.issueLabels.nodes
+  max_pages: 5
+errors:
+  "401": {code: auth_failed}

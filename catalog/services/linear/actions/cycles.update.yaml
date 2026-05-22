@@ -1,0 +1,23 @@
+id: cycles.update
+description: Update a cycle
+permission: cycles.write
+side_effects: write
+request:
+  method: POST
+  path: /graphql
+  headers:
+    Content-Type: application/json
+  body: '{"query":"mutation($id: String!, $input: CycleUpdateInput!){ cycleUpdate(id:$id, input:$input){ success cycle { id number } } }","variables":{"id":{id|json},"input":{input|json}}}'
+inputs:
+  - name: id
+    type: string
+    required: true
+    location: body
+  - name: input
+    type: object
+    required: true
+    location: body
+    description: "CycleUpdateInput fields: name, description, startsAt, endsAt, completedAt."
+errors:
+  "401": {code: auth_failed}
+  "404": {code: not_found}

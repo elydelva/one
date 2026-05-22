@@ -1,0 +1,13 @@
+id: users.me
+description: Get the current authenticated user
+permission: users.read
+side_effects: read
+request:
+  method: POST
+  path: /graphql
+  headers:
+    Content-Type: application/json
+  body: '{"query":"query { viewer { id name email displayName organization { id name urlKey } } }"}'
+inputs: []
+errors:
+  "401": {code: auth_failed}

@@ -1,0 +1,18 @@
+id: issues.archive
+description: Archive an issue
+permission: issues.write
+side_effects: write
+request:
+  method: POST
+  path: /graphql
+  headers:
+    Content-Type: application/json
+  body: '{"query":"mutation($id: String!){ issueArchive(id:$id){ success } }","variables":{"id":{id|json}}}'
+inputs:
+  - name: id
+    type: string
+    required: true
+    location: body
+errors:
+  "401": {code: auth_failed}
+  "404": {code: not_found}

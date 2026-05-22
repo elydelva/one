@@ -1,0 +1,23 @@
+id: labels.update
+description: Update an issue label
+permission: labels.write
+side_effects: write
+request:
+  method: POST
+  path: /graphql
+  headers:
+    Content-Type: application/json
+  body: '{"query":"mutation($id: String!, $input: IssueLabelUpdateInput!){ issueLabelUpdate(id:$id, input:$input){ success issueLabel { id name color } } }","variables":{"id":{id|json},"input":{input|json}}}'
+inputs:
+  - name: id
+    type: string
+    required: true
+    location: body
+  - name: input
+    type: object
+    required: true
+    location: body
+    description: "IssueLabelUpdateInput fields: name, color, description, parentId."
+errors:
+  "401": {code: auth_failed}
+  "404": {code: not_found}

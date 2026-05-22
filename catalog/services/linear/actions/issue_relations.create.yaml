@@ -1,0 +1,19 @@
+id: issue_relations.create
+description: Create a relation between two issues (blocks, related, duplicate)
+permission: issues.write
+side_effects: write
+request:
+  method: POST
+  path: /graphql
+  headers:
+    Content-Type: application/json
+  body: '{"query":"mutation($input: IssueRelationCreateInput!){ issueRelationCreate(input:$input){ success issueRelation { id type } } }","variables":{"input":{input|json}}}'
+inputs:
+  - name: input
+    type: object
+    required: true
+    location: body
+    description: "IssueRelationCreateInput. Required: issueId, relatedIssueId, type ('blocks'|'related'|'duplicate')."
+errors:
+  "401": {code: auth_failed}
+  "404": {code: not_found}

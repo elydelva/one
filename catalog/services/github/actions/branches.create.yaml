@@ -1,0 +1,31 @@
+id: branches.create
+description: Create a branch by creating a git ref
+permission: repo.write
+side_effects: write
+request:
+  method: POST
+  path: /repos/{owner}/{repo}/git/refs
+  body: '{"ref":"refs/heads/{branch|json}","sha":{sha|json}}'
+inputs:
+  - name: owner
+    type: string
+    required: true
+    location: path
+  - name: repo
+    type: string
+    required: true
+    location: path
+  - name: branch
+    type: string
+    required: true
+    location: body
+    description: "New branch name (without refs/heads/ prefix)"
+  - name: sha
+    type: string
+    required: true
+    location: body
+    description: "Commit SHA the branch should point at"
+errors:
+  "401": {code: auth_failed}
+  "404": {code: not_found}
+  "422": {code: validation_failed, hint: "Branch already exists or SHA invalid."}

@@ -1,0 +1,19 @@
+id: repos.read
+description: Read repository metadata
+permission: repo.read
+side_effects: read
+request:
+  method: GET
+  path: /repos/{owner}/{repo}
+inputs:
+  - name: owner
+    type: string
+    required: true
+    location: path
+  - name: repo
+    type: string
+    required: true
+    location: path
+errors:
+  "401": {code: auth_failed}
+  "404": {code: not_found}

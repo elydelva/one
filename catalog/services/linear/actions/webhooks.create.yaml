@@ -1,0 +1,18 @@
+id: webhooks.create
+description: Create a webhook subscription
+permission: webhooks.write
+side_effects: write
+request:
+  method: POST
+  path: /graphql
+  headers:
+    Content-Type: application/json
+  body: '{"query":"mutation($input: WebhookCreateInput!){ webhookCreate(input:$input){ success webhook { id url } } }","variables":{"input":{input|json}}}'
+inputs:
+  - name: input
+    type: object
+    required: true
+    location: body
+    description: "WebhookCreateInput. Required: url, resourceTypes[]. Optional: teamId, label, allPublicTeams."
+errors:
+  "401": {code: auth_failed}

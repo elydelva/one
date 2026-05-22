@@ -1,0 +1,39 @@
+id: search.issues
+description: Search issues and PRs across GitHub
+permission: issues.read
+side_effects: read
+request:
+  method: GET
+  path: /search/issues
+inputs:
+  - name: q
+    type: string
+    required: true
+    location: query
+    description: "Search qualifiers (e.g. 'repo:owner/name is:open label:bug')"
+  - name: sort
+    type: string
+    location: query
+    enum: [comments, reactions, created, updated]
+  - name: order
+    type: string
+    location: query
+    enum: [asc, desc]
+  - name: page
+    type: integer
+    location: query
+  - name: per_page
+    type: integer
+    location: query
+    default: 30
+pagination:
+  style: cursor
+  request_param: page
+  request_location: query
+  response_token: next_page
+  response_items: items
+  max_pages: 10
+errors:
+  "401": {code: auth_failed}
+  "422": {code: validation_failed}
+  "429": {code: rate_limited, retry: backoff}

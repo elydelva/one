@@ -1,0 +1,24 @@
+id: gists.create
+description: Create a gist
+permission: gist.write
+side_effects: write
+request:
+  method: POST
+  path: /gists
+  body: $inputs
+inputs:
+  - name: description
+    type: string
+    location: body
+  - name: public
+    type: boolean
+    location: body
+    default: false
+  - name: files
+    type: object
+    required: true
+    location: body
+    description: "Map of filename → {content: '...'}"
+errors:
+  "401": {code: auth_failed}
+  "422": {code: validation_failed}

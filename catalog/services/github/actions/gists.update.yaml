@@ -1,0 +1,24 @@
+id: gists.update
+description: Update a gist (files, description)
+permission: gist.write
+side_effects: write
+request:
+  method: PATCH
+  path: /gists/{gist_id}
+  body: $inputs
+inputs:
+  - name: gist_id
+    type: string
+    required: true
+    location: path
+  - name: description
+    type: string
+    location: body
+  - name: files
+    type: object
+    location: body
+    description: "Map filename → {content, filename?} or null to delete"
+errors:
+  "401": {code: auth_failed}
+  "404": {code: not_found}
+  "422": {code: validation_failed}

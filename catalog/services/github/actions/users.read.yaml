@@ -1,0 +1,14 @@
+id: users.read
+description: Read a user's public profile
+permission: user.read
+side_effects: read
+request:
+  method: GET
+  path: /users/{username}
+inputs:
+  - name: username
+    type: string
+    required: true
+    location: path
+errors:
+  "404": {code: not_found}

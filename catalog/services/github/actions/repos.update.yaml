@@ -1,0 +1,53 @@
+id: repos.update
+description: Update repository settings (description, homepage, visibility, default branch)
+permission: repo.write
+side_effects: write
+request:
+  method: PATCH
+  path: /repos/{owner}/{repo}
+  body: $inputs
+inputs:
+  - name: owner
+    type: string
+    required: true
+    location: path
+  - name: repo
+    type: string
+    required: true
+    location: path
+  - name: name
+    type: string
+    location: body
+  - name: description
+    type: string
+    location: body
+  - name: homepage
+    type: string
+    location: body
+  - name: private
+    type: boolean
+    location: body
+  - name: visibility
+    type: string
+    location: body
+    enum: [public, private, internal]
+  - name: default_branch
+    type: string
+    location: body
+  - name: archived
+    type: boolean
+    location: body
+  - name: has_issues
+    type: boolean
+    location: body
+  - name: has_projects
+    type: boolean
+    location: body
+  - name: has_wiki
+    type: boolean
+    location: body
+errors:
+  "401": {code: auth_failed}
+  "403": {code: forbidden}
+  "404": {code: not_found}
+  "422": {code: validation_failed}

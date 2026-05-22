@@ -1,0 +1,26 @@
+id: issues.update
+description: Update a Linear issue (state, assignee, priority, labels, cycle, project)
+permission: issues.write
+side_effects: write
+request:
+  method: POST
+  path: /graphql
+  headers:
+    Content-Type: application/json
+  body: '{"query":"mutation($id: String!, $input: IssueUpdateInput!){ issueUpdate(id:$id, input:$input){ success issue { id identifier title state { name } } } }","variables":{"id":{id|json},"input":{input|json}}}'
+inputs:
+  - name: id
+    type: string
+    required: true
+    location: body
+    description: "Issue UUID or identifier (e.g. ENG-123)"
+  - name: input
+    type: object
+    required: true
+    location: body
+    description: |
+      IssueUpdateInput. Fields: title, description, stateId, assigneeId, priority,
+      labelIds[], projectId, cycleId, parentId, dueDate, estimate.
+errors:
+  "401": {code: auth_failed}
+  "404": {code: not_found}

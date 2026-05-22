@@ -1,0 +1,46 @@
+id: actions.workflow_runs.list
+description: List workflow runs in a repo
+permission: actions.read
+side_effects: read
+request:
+  method: GET
+  path: /repos/{owner}/{repo}/actions/runs
+inputs:
+  - name: owner
+    type: string
+    required: true
+    location: path
+  - name: repo
+    type: string
+    required: true
+    location: path
+  - name: actor
+    type: string
+    location: query
+  - name: branch
+    type: string
+    location: query
+  - name: event
+    type: string
+    location: query
+  - name: status
+    type: string
+    location: query
+    enum: [completed, action_required, cancelled, failure, neutral, skipped, stale, success, timed_out, in_progress, queued, requested, waiting]
+  - name: page
+    type: integer
+    location: query
+  - name: per_page
+    type: integer
+    location: query
+    default: 30
+pagination:
+  style: cursor
+  request_param: page
+  request_location: query
+  response_token: next_page
+  response_items: workflow_runs
+  max_pages: 10
+errors:
+  "401": {code: auth_failed}
+  "404": {code: not_found}

@@ -1,0 +1,36 @@
+id: issues.list
+description: List issues with filtering (cursor-paginated)
+permission: issues.read
+side_effects: read
+request:
+  method: POST
+  path: /graphql
+  headers:
+    Content-Type: application/json
+  body: '{"query":"query($filter: IssueFilter, $first: Int, $after: String, $orderBy: PaginationOrderBy){ issues(filter:$filter, first:$first, after:$after, orderBy:$orderBy){ nodes { id identifier title priority state { name } assignee { name } team { key } updatedAt } pageInfo { hasNextPage endCursor } } }","variables":{"filter":{filter|json},"first":{first|json},"after":{after|json},"orderBy":{order_by|json}}}'
+inputs:
+  - name: filter
+    type: object
+    location: body
+    description: "IssueFilter, e.g. {team:{key:{eq:'ENG'}}, state:{type:{eq:'started'}}}"
+  - name: first
+    type: integer
+    location: body
+    default: 50
+  - name: after
+    type: string
+    location: body
+  - name: order_by
+    type: string
+    location: body
+    enum: [createdAt, updatedAt]
+    default: updatedAt
+pagination:
+  style: cursor
+  request_param: after
+  request_location: body
+  response_token: endCursor
+  response_items: data.issues.nodes
+  max_pages: 10
+errors:
+  "401": {code: auth_failed}

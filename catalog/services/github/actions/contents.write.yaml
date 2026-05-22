@@ -1,0 +1,50 @@
+id: contents.write
+description: Create or update a file (commit included)
+permission: repo.write
+side_effects: write
+request:
+  method: PUT
+  path: /repos/{owner}/{repo}/contents/{path}
+  body: $inputs
+inputs:
+  - name: owner
+    type: string
+    required: true
+    location: path
+  - name: repo
+    type: string
+    required: true
+    location: path
+  - name: path
+    type: string
+    required: true
+    location: path
+  - name: message
+    type: string
+    required: true
+    location: body
+    description: "Commit message"
+  - name: content
+    type: string
+    required: true
+    location: body
+    description: "Base64-encoded file content"
+  - name: sha
+    type: string
+    location: body
+    description: "Required when updating (blob SHA of file being replaced)"
+  - name: branch
+    type: string
+    location: body
+  - name: committer
+    type: object
+    location: body
+    description: "{name, email}"
+  - name: author
+    type: object
+    location: body
+errors:
+  "401": {code: auth_failed}
+  "404": {code: not_found}
+  "409": {code: conflict, hint: "Stale SHA — fetch latest and retry."}
+  "422": {code: validation_failed}

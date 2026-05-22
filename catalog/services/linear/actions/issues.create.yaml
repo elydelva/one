@@ -1,0 +1,23 @@
+id: issues.create
+description: Create a Linear issue
+permission: issues.write
+side_effects: write
+request:
+  method: POST
+  path: /graphql
+  headers:
+    Content-Type: application/json
+  body: '{"query":"mutation($input: IssueCreateInput!){ issueCreate(input:$input){ success issue { id identifier url title } } }","variables":{"input":{input|json}}}'
+inputs:
+  - name: input
+    type: object
+    required: true
+    location: body
+    description: |
+      IssueCreateInput. Required: teamId, title.
+      Common: description, assigneeId, stateId, priority (0-4), labelIds[], projectId, cycleId, parentId, dueDate.
+errors:
+  "200": {code: validation_failed, hint: "Check `errors` array in response."}
+  "400": {code: validation_failed}
+  "401": {code: auth_failed}
+  "429": {code: rate_limited, retry: backoff}

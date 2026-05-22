@@ -1,0 +1,18 @@
+id: initiatives.create
+description: Create a strategic initiative (multi-project)
+permission: initiatives.write
+side_effects: write
+request:
+  method: POST
+  path: /graphql
+  headers:
+    Content-Type: application/json
+  body: '{"query":"mutation($input: InitiativeCreateInput!){ initiativeCreate(input:$input){ success initiative { id name url } } }","variables":{"input":{input|json}}}'
+inputs:
+  - name: input
+    type: object
+    required: true
+    location: body
+    description: "InitiativeCreateInput. Required: name. Optional: description, targetDate, ownerId, color, icon."
+errors:
+  "401": {code: auth_failed}

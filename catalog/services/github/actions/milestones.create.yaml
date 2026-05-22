@@ -1,0 +1,36 @@
+id: milestones.create
+description: Create a milestone
+permission: issues.write
+side_effects: write
+request:
+  method: POST
+  path: /repos/{owner}/{repo}/milestones
+  body: $inputs
+inputs:
+  - name: owner
+    type: string
+    required: true
+    location: path
+  - name: repo
+    type: string
+    required: true
+    location: path
+  - name: title
+    type: string
+    required: true
+    location: body
+  - name: state
+    type: string
+    location: body
+    enum: [open, closed]
+  - name: description
+    type: string
+    location: body
+  - name: due_on
+    type: string
+    location: body
+    description: "ISO 8601 timestamp"
+errors:
+  "401": {code: auth_failed}
+  "404": {code: not_found}
+  "422": {code: validation_failed}

@@ -1,0 +1,27 @@
+id: gists.list
+description: List authenticated user's gists
+permission: gist.read
+side_effects: read
+request:
+  method: GET
+  path: /gists
+inputs:
+  - name: since
+    type: string
+    location: query
+    description: "ISO 8601 — return gists updated after this time"
+  - name: page
+    type: integer
+    location: query
+  - name: per_page
+    type: integer
+    location: query
+    default: 30
+pagination:
+  style: cursor
+  request_param: page
+  request_location: query
+  response_token: next_page
+  max_pages: 10
+errors:
+  "401": {code: auth_failed}

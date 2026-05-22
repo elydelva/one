@@ -1,0 +1,27 @@
+id: users.list
+description: List workspace users
+permission: users.read
+side_effects: read
+request:
+  method: POST
+  path: /graphql
+  headers:
+    Content-Type: application/json
+  body: '{"query":"query($first: Int, $after: String){ users(first:$first, after:$after){ nodes { id name email active displayName } pageInfo { hasNextPage endCursor } } }","variables":{"first":{first|json},"after":{after|json}}}'
+inputs:
+  - name: first
+    type: integer
+    location: body
+    default: 50
+  - name: after
+    type: string
+    location: body
+pagination:
+  style: cursor
+  request_param: after
+  request_location: body
+  response_token: endCursor
+  response_items: data.users.nodes
+  max_pages: 10
+errors:
+  "401": {code: auth_failed}

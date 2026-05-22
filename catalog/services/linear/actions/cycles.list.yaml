@@ -1,0 +1,31 @@
+id: cycles.list
+description: List cycles
+permission: cycles.read
+side_effects: read
+request:
+  method: POST
+  path: /graphql
+  headers:
+    Content-Type: application/json
+  body: '{"query":"query($filter: CycleFilter, $first: Int, $after: String){ cycles(filter:$filter, first:$first, after:$after){ nodes { id number name startsAt endsAt completedAt team { key } } pageInfo { hasNextPage endCursor } } }","variables":{"filter":{filter|json},"first":{first|json},"after":{after|json}}}'
+inputs:
+  - name: filter
+    type: object
+    location: body
+    description: "CycleFilter — e.g. {team:{key:{eq:'ENG'}}, isActive:{eq:true}}"
+  - name: first
+    type: integer
+    location: body
+    default: 50
+  - name: after
+    type: string
+    location: body
+pagination:
+  style: cursor
+  request_param: after
+  request_location: body
+  response_token: endCursor
+  response_items: data.cycles.nodes
+  max_pages: 5
+errors:
+  "401": {code: auth_failed}

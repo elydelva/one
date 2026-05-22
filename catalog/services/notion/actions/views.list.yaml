@@ -1,0 +1,32 @@
+id: views.list
+description: List views (paginated)
+permission: databases.read
+side_effects: read
+request:
+  method: GET
+  path: /v1/views
+  headers:
+    Notion-Version: "2026-04-01"
+inputs:
+  - name: data_source_id
+    type: string
+    location: query
+    description: "Filter views by parent data source"
+  - name: start_cursor
+    type: string
+    location: query
+  - name: page_size
+    type: integer
+    location: query
+    default: 100
+    max: 100
+pagination:
+  style: cursor
+  request_param: start_cursor
+  request_location: query
+  response_token: next_cursor
+  response_items: results
+  max_pages: 10
+errors:
+  "401": {code: auth_failed}
+  "429": {code: rate_limited, retry: backoff}

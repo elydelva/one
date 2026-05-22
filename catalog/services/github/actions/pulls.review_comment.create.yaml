@@ -1,0 +1,50 @@
+id: pulls.review_comment.create
+description: Add an inline review comment to a PR file/line
+permission: pulls.write
+side_effects: write
+request:
+  method: POST
+  path: /repos/{owner}/{repo}/pulls/{pull_number}/comments
+  body: $inputs
+inputs:
+  - name: owner
+    type: string
+    required: true
+    location: path
+  - name: repo
+    type: string
+    required: true
+    location: path
+  - name: pull_number
+    type: integer
+    required: true
+    location: path
+  - name: body
+    type: string
+    required: true
+    location: body
+  - name: commit_id
+    type: string
+    required: true
+    location: body
+  - name: path
+    type: string
+    required: true
+    location: body
+  - name: line
+    type: integer
+    location: body
+  - name: side
+    type: string
+    location: body
+    enum: [LEFT, RIGHT]
+  - name: start_line
+    type: integer
+    location: body
+  - name: in_reply_to
+    type: integer
+    location: body
+errors:
+  "401": {code: auth_failed}
+  "404": {code: not_found}
+  "422": {code: validation_failed}

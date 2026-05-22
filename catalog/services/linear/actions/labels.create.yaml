@@ -1,0 +1,18 @@
+id: labels.create
+description: Create an issue label
+permission: labels.write
+side_effects: write
+request:
+  method: POST
+  path: /graphql
+  headers:
+    Content-Type: application/json
+  body: '{"query":"mutation($input: IssueLabelCreateInput!){ issueLabelCreate(input:$input){ success issueLabel { id name color } } }","variables":{"input":{input|json}}}'
+inputs:
+  - name: input
+    type: object
+    required: true
+    location: body
+    description: "IssueLabelCreateInput. Required: name. Optional: teamId (workspace-wide if omitted), color, description, parentId."
+errors:
+  "401": {code: auth_failed}

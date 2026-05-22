@@ -1,0 +1,29 @@
+id: pulls.update_branch
+description: Update PR branch with latest from base
+permission: pulls.write
+side_effects: write
+request:
+  method: PUT
+  path: /repos/{owner}/{repo}/pulls/{pull_number}/update-branch
+  body: $inputs
+inputs:
+  - name: owner
+    type: string
+    required: true
+    location: path
+  - name: repo
+    type: string
+    required: true
+    location: path
+  - name: pull_number
+    type: integer
+    required: true
+    location: path
+  - name: expected_head_sha
+    type: string
+    location: body
+errors:
+  "401": {code: auth_failed}
+  "403": {code: forbidden}
+  "404": {code: not_found}
+  "422": {code: conflict, hint: "Head SHA changed or merge conflict."}

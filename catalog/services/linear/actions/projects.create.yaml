@@ -1,0 +1,18 @@
+id: projects.create
+description: Create a project
+permission: projects.write
+side_effects: write
+request:
+  method: POST
+  path: /graphql
+  headers:
+    Content-Type: application/json
+  body: '{"query":"mutation($input: ProjectCreateInput!){ projectCreate(input:$input){ success project { id name url state } } }","variables":{"input":{input|json}}}'
+inputs:
+  - name: input
+    type: object
+    required: true
+    location: body
+    description: "ProjectCreateInput. Required: name, teamIds[]. Optional: description, leadId, startDate, targetDate, state, color, icon."
+errors:
+  "401": {code: auth_failed}

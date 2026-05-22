@@ -1,0 +1,27 @@
+id: custom_emojis.list
+description: List workspace custom emojis
+permission: workspace.read
+side_effects: read
+request:
+  method: GET
+  path: /v1/custom_emojis
+  headers:
+    Notion-Version: "2025-09-03"
+inputs:
+  - name: start_cursor
+    type: string
+    location: query
+  - name: page_size
+    type: integer
+    location: query
+    default: 100
+    max: 100
+pagination:
+  style: cursor
+  request_param: start_cursor
+  request_location: query
+  response_token: next_cursor
+  response_items: results
+  max_pages: 5
+errors:
+  "401": {code: auth_failed}

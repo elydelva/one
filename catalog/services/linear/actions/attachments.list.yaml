@@ -1,0 +1,18 @@
+id: attachments.list
+description: List attachments on an issue
+permission: attachments.read
+side_effects: read
+request:
+  method: POST
+  path: /graphql
+  headers:
+    Content-Type: application/json
+  body: '{"query":"query($issueId: String!){ issue(id:$issueId){ attachments { nodes { id title url subtitle iconUrl } } } }","variables":{"issueId":{issue_id|json}}}'
+inputs:
+  - name: issue_id
+    type: string
+    required: true
+    location: body
+errors:
+  "401": {code: auth_failed}
+  "404": {code: not_found}

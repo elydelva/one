@@ -1,0 +1,19 @@
+id: issues.comment.create
+description: Add a comment to an issue
+permission: issues.write
+side_effects: write
+request:
+  method: POST
+  path: /graphql
+  headers:
+    Content-Type: application/json
+  body: '{"query":"mutation($input: CommentCreateInput!){ commentCreate(input:$input){ success comment { id body url } } }","variables":{"input":{input|json}}}'
+inputs:
+  - name: input
+    type: object
+    required: true
+    location: body
+    description: "CommentCreateInput. Required: issueId, body. Optional: parentId (threaded)."
+errors:
+  "401": {code: auth_failed}
+  "404": {code: not_found}

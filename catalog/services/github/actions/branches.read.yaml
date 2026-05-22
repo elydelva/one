@@ -1,0 +1,23 @@
+id: branches.read
+description: Read a branch (HEAD commit, protection status)
+permission: repo.read
+side_effects: read
+request:
+  method: GET
+  path: /repos/{owner}/{repo}/branches/{branch}
+inputs:
+  - name: owner
+    type: string
+    required: true
+    location: path
+  - name: repo
+    type: string
+    required: true
+    location: path
+  - name: branch
+    type: string
+    required: true
+    location: path
+errors:
+  "401": {code: auth_failed}
+  "404": {code: not_found}

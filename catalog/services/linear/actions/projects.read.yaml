@@ -1,0 +1,18 @@
+id: projects.read
+description: Read a project
+permission: projects.read
+side_effects: read
+request:
+  method: POST
+  path: /graphql
+  headers:
+    Content-Type: application/json
+  body: '{"query":"query($id: String!){ project(id:$id){ id name description url state startDate targetDate progress lead { name } teams { nodes { key name } } } }","variables":{"id":{id|json}}}'
+inputs:
+  - name: id
+    type: string
+    required: true
+    location: body
+errors:
+  "401": {code: auth_failed}
+  "404": {code: not_found}

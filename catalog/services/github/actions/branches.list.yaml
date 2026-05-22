@@ -1,0 +1,35 @@
+id: branches.list
+description: List branches
+permission: repo.read
+side_effects: read
+request:
+  method: GET
+  path: /repos/{owner}/{repo}/branches
+inputs:
+  - name: owner
+    type: string
+    required: true
+    location: path
+  - name: repo
+    type: string
+    required: true
+    location: path
+  - name: protected
+    type: boolean
+    location: query
+  - name: page
+    type: integer
+    location: query
+  - name: per_page
+    type: integer
+    location: query
+    default: 30
+pagination:
+  style: cursor
+  request_param: page
+  request_location: query
+  response_token: next_page
+  max_pages: 10
+errors:
+  "401": {code: auth_failed}
+  "404": {code: not_found}

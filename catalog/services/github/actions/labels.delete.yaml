@@ -1,0 +1,23 @@
+id: labels.delete
+description: Delete a label
+permission: issues.write
+side_effects: write
+request:
+  method: DELETE
+  path: /repos/{owner}/{repo}/labels/{name}
+inputs:
+  - name: owner
+    type: string
+    required: true
+    location: path
+  - name: repo
+    type: string
+    required: true
+    location: path
+  - name: name
+    type: string
+    required: true
+    location: path
+errors:
+  "401": {code: auth_failed}
+  "404": {code: not_found}

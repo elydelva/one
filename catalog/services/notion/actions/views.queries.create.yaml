@@ -1,0 +1,42 @@
+id: views.queries.create
+description: Query a view (returns row data matching view filter/sort)
+permission: databases.read
+side_effects: read
+request:
+  method: POST
+  path: /v1/views/{view_id}/queries
+  headers:
+    Notion-Version: "2026-04-01"
+  body: $inputs
+inputs:
+  - name: view_id
+    type: string
+    required: true
+    location: path
+  - name: filter
+    type: object
+    location: body
+    description: "Override view filter"
+  - name: sort
+    type: array
+    location: body
+  - name: start_cursor
+    type: string
+    location: body
+  - name: page_size
+    type: integer
+    location: body
+    default: 100
+    max: 100
+pagination:
+  style: cursor
+  request_param: start_cursor
+  request_location: body
+  response_token: next_cursor
+  response_items: results
+  max_pages: 10
+errors:
+  "400": {code: validation_failed}
+  "401": {code: auth_failed}
+  "404": {code: not_found}
+  "429": {code: rate_limited, retry: backoff}

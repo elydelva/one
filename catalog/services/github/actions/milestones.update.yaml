@@ -1,0 +1,38 @@
+id: milestones.update
+description: Update a milestone
+permission: issues.write
+side_effects: write
+request:
+  method: PATCH
+  path: /repos/{owner}/{repo}/milestones/{milestone_number}
+  body: $inputs
+inputs:
+  - name: owner
+    type: string
+    required: true
+    location: path
+  - name: repo
+    type: string
+    required: true
+    location: path
+  - name: milestone_number
+    type: integer
+    required: true
+    location: path
+  - name: title
+    type: string
+    location: body
+  - name: state
+    type: string
+    location: body
+    enum: [open, closed]
+  - name: description
+    type: string
+    location: body
+  - name: due_on
+    type: string
+    location: body
+errors:
+  "401": {code: auth_failed}
+  "404": {code: not_found}
+  "422": {code: validation_failed}

@@ -1,0 +1,41 @@
+id: pulls.update
+description: Update a pull request (title, body, state, base branch)
+permission: pulls.write
+side_effects: write
+request:
+  method: PATCH
+  path: /repos/{owner}/{repo}/pulls/{pull_number}
+  body: $inputs
+inputs:
+  - name: owner
+    type: string
+    required: true
+    location: path
+  - name: repo
+    type: string
+    required: true
+    location: path
+  - name: pull_number
+    type: integer
+    required: true
+    location: path
+  - name: title
+    type: string
+    location: body
+  - name: body
+    type: string
+    location: body
+  - name: state
+    type: string
+    location: body
+    enum: [open, closed]
+  - name: base
+    type: string
+    location: body
+  - name: maintainer_can_modify
+    type: boolean
+    location: body
+errors:
+  "401": {code: auth_failed}
+  "404": {code: not_found}
+  "422": {code: validation_failed}

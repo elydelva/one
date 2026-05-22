@@ -1,0 +1,28 @@
+id: issues.comment.update
+description: Edit an existing issue/PR comment
+permission: issues.write
+side_effects: write
+request:
+  method: PATCH
+  path: /repos/{owner}/{repo}/issues/comments/{comment_id}
+  body: $inputs
+inputs:
+  - name: owner
+    type: string
+    required: true
+    location: path
+  - name: repo
+    type: string
+    required: true
+    location: path
+  - name: comment_id
+    type: integer
+    required: true
+    location: path
+  - name: body
+    type: string
+    required: true
+    location: body
+errors:
+  "401": {code: auth_failed}
+  "404": {code: not_found}

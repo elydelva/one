@@ -1,0 +1,24 @@
+id: commits.read
+description: Read a single commit (diff stats, files changed)
+permission: repo.read
+side_effects: read
+request:
+  method: GET
+  path: /repos/{owner}/{repo}/commits/{ref}
+inputs:
+  - name: owner
+    type: string
+    required: true
+    location: path
+  - name: repo
+    type: string
+    required: true
+    location: path
+  - name: ref
+    type: string
+    required: true
+    location: path
+    description: "SHA, branch, or tag"
+errors:
+  "401": {code: auth_failed}
+  "404": {code: not_found}

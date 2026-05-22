@@ -1,0 +1,25 @@
+id: pages.move
+description: Move a page to a new parent (reparent)
+permission: pages.write
+side_effects: write
+request:
+  method: POST
+  path: /v1/pages/{page_id}/move
+  headers:
+    Notion-Version: "2022-06-28"
+  body: $inputs
+inputs:
+  - name: page_id
+    type: string
+    required: true
+    location: path
+  - name: parent
+    type: object
+    required: true
+    location: body
+    description: "{type:'page_id', page_id:'...'} or {type:'database_id', database_id:'...'}"
+errors:
+  "400": {code: validation_failed}
+  "401": {code: auth_failed}
+  "403": {code: forbidden, hint: "Integration lacks access to new parent."}
+  "404": {code: not_found}

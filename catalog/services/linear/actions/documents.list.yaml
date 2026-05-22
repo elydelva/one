@@ -1,0 +1,30 @@
+id: documents.list
+description: List documents
+permission: documents.read
+side_effects: read
+request:
+  method: POST
+  path: /graphql
+  headers:
+    Content-Type: application/json
+  body: '{"query":"query($filter: DocumentFilter, $first: Int, $after: String){ documents(filter:$filter, first:$first, after:$after){ nodes { id title url updatedAt project { name } } pageInfo { hasNextPage endCursor } } }","variables":{"filter":{filter|json},"first":{first|json},"after":{after|json}}}'
+inputs:
+  - name: filter
+    type: object
+    location: body
+  - name: first
+    type: integer
+    location: body
+    default: 50
+  - name: after
+    type: string
+    location: body
+pagination:
+  style: cursor
+  request_param: after
+  request_location: body
+  response_token: endCursor
+  response_items: data.documents.nodes
+  max_pages: 10
+errors:
+  "401": {code: auth_failed}

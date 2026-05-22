@@ -1,0 +1,17 @@
+id: comments.retrieve
+description: Retrieve a single comment
+permission: comments.read
+side_effects: read
+request:
+  method: GET
+  path: /v1/comments/{comment_id}
+  headers:
+    Notion-Version: "2022-06-28"
+inputs:
+  - name: comment_id
+    type: string
+    required: true
+    location: path
+errors:
+  "401": {code: auth_failed}
+  "404": {code: not_found}

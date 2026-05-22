@@ -1,0 +1,31 @@
+id: projects.list
+description: List projects
+permission: projects.read
+side_effects: read
+request:
+  method: POST
+  path: /graphql
+  headers:
+    Content-Type: application/json
+  body: '{"query":"query($filter: ProjectFilter, $first: Int, $after: String){ projects(filter:$filter, first:$first, after:$after){ nodes { id name state startDate targetDate progress } pageInfo { hasNextPage endCursor } } }","variables":{"filter":{filter|json},"first":{first|json},"after":{after|json}}}'
+inputs:
+  - name: filter
+    type: object
+    location: body
+    description: "ProjectFilter — e.g. {state:{eq:'started'}}"
+  - name: first
+    type: integer
+    location: body
+    default: 50
+  - name: after
+    type: string
+    location: body
+pagination:
+  style: cursor
+  request_param: after
+  request_location: body
+  response_token: endCursor
+  response_items: data.projects.nodes
+  max_pages: 10
+errors:
+  "401": {code: auth_failed}

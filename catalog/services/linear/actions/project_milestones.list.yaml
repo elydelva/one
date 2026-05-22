@@ -1,0 +1,18 @@
+id: project_milestones.list
+description: List milestones in a project
+permission: projects.read
+side_effects: read
+request:
+  method: POST
+  path: /graphql
+  headers:
+    Content-Type: application/json
+  body: '{"query":"query($projectId: String!){ project(id:$projectId){ projectMilestones { nodes { id name description targetDate sortOrder } } } }","variables":{"projectId":{project_id|json}}}'
+inputs:
+  - name: project_id
+    type: string
+    required: true
+    location: body
+errors:
+  "401": {code: auth_failed}
+  "404": {code: not_found}

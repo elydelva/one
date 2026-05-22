@@ -1,0 +1,41 @@
+id: views.create
+description: Create a view (table, board, calendar, gallery, timeline, list) on a data source
+permission: databases.write
+side_effects: write
+request:
+  method: POST
+  path: /v1/views
+  headers:
+    Notion-Version: "2026-04-01"
+  body: $inputs
+inputs:
+  - name: parent
+    type: object
+    required: true
+    location: body
+    description: "{type:'data_source_id', data_source_id:'...'}"
+  - name: name
+    type: string
+    required: true
+    location: body
+  - name: type
+    type: string
+    required: true
+    location: body
+    enum: [table, board, calendar, gallery, timeline, list]
+  - name: filter
+    type: object
+    location: body
+  - name: sort
+    type: array
+    location: body
+  - name: properties
+    type: object
+    location: body
+    description: "Property visibility/order config"
+errors:
+  "400": {code: validation_failed}
+  "401": {code: auth_failed}
+  "403": {code: forbidden}
+  "404": {code: not_found}
+  "429": {code: rate_limited, retry: backoff}

@@ -1,0 +1,49 @@
+id: commits.list
+description: List commits on a repo (filterable by path/author/since)
+permission: repo.read
+side_effects: read
+request:
+  method: GET
+  path: /repos/{owner}/{repo}/commits
+inputs:
+  - name: owner
+    type: string
+    required: true
+    location: path
+  - name: repo
+    type: string
+    required: true
+    location: path
+  - name: sha
+    type: string
+    location: query
+    description: "SHA or branch to start listing from"
+  - name: path
+    type: string
+    location: query
+  - name: author
+    type: string
+    location: query
+  - name: since
+    type: string
+    location: query
+    description: "ISO 8601 timestamp"
+  - name: until
+    type: string
+    location: query
+  - name: page
+    type: integer
+    location: query
+  - name: per_page
+    type: integer
+    location: query
+    default: 30
+pagination:
+  style: cursor
+  request_param: page
+  request_location: query
+  response_token: next_page
+  max_pages: 10
+errors:
+  "401": {code: auth_failed}
+  "404": {code: not_found}

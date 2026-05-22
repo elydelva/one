@@ -1,0 +1,30 @@
+id: data_sources.create
+description: Create a new data source under an existing database
+permission: databases.write
+side_effects: write
+request:
+  method: POST
+  path: /v1/data_sources
+  headers:
+    Notion-Version: "2025-09-03"
+  body: $inputs
+inputs:
+  - name: parent
+    type: object
+    required: true
+    location: body
+    description: "{type:'database_id', database_id:'...'}"
+  - name: properties
+    type: object
+    required: true
+    location: body
+    description: "Property schema (see databases.create for format)"
+  - name: title
+    type: array
+    location: body
+    description: "Rich text array (optional name for the data source)"
+errors:
+  "400": {code: validation_failed}
+  "401": {code: auth_failed}
+  "403": {code: forbidden}
+  "404": {code: not_found}

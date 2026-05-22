@@ -1,0 +1,19 @@
+id: issues.read
+description: Read a single Linear issue
+permission: issues.read
+side_effects: read
+request:
+  method: POST
+  path: /graphql
+  headers:
+    Content-Type: application/json
+  body: '{"query":"query($id: String!){ issue(id:$id){ id identifier title description url priority estimate dueDate createdAt updatedAt state { id name type } assignee { id name email } team { id key name } project { id name } cycle { id number } labels { nodes { id name color } } } }","variables":{"id":{id|json}}}'
+inputs:
+  - name: id
+    type: string
+    required: true
+    location: body
+    description: "Issue UUID or human identifier (e.g. ENG-123)"
+errors:
+  "401": {code: auth_failed}
+  "404": {code: not_found}

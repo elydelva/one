@@ -1,0 +1,23 @@
+id: issues.comment.delete
+description: Delete an issue/PR comment
+permission: issues.write
+side_effects: write
+request:
+  method: DELETE
+  path: /repos/{owner}/{repo}/issues/comments/{comment_id}
+inputs:
+  - name: owner
+    type: string
+    required: true
+    location: path
+  - name: repo
+    type: string
+    required: true
+    location: path
+  - name: comment_id
+    type: integer
+    required: true
+    location: path
+errors:
+  "401": {code: auth_failed}
+  "404": {code: not_found}

@@ -1,0 +1,39 @@
+id: releases.update
+description: Update a release
+permission: repo.write
+side_effects: write
+request:
+  method: PATCH
+  path: /repos/{owner}/{repo}/releases/{release_id}
+  body: $inputs
+inputs:
+  - name: owner
+    type: string
+    required: true
+    location: path
+  - name: repo
+    type: string
+    required: true
+    location: path
+  - name: release_id
+    type: integer
+    required: true
+    location: path
+  - name: tag_name
+    type: string
+    location: body
+  - name: name
+    type: string
+    location: body
+  - name: body
+    type: string
+    location: body
+  - name: draft
+    type: boolean
+    location: body
+  - name: prerelease
+    type: boolean
+    location: body
+errors:
+  "401": {code: auth_failed}
+  "404": {code: not_found}

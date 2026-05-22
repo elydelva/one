@@ -1,0 +1,23 @@
+id: pulls.read
+description: Read a single pull request
+permission: pulls.read
+side_effects: read
+request:
+  method: GET
+  path: /repos/{owner}/{repo}/pulls/{pull_number}
+inputs:
+  - name: owner
+    type: string
+    required: true
+    location: path
+  - name: repo
+    type: string
+    required: true
+    location: path
+  - name: pull_number
+    type: integer
+    required: true
+    location: path
+errors:
+  "401": {code: auth_failed}
+  "404": {code: not_found}

@@ -1,0 +1,34 @@
+id: labels.update
+description: Update a label (rename, change color or description)
+permission: issues.write
+side_effects: write
+request:
+  method: PATCH
+  path: /repos/{owner}/{repo}/labels/{name}
+  body: $inputs
+inputs:
+  - name: owner
+    type: string
+    required: true
+    location: path
+  - name: repo
+    type: string
+    required: true
+    location: path
+  - name: name
+    type: string
+    required: true
+    location: path
+  - name: new_name
+    type: string
+    location: body
+  - name: color
+    type: string
+    location: body
+  - name: description
+    type: string
+    location: body
+errors:
+  "401": {code: auth_failed}
+  "404": {code: not_found}
+  "422": {code: validation_failed}

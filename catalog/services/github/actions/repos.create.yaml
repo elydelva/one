@@ -1,0 +1,39 @@
+id: repos.create
+description: Create a repository (under user or org)
+permission: repo.write
+side_effects: write
+request:
+  method: POST
+  path: /user/repos
+  body: $inputs
+inputs:
+  - name: name
+    type: string
+    required: true
+    location: body
+  - name: description
+    type: string
+    location: body
+  - name: homepage
+    type: string
+    location: body
+  - name: private
+    type: boolean
+    location: body
+    default: false
+  - name: auto_init
+    type: boolean
+    location: body
+  - name: gitignore_template
+    type: string
+    location: body
+  - name: license_template
+    type: string
+    location: body
+  - name: default_branch
+    type: string
+    location: body
+errors:
+  "401": {code: auth_failed}
+  "403": {code: forbidden}
+  "422": {code: validation_failed, hint: "Name taken or invalid."}

@@ -1,0 +1,18 @@
+id: cycles.create
+description: Create a cycle (sprint)
+permission: cycles.write
+side_effects: write
+request:
+  method: POST
+  path: /graphql
+  headers:
+    Content-Type: application/json
+  body: '{"query":"mutation($input: CycleCreateInput!){ cycleCreate(input:$input){ success cycle { id number startsAt endsAt } } }","variables":{"input":{input|json}}}'
+inputs:
+  - name: input
+    type: object
+    required: true
+    location: body
+    description: "CycleCreateInput. Required: teamId, startsAt, endsAt. Optional: name, description."
+errors:
+  "401": {code: auth_failed}

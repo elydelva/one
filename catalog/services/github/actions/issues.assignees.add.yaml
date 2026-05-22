@@ -1,0 +1,28 @@
+id: issues.assignees.add
+description: Add assignees to an issue
+permission: issues.write
+side_effects: write
+request:
+  method: POST
+  path: /repos/{owner}/{repo}/issues/{issue_number}/assignees
+  body: $inputs
+inputs:
+  - name: owner
+    type: string
+    required: true
+    location: path
+  - name: repo
+    type: string
+    required: true
+    location: path
+  - name: issue_number
+    type: integer
+    required: true
+    location: path
+  - name: assignees
+    type: array
+    required: true
+    location: body
+errors:
+  "401": {code: auth_failed}
+  "404": {code: not_found}
