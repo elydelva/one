@@ -155,7 +155,7 @@ func hashCatalogTree(root string) (map[string]string, error) {
 		if rel == checksumFile || rel == signatureFile {
 			return nil
 		}
-		f, err := os.Open(path)
+		f, err := os.Open(path) //nolint:gosec // G122: walk root is a trusted local tap directory
 		if err != nil {
 			return err
 		}

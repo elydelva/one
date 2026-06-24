@@ -58,7 +58,7 @@ func compileAllowlist(h *core.HandlerRef) ([]*regexp.Regexp, error) {
 			anchored = "^" + anchored
 		}
 		if anchored[len(anchored)-1] != '$' {
-			anchored = anchored + "$"
+			anchored += "$"
 		}
 		re, err := regexp.Compile(anchored)
 		if err != nil {
@@ -125,7 +125,7 @@ func (r *WazeroRuntime) doHostHTTP(ctx context.Context, st *invocationState, raw
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	st.httpCalls = append(st.httpCalls, ports.HTTPCall{Method: method, URL: hr.URL, Status: resp.StatusCode})
 

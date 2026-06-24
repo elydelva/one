@@ -15,8 +15,8 @@ import (
 // Filters:
 //   - (none)  : fmt.Sprint(value)
 //   - json    : json.Marshal(value) — yields a JSON literal (quoted strings,
-//               escaped specials, booleans/numbers/objects unquoted). Use this
-//               to safely embed values inside JSON body templates.
+//     escaped specials, booleans/numbers/objects unquoted). Use this
+//     to safely embed values inside JSON body templates.
 //
 // urlEscape applies after filtering. With urlEscape=true, the substituted
 // string must not contain `..` or `/` (anti path-traversal).

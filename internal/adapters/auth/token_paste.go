@@ -78,7 +78,7 @@ func validateToken(ctx context.Context, tr ports.Transport, cat ports.Catalog, s
 	if err != nil {
 		return fmt.Errorf("token validation request failed: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	if resp.StatusCode == http.StatusUnauthorized || resp.StatusCode == http.StatusForbidden {
 		return fmt.Errorf("token validation failed: %s returned %d", cfg.ValidateURL, resp.StatusCode)
 	}

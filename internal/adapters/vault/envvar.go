@@ -16,7 +16,7 @@ const envVarPrefix = "ONE_CREDS_"
 // EnvVarVault reads credentials from environment variables (ONE_CREDS_<SVC>_<ACCOUNT>=<json>).
 // Read-only: Store/Delete return ErrReadOnly.
 type EnvVarVault struct {
-	getenv func(string) string
+	getenv  func(string) string
 	environ func() []string
 }
 

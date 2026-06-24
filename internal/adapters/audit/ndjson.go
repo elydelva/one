@@ -51,7 +51,7 @@ func (a *NDJSONAudit) Record(_ context.Context, ev core.AuditEvent) error {
 	if err != nil {
 		return fmt.Errorf("audit: open: %w", err)
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 	buf, err := json.Marshal(ev)
 	if err != nil {
 		return fmt.Errorf("audit: marshal: %w", err)
@@ -125,7 +125,7 @@ func (a *NDJSONAudit) readFile(path string) ([]core.AuditEvent, error) {
 	if err != nil {
 		return nil, fmt.Errorf("audit: open %s: %w", path, err)
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 	scanner := bufio.NewScanner(f)
 	scanner.Buffer(make([]byte, 0, 64*1024), 1024*1024)
 	var out []core.AuditEvent

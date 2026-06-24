@@ -77,7 +77,7 @@ func TestOAuthClientProvider_LoginExchangesCredentials(t *testing.T) {
 	defer srv.Close()
 
 	cat := &stubCatalog{svc: &core.Service{
-		ID:        "myapi",
+		ID: "myapi",
 		AuthConfigs: map[core.ProviderKind]core.AuthConfig{
 			core.ProviderOAuthClient: {
 				ClientID:      "client-x",
@@ -160,7 +160,7 @@ func TestTokenPasteProvider_ValidationRejects401(t *testing.T) {
 	}))
 	defer srv.Close()
 	cat := &stubCatalog{svc: &core.Service{
-		ID:        "demo",
+		ID: "demo",
 		Injection: map[core.ProviderKind]core.AuthInjection{
 			core.ProviderPAT: {Header: "Authorization", Format: "Bearer {access_token}"},
 		},
@@ -182,7 +182,7 @@ func TestTokenPasteProvider_ValidationAccepts200(t *testing.T) {
 	}))
 	defer srv.Close()
 	cat := &stubCatalog{svc: &core.Service{
-		ID:        "demo",
+		ID: "demo",
 		Injection: map[core.ProviderKind]core.AuthInjection{
 			core.ProviderPAT: {Header: "Authorization", Format: "Bearer {access_token}"},
 		},

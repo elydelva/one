@@ -60,7 +60,7 @@ func (p *AWSKeysProvider) Login(ctx context.Context, svc core.ServiceID, alias c
 	if sessionErr == nil {
 		payload.SessionToken = session.Reveal()
 	}
-	raw, _ := json.Marshal(payload)
+	raw, _ := json.Marshal(payload) //nolint:gosec // G117: serializing the credential payload for local encrypted storage, not a leak
 	cred := core.Credential{
 		Provider:     core.ProviderAWSKeys,
 		Service:      svc,
@@ -133,7 +133,7 @@ func stsGetCallerIdentity(ctx context.Context, tr ports.Transport, akid, secret,
 	if err != nil {
 		return err
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	if resp.StatusCode >= 300 {
 		body, _ := io.ReadAll(resp.Body)
 		return fmt.Errorf("STS returned %d: %s", resp.StatusCode, string(body))

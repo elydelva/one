@@ -20,13 +20,13 @@ const (
 type InputType string
 
 const (
-	TypeString   InputType = "string"
-	TypeInteger  InputType = "integer"
-	TypeNumber   InputType = "number"
-	TypeBoolean  InputType = "boolean"
-	TypeArray    InputType = "array"
-	TypeObject   InputType = "object"
-	TypeFileRef  InputType = "file_ref"
+	TypeString  InputType = "string"
+	TypeInteger InputType = "integer"
+	TypeNumber  InputType = "number"
+	TypeBoolean InputType = "boolean"
+	TypeArray   InputType = "array"
+	TypeObject  InputType = "object"
+	TypeFileRef InputType = "file_ref"
 )
 
 // InputDef describes a single action parameter (parsed from the catalog YAML).

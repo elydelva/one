@@ -47,7 +47,7 @@ func New(t *testing.T, routes []Route) *Server {
 	t.Helper()
 	s := &Server{routes: routes}
 	s.Server = httptest.NewServer(http.HandlerFunc(s.handle))
-	t.Cleanup(s.Server.Close)
+	t.Cleanup(s.Close)
 	return s
 }
 

@@ -160,8 +160,8 @@ func TestDeclarative_QueryParamsApplied(t *testing.T) {
 	})
 	action := findAction(t, svc, "issues.list")
 	_, err := rt.Execute(context.Background(), ports.ExecuteRequest{
-		Action: action,
-		Inputs: core.Inputs{"owner": "x", "repo": "y", "state": "closed"},
+		Action:     action,
+		Inputs:     core.Inputs{"owner": "x", "repo": "y", "state": "closed"},
 		Credential: core.Credential{Provider: core.ProviderPAT, AccessToken: core.NewSecret("t")},
 	})
 	if err != nil {

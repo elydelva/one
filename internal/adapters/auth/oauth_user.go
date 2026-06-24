@@ -62,11 +62,11 @@ func (p *OAuthUserProvider) Login(ctx context.Context, svc core.ServiceID, alias
 	if redirectPath == "" {
 		redirectPath = "/callback"
 	}
-	listener, err := net.Listen("tcp", "127.0.0.1:0")
+	listener, err := (&net.ListenConfig{}).Listen(ctx, "tcp", "127.0.0.1:0")
 	if err != nil {
 		return core.Credential{}, err
 	}
-	defer listener.Close()
+	defer func() { _ = listener.Close() }()
 	port := listener.Addr().(*net.TCPAddr).Port
 	redirectURI := fmt.Sprintf("http://127.0.0.1:%d%s", port, redirectPath)
 
@@ -101,7 +101,7 @@ func (p *OAuthUserProvider) Login(ctx context.Context, svc core.ServiceID, alias
 	})
 	srv.Handler = mux
 	go func() { _ = srv.Serve(listener) }()
-	defer srv.Close()
+	defer func() { _ = srv.Close() }()
 
 	loginCtx, cancel := context.WithTimeout(ctx, p.loginTimeout)
 	defer cancel()
@@ -231,7 +231,7 @@ func postToken(ctx context.Context, transport ports.Transport, endpoint string, 
 	if err != nil {
 		return tokenResponse{}, err
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return tokenResponse{}, err

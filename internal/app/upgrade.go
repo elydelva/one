@@ -88,7 +88,7 @@ func (uc *Upgrade) Run(_ context.Context, in UpgradeInput) (UpgradeOutput, error
 	if err != nil {
 		return out, err
 	}
-	defer os.Remove(tmp)
+	defer func() { _ = os.Remove(tmp) }()
 	if err := os.Rename(tmp, binaryPath); err != nil {
 		return out, fmt.Errorf("upgrade: replace binary: %w", err)
 	}
@@ -101,7 +101,7 @@ func fetchSum(get func(string) (*http.Response, error), url string) (string, err
 	if err != nil {
 		return "", fmt.Errorf("upgrade: fetch sum: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	if resp.StatusCode != http.StatusOK {
 		return "", fmt.Errorf("upgrade: sum http %d", resp.StatusCode)
 	}
@@ -125,7 +125,7 @@ func downloadAndVerify(get func(string) (*http.Response, error), url, expected, 
 	if err != nil {
 		return "", fmt.Errorf("upgrade: download: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	if resp.StatusCode != http.StatusOK {
 		return "", fmt.Errorf("upgrade: download http %d", resp.StatusCode)
 	}
@@ -135,21 +135,21 @@ func downloadAndVerify(get func(string) (*http.Response, error), url, expected, 
 	}
 	h := sha256.New()
 	if _, err := io.Copy(io.MultiWriter(tmp, h), resp.Body); err != nil {
-		tmp.Close()
-		os.Remove(tmp.Name())
+		_ = tmp.Close()
+		_ = os.Remove(tmp.Name())
 		return "", err
 	}
 	if err := tmp.Close(); err != nil {
-		os.Remove(tmp.Name())
+		_ = os.Remove(tmp.Name())
 		return "", err
 	}
 	got := hex.EncodeToString(h.Sum(nil))
 	if got != expected {
-		os.Remove(tmp.Name())
+		_ = os.Remove(tmp.Name())
 		return "", fmt.Errorf("upgrade: sha256 mismatch (want %s, got %s)", expected, got)
 	}
-	if err := os.Chmod(tmp.Name(), 0o755); err != nil {
-		os.Remove(tmp.Name())
+	if err := os.Chmod(tmp.Name(), 0o755); err != nil { //nolint:gosec // G302: downloaded binary must be executable
+		_ = os.Remove(tmp.Name())
 		return "", err
 	}
 	return tmp.Name(), nil

@@ -212,7 +212,7 @@ type fakeVerifier struct {
 	lastPK string
 }
 
-func (f *fakeVerifier) Verify(_ , publicKey string) error {
+func (f *fakeVerifier) Verify(_, publicKey string) error {
 	f.called++
 	f.lastPK = publicKey
 	return f.err

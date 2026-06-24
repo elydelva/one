@@ -38,8 +38,8 @@ type RefreshIfNeeded struct {
 	locks    map[string]*sync.Mutex
 	audit    ports.Audit
 
-	Margin       time.Duration
-	LockTimeout  time.Duration
+	Margin      time.Duration
+	LockTimeout time.Duration
 }
 
 // WithAudit installs an audit recorder. REFRESH events emitted on each attempt.
@@ -79,7 +79,7 @@ func (uc *RefreshIfNeeded) Run(ctx context.Context, cred core.Credential) (core.
 		if err != nil || !got {
 			return core.Credential{}, core.ErrReAuthRequired{Service: cred.Service, Account: cred.Account}
 		}
-		defer fl.Unlock()
+		defer func() { _ = fl.Unlock() }()
 	}
 
 	// Re-fetch: someone else may have already refreshed during our wait.

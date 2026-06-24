@@ -60,7 +60,7 @@ func TestExecute_Happy(t *testing.T) {
 
 	out, err := uc.Run(context.Background(), ExecuteInput{
 		Service: "github", Action: "issues.read",
-		Inputs: map[string]any{"owner": "x", "repo": "y", "n": 1},
+		Inputs:     map[string]any{"owner": "x", "repo": "y", "n": 1},
 		ProjectDir: dir,
 	})
 	if err != nil {
@@ -114,7 +114,7 @@ func TestExecute_NotAuthenticated(t *testing.T) {
 	uc, _, _, dir := newExec(t)
 	_, err := uc.Run(context.Background(), ExecuteInput{
 		Service: "github", Action: "issues.read",
-		Inputs: map[string]any{"owner": "x", "repo": "y", "n": 1},
+		Inputs:     map[string]any{"owner": "x", "repo": "y", "n": 1},
 		ProjectDir: dir,
 	})
 	var notAuth core.ErrNotAuthenticated
@@ -133,7 +133,7 @@ func TestExecute_NotInEnv(t *testing.T) {
 	)
 	_, err := uc.Run(context.Background(), ExecuteInput{
 		Service: "github", Action: "issues.read",
-		Inputs: map[string]any{"owner": "x", "repo": "y", "n": 1},
+		Inputs:     map[string]any{"owner": "x", "repo": "y", "n": 1},
 		ProjectDir: dir,
 	})
 	var nie core.ErrNotInEnv
@@ -163,7 +163,7 @@ func TestExecute_BypassPermissionsSkipsScopeCheck(t *testing.T) {
 	)
 	out, err := uc.Run(context.Background(), ExecuteInput{
 		Service: "github", Action: "issues.read",
-		Inputs: map[string]any{"owner": "x", "repo": "y", "n": 1},
+		Inputs:     map[string]any{"owner": "x", "repo": "y", "n": 1},
 		ProjectDir: dir,
 	})
 	if err != nil {

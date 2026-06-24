@@ -35,12 +35,12 @@ type RequestSpec struct {
 
 // PaginationSpec declares cursor pagination behavior for an action.
 type PaginationSpec struct {
-	Style          string // "cursor" only in v0.2
-	RequestParam   string
+	Style           string // "cursor" only in v0.2
+	RequestParam    string
 	RequestLocation string // "query" by default
-	ResponseToken  string
-	ResponseItems  string // JSON path to the items slice (empty = top-level array)
-	MaxPages       int
+	ResponseToken   string
+	ResponseItems   string // JSON path to the items slice (empty = top-level array)
+	MaxPages        int
 }
 
 // ErrorSpec declares the runtime mapping for a specific HTTP status code.

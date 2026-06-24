@@ -278,11 +278,11 @@ func toCoreAction(svcID core.ServiceID, def pkgcatalog.ActionDef) (core.Action, 
 		}
 	}
 	if len(def.Inputs) > 0 {
-		core_defs := make([]core.InputDef, len(def.Inputs))
+		coreDefs := make([]core.InputDef, len(def.Inputs))
 		for i, in := range def.Inputs {
-			core_defs[i] = convertInputDef(in)
+			coreDefs[i] = convertInputDef(in)
 		}
-		raw, err := json.Marshal(core_defs)
+		raw, err := json.Marshal(coreDefs)
 		if err != nil {
 			return core.Action{}, err
 		}

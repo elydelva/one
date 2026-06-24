@@ -152,7 +152,7 @@ func (p *OAuthDeviceProvider) requestDeviceCode(ctx context.Context, cfg core.Au
 	if err != nil {
 		return deviceAuthResponse{}, err
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return deviceAuthResponse{}, err
@@ -180,7 +180,7 @@ func pollDeviceToken(ctx context.Context, tr ports.Transport, endpoint string, f
 	if err != nil {
 		return tokenResponse{}, "", err
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return tokenResponse{}, "", err

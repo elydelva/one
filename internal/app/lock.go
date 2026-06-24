@@ -227,7 +227,7 @@ func writeLock(path string, lock LockFile) error {
 		return err
 	}
 	tmp := path + ".tmp"
-	if err := os.WriteFile(tmp, data, 0o644); err != nil {
+	if err := os.WriteFile(tmp, data, 0o644); err != nil { //nolint:gosec // G306: lock file is a non-secret, VCS-committed integrity manifest
 		return err
 	}
 	return os.Rename(tmp, path)

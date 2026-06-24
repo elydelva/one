@@ -54,7 +54,7 @@ func revParse(ctx context.Context, dir string) (string, error) {
 }
 
 func run(ctx context.Context, dir string, args ...string) error {
-	cmd := exec.CommandContext(ctx, "git", args...)
+	cmd := exec.CommandContext(ctx, "git", args...) //nolint:gosec // G204: git invoked with program-controlled arguments
 	if dir != "" {
 		cmd.Dir = dir
 	}
@@ -67,7 +67,7 @@ func run(ctx context.Context, dir string, args ...string) error {
 }
 
 func output(ctx context.Context, dir string, args ...string) (string, error) {
-	cmd := exec.CommandContext(ctx, "git", args...)
+	cmd := exec.CommandContext(ctx, "git", args...) //nolint:gosec // G204: git invoked with program-controlled arguments
 	if dir != "" {
 		cmd.Dir = dir
 	}

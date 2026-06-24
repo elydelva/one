@@ -111,7 +111,7 @@ func (r *WazeroRuntime) Execute(ctx context.Context, req ports.ExecuteRequest) (
 		cfg = cfg.WithCompilationCache(r.cache)
 	}
 	rt := wazero.NewRuntimeWithConfig(ctx, cfg)
-	defer rt.Close(ctx)
+	defer func() { _ = rt.Close(ctx) }()
 
 	if _, err := wasi_snapshot_preview1.Instantiate(ctx, rt); err != nil {
 		return ports.ExecuteResult{}, fmt.Errorf("wazero: wasi: %w", err)
@@ -139,7 +139,7 @@ func (r *WazeroRuntime) Execute(ctx context.Context, req ports.ExecuteRequest) (
 	if err != nil {
 		return ports.ExecuteResult{}, r.classifyExecError(req.Action.ID, st, cpuCtx, cpuS, err)
 	}
-	defer mod.Close(cpuCtx)
+	defer func() { _ = mod.Close(cpuCtx) }()
 
 	entry := h.Entry
 	if entry == "" {
@@ -157,7 +157,7 @@ func (r *WazeroRuntime) Execute(ctx context.Context, req ports.ExecuteRequest) (
 	if st.failure != nil {
 		return ports.ExecuteResult{}, *st.failure
 	}
-	if v, ok := st.violation(); ok {
+	if ok, v := st.violation(); ok {
 		return ports.ExecuteResult{}, v
 	}
 	if st.output == nil {
@@ -173,7 +173,7 @@ func (r *WazeroRuntime) classifyExecError(action core.ActionID, st *invocationSt
 	if st.failure != nil {
 		return *st.failure
 	}
-	if v, ok := st.violation(); ok {
+	if ok, v := st.violation(); ok {
 		return v
 	}
 	return fmt.Errorf("wazero: invoke: %w", err)
@@ -248,16 +248,16 @@ func (s *invocationState) setResourceExhausted(resource, cap string) {
 	}
 }
 
-func (s *invocationState) violation() (error, bool) {
+func (s *invocationState) violation() (bool, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	if s.resEx != nil {
-		return *s.resEx, true
+		return true, *s.resEx
 	}
 	if s.viol != nil {
-		return *s.viol, true
+		return true, *s.viol
 	}
-	return nil, false
+	return false, nil
 }
 
 func (r *WazeroRuntime) registerHostModule(ctx context.Context, rt wazero.Runtime, st *invocationState) error {

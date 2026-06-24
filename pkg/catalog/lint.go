@@ -90,7 +90,7 @@ func compilePatterns(in []string) []*regexp.Regexp {
 			anchored = "^" + anchored
 		}
 		if anchored[len(anchored)-1] != '$' {
-			anchored = anchored + "$"
+			anchored += "$"
 		}
 		if re, err := regexp.Compile(anchored); err == nil {
 			out = append(out, re)

@@ -6,21 +6,21 @@ import "time"
 type AuditKind string
 
 const (
-	AuditLogin    AuditKind = "LOGIN"
-	AuditLogout   AuditKind = "LOGOUT"
-	AuditRefresh  AuditKind = "REFRESH"
-	AuditExec     AuditKind = "EXEC"
-	AuditScope    AuditKind = "SCOPE_CHANGE"
-	AuditRotate   AuditKind = "ROTATE"
+	AuditLogin   AuditKind = "LOGIN"
+	AuditLogout  AuditKind = "LOGOUT"
+	AuditRefresh AuditKind = "REFRESH"
+	AuditExec    AuditKind = "EXEC"
+	AuditScope   AuditKind = "SCOPE_CHANGE"
+	AuditRotate  AuditKind = "ROTATE"
 )
 
 // AuditOutcome represents the result of an audited operation.
 type AuditOutcome string
 
 const (
-	OutcomeOK      AuditOutcome = "ok"
-	OutcomeError   AuditOutcome = "error"
-	OutcomeDenied  AuditOutcome = "denied"
+	OutcomeOK     AuditOutcome = "ok"
+	OutcomeError  AuditOutcome = "error"
+	OutcomeDenied AuditOutcome = "denied"
 )
 
 // AuditEvent is a single audit log entry. Secrets MUST never appear in this struct.

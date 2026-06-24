@@ -19,10 +19,10 @@ type InitInput struct {
 
 // InitOutput reports what changed on disk.
 type InitOutput struct {
-	ScopePath          string
-	ScopeCreated       bool
-	GitignorePath      string
-	GitignoreAppended  bool
+	ScopePath         string
+	ScopeCreated      bool
+	GitignorePath     string
+	GitignoreAppended bool
 }
 
 // Init bootstraps .onerc.yaml + .gitignore for a fresh project.
@@ -78,7 +78,7 @@ func ensureGitignoreEntry(path, entry string) (bool, error) {
 	}
 	buf.WriteString(entry)
 	buf.WriteByte('\n')
-	if err := os.WriteFile(path, []byte(buf.String()), 0o644); err != nil {
+	if err := os.WriteFile(path, []byte(buf.String()), 0o644); err != nil { //nolint:gosec // G306: .gitignore is a non-secret, VCS-committed file
 		return false, fmt.Errorf("write %s: %w", path, err)
 	}
 	return true, nil

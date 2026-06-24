@@ -80,10 +80,10 @@ verify:
 func newGithubServer(t *testing.T, tamper bool) *httptest.Server {
 	t.Helper()
 	tarball := buildTarball(t, map[string]string{
-		"service.yaml":            githubServiceYAML,
+		"service.yaml":             githubServiceYAML,
 		"actions/issues.read.yaml": issuesReadActionYAML,
-		"SKILL.md":                "# github skill",
-		"guides/setup.md":         sampleGuideMD,
+		"SKILL.md":                 "# github skill",
+		"guides/setup.md":          sampleGuideMD,
 	})
 	sum := sha256.Sum256(tarball)
 	hash := hex.EncodeToString(sum[:])

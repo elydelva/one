@@ -138,7 +138,7 @@ func (uc *VaultRotate) WithAudit(a ports.Audit) *VaultRotate { uc.audit = a; ret
 
 // VaultRotateOutput summarizes how many credentials were rotated.
 type VaultRotateOutput struct {
-	Rotated int            `json:"rotated"`
+	Rotated int               `json:"rotated"`
 	Failed  map[string]string `json:"failed,omitempty"`
 }
 

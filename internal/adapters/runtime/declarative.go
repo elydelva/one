@@ -78,7 +78,7 @@ func (r *DeclarativeRuntime) executeOnce(ctx context.Context, svc *core.Service,
 	if err != nil {
 		return ports.ExecuteResult{}, err
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	call := ports.HTTPCall{Method: httpReq.Method, URL: httpReq.URL.String(), Status: resp.StatusCode}
 

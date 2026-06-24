@@ -30,7 +30,7 @@ func (s *ProfileScopeStore) Load(dir string) (core.Scope, error) {
 		return s.base.Load(dir)
 	}
 	path := filepath.Join(dir, ".onerc."+profile+".yaml")
-	raw, err := os.ReadFile(path)
+	raw, err := os.ReadFile(path) //nolint:gosec // G703: path comes from trusted local config
 	if err != nil {
 		if errors.Is(err, fs.ErrNotExist) {
 			return s.base.Load(dir)

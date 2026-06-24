@@ -91,10 +91,10 @@ func (uc *Skill) Run(_ context.Context, in SkillInput) (SkillOutput, error) {
 	if !in.Install {
 		return out, nil
 	}
-	if err := os.MkdirAll(filepath.Dir(dest), 0o755); err != nil {
+	if err := os.MkdirAll(filepath.Dir(dest), 0o750); err != nil {
 		return out, fmt.Errorf("skill: mkdir: %w", err)
 	}
-	if err := os.WriteFile(dest, []byte(SkillContent), 0o644); err != nil {
+	if err := os.WriteFile(dest, []byte(SkillContent), 0o600); err != nil {
 		return out, fmt.Errorf("skill: write: %w", err)
 	}
 	out.Installed = true

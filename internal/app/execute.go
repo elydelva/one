@@ -16,7 +16,7 @@ import (
 // BypassPermissionEnv, when set to a truthy value (1/true/yes), skips the
 // project-env presence check AND the scope allowlist enforcement. Intended for
 // agents running outside a checked-out project (e.g. one-shot scripts).
-const BypassPermissionEnv = "ONECLI_BYPASS_PERMISSION"
+const BypassPermissionEnv = "ONECLI_BYPASS_PERMISSION" //nolint:gosec // G101: this is an environment variable name, not a credential
 
 func bypassPermissions() bool {
 	switch os.Getenv(BypassPermissionEnv) {
