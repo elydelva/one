@@ -67,10 +67,14 @@ func (uc *ShowInfo) serviceInfo(ctx context.Context, id core.ServiceID) (InfoOut
 		return InfoOutput{}, err
 	}
 	var b strings.Builder
-	fmt.Fprintf(&b, "# %s\n\n%s\n\n", svc.Name, svc.Description)
+	// When a per-service SKILL.md exists it owns the H1 and intro, so we don't
+	// emit our own `# <Name>` header (it duplicated the skill's heading).
+	// Without a skill, generate a minimal header from the catalog metadata.
 	if skill, err := uc.catalog.GetSkill(ctx, id); err == nil && skill != "" {
-		b.WriteString(skill)
+		b.WriteString(strings.TrimSpace(skill))
 		b.WriteString("\n\n")
+	} else {
+		fmt.Fprintf(&b, "# %s\n\n%s\n\n", svc.Name, svc.Description)
 	}
 	b.WriteString("## Actions\n\n")
 	actions := append([]core.Action(nil), svc.Actions...)

@@ -27,6 +27,13 @@ func NewCatalog(services []core.Service) *Catalog {
 	return c
 }
 
+// WithSkill registers a per-service SKILL.md body and returns the catalog for
+// chaining. Used by tests exercising `one info <service>`.
+func (c *Catalog) WithSkill(svc core.ServiceID, skill string) *Catalog {
+	c.skills[svc] = skill
+	return c
+}
+
 func (c *Catalog) GetService(_ context.Context, id core.ServiceID) (*core.Service, error) {
 	svc, ok := c.services[id]
 	if !ok {
