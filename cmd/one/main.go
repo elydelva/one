@@ -55,12 +55,14 @@ func main() {
 	scp := scopestore.NewProfileScopeStore(scopestore.NewMergedScopeStore(scopestore.NewFileScopeStore()))
 	scpWriter := scopestore.NewFileScopeStore()
 
-	// Renderer (auto-detect TTY)
+	// Renderer: JSON when piped (auto-detect) or when --json is passed
+	// explicitly. The root/exec commands disable flag parsing, so the flag is
+	// read here directly from os.Args rather than via cobra.
 	var rnd ports.Renderer
-	if isatty() {
-		rnd = renderer.NewTTYRendererStd()
-	} else {
+	if hasJSONFlag(os.Args[1:]) || !isatty() {
 		rnd = renderer.NewJSONRendererStd()
+	} else {
+		rnd = renderer.NewTTYRendererStd()
 	}
 
 	// Audit (NDJSON) — wired into all credentialed use cases.
@@ -238,4 +240,14 @@ func isatty() bool {
 		return false
 	}
 	return (fi.Mode() & os.ModeCharDevice) != 0
+}
+
+// hasJSONFlag reports whether --json (or --json=true) appears anywhere in args.
+func hasJSONFlag(args []string) bool {
+	for _, a := range args {
+		if a == "--json" || a == "--json=true" {
+			return true
+		}
+	}
+	return false
 }
