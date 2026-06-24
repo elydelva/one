@@ -121,7 +121,7 @@ func parseActionFlags(args []string, schema core.InputSchema) (inputs map[string
 			name = name[:idx]
 			i++
 		} else {
-			// Boolean flags (no value): --dry-run, --confirm.
+			// Boolean flags (no value): --dry-run, --confirm, --json.
 			if name == "dry-run" {
 				dryRun = true
 				i++
@@ -129,6 +129,13 @@ func parseActionFlags(args []string, schema core.InputSchema) (inputs map[string
 			}
 			if name == "confirm" {
 				confirmed = true
+				i++
+				continue
+			}
+			// --json is a global output flag, already handled when the renderer
+			// is selected; accept and ignore it here so it never gets treated
+			// as an action input or a value-taking flag.
+			if name == "json" {
 				i++
 				continue
 			}
@@ -140,6 +147,9 @@ func parseActionFlags(args []string, schema core.InputSchema) (inputs map[string
 		}
 
 		switch name {
+		case "json":
+			// Global output flag; renderer already chosen. Ignore value.
+			continue
 		case "as", "account":
 			account = raw
 			continue

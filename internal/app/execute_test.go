@@ -74,6 +74,50 @@ func TestExecute_Happy(t *testing.T) {
 	}
 }
 
+func TestExecute_PersistsHTTPCallsToAudit(t *testing.T) {
+	dir := t.TempDir()
+	ss := scopestore.NewFileScopeStore()
+	if err := ss.Save(dir, core.Scope{Version: 1, Services: map[core.ServiceID]core.ServiceScope{
+		"github": {Allow: []core.PermissionPattern{"issues.*"}},
+	}}); err != nil {
+		t.Fatalf("save scope: %v", err)
+	}
+	vlt := fake.NewVault()
+	_ = vlt.Store(context.Background(), core.AccountRef{Service: "github", Alias: "default"}, core.Credential{
+		Provider: core.ProviderPAT, Service: "github", Account: "default", AccessToken: core.NewSecret("t"),
+	})
+	rt := fake.NewRuntime()
+	rt.SetResponse("github", "issues.read", json.RawMessage(`{"number":1}`))
+	rt.SetCalls("github", "issues.read", core.HTTPCall{
+		Method: "GET", URL: "https://api.github.com/issues/1", Status: 200, DurationMS: 42,
+	})
+	aud := fake.NewAudit()
+
+	uc := NewExecuteAction(
+		fake.NewCatalog([]core.Service{fixtureService()}),
+		vlt, rt, ss, nil, fake.NewLogger(), fake.NewClock(), crypto.NewStdCrypto(),
+	).WithAudit(aud)
+
+	_, err := uc.Run(context.Background(), ExecuteInput{
+		Service: "github", Action: "issues.read",
+		Inputs:     map[string]any{"owner": "x", "repo": "y", "n": 1},
+		ProjectDir: dir,
+	})
+	if err != nil {
+		t.Fatalf("run: %v", err)
+	}
+	if len(aud.Events) != 1 {
+		t.Fatalf("expected 1 audit event, got %d", len(aud.Events))
+	}
+	calls := aud.Events[0].HTTPCalls
+	if len(calls) != 1 {
+		t.Fatalf("expected 1 persisted HTTP call, got %d", len(calls))
+	}
+	if calls[0].Status != 200 || calls[0].DurationMS != 42 || calls[0].Method != "GET" {
+		t.Errorf("call not persisted faithfully: %+v", calls[0])
+	}
+}
+
 func TestExecute_UnknownService(t *testing.T) {
 	uc, _, _, dir := newExec(t)
 	_, err := uc.Run(context.Background(), ExecuteInput{Service: "notion", Action: "x.y", ProjectDir: dir})

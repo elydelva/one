@@ -3,15 +3,19 @@
 > Implementation phases for One CLI. One phase = one GitHub milestone, one PR = one achievable objective.
 > The PRs listed per phase are **scoped proposals** (conventional commit title + one-line scope), not a rigid breakdown. Grouping two trivial PRs is OK if they fit within the same objective.
 
-## Current status — v0.0.1 (skeleton)
+## Current status — v1.0.0
 
-- Go module `elydelva/one`, hexagonal layout (`cmd/`, `internal/{core,ports,adapters,app,cli,testing}`, `pkg/{catalog,handlersdk}`)
-- Composition root wired in `cmd/one/main.go` (all ports resolved to concrete adapters or stubs)
-- Tooling: Makefile, golangci, lefthook, goreleaser, renovate, codecov, schemas
-- `go build ./...` ✅ — `go test ./...` ✅ **zero tests for now**
-- No real implementation: all adapters are stubs with no business logic
+Phases 1–5 are complete (see CHANGELOG.md for the per-release detail):
 
-**Next action**: open the **v0.1** milestone and start Phase 1.
+- **Phase 1 — Core, Vault, Scope (v0.1)**: typed errors + `Secret` redaction, value objects, glob permissions + precedence, credential model, finalized ports, in-memory fakes + contract harness, vault chain (env → keychain → age), `.onerc.yaml` scope store, `login`/`scope`/`can`.
+- **Phase 2 — Catalog + declarative runtime (v0.2)**: FS catalog, declarative HTTP runtime, pagination, `ExecuteAction`, runtime router.
+- **Phase 3 — WASM handlers**: wazero runtime, strict URL allowlist enforced at the host-call boundary, resource caps, third-party source default-deny.
+- **Phase 4 — Catalog distribution + auth**: OAuth flows, HTTP/cached/chain catalog, taps, install guides.
+- **Phase 5 — Polish, Trace, Skill, Release**: TTY renderer, interactive install guides, `trace` audit log, embedded agent skill, goreleaser packaging.
+
+`make build` ✅ · `make test` ✅ · `make lint` ✅
+
+**Next action**: post-1.0 evolutions (see DESIGN.md > Planned evolution) — MCP server mode, remote audit log, scope templates.
 
 ---
 

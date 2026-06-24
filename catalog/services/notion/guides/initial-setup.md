@@ -1,4 +1,6 @@
-# Notion — Initial Setup
+---
+title: Notion — Initial Setup
+---
 
 Three steps to use the Notion service via One CLI, plus a section on the **four traps** that bite every first-time Notion API user.
 
@@ -24,7 +26,7 @@ A DB you share also gives access to all its child pages. Skipping this step yiel
 ## 3. Store the token in the One vault
 
 ```bash
-one auth login notion --pat <paste-token>
+one login notion         # --provider pat is the default; paste the token when prompted
 one notion users.me      # smoke test — works without any shared page
 ```
 

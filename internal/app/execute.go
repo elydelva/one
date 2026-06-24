@@ -94,6 +94,7 @@ func (uc *ExecuteAction) Run(ctx context.Context, in ExecuteInput) (out ExecuteO
 			TraceID: out.TraceID, Kind: core.AuditExec,
 			Service: in.Service, Account: in.Account, Action: in.Action,
 			Outcome: outcomeOf(rerr), Err: errMsg(rerr),
+			HTTPCalls: out.Calls,
 		})
 	}()
 	svcID := core.ServiceID(in.Service)

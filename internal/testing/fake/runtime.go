@@ -18,6 +18,7 @@ type runtimeKey struct {
 type Runtime struct {
 	responses map[runtimeKey]json.RawMessage
 	errors    map[runtimeKey]error
+	calls     map[runtimeKey][]ports.HTTPCall
 }
 
 // NewRuntime creates an empty fake runtime.
@@ -25,6 +26,7 @@ func NewRuntime() *Runtime {
 	return &Runtime{
 		responses: map[runtimeKey]json.RawMessage{},
 		errors:    map[runtimeKey]error{},
+		calls:     map[runtimeKey][]ports.HTTPCall{},
 	}
 }
 
@@ -38,13 +40,18 @@ func (r *Runtime) SetError(svc core.ServiceID, action core.ActionID, err error) 
 	r.errors[runtimeKey{svc, action}] = err
 }
 
+// SetCalls configures the HTTP calls reported for the given service+action.
+func (r *Runtime) SetCalls(svc core.ServiceID, action core.ActionID, calls ...ports.HTTPCall) {
+	r.calls[runtimeKey{svc, action}] = calls
+}
+
 func (r *Runtime) Execute(_ context.Context, req ports.ExecuteRequest) (ports.ExecuteResult, error) {
 	k := runtimeKey{req.Action.Service, req.Action.ID}
 	if err, ok := r.errors[k]; ok {
-		return ports.ExecuteResult{}, err
+		return ports.ExecuteResult{Calls: r.calls[k]}, err
 	}
 	if out, ok := r.responses[k]; ok {
-		return ports.ExecuteResult{Output: out}, nil
+		return ports.ExecuteResult{Output: out, Calls: r.calls[k]}, nil
 	}
 	return ports.ExecuteResult{}, fmt.Errorf("fake runtime: no response configured for %s.%s", req.Action.Service, req.Action.ID)
 }

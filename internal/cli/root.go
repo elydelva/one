@@ -71,13 +71,22 @@ func BuildRoot(deps Deps) *cobra.Command {
 			if deps.Catalog == nil {
 				return cmd.Help()
 			}
-			if _, err := deps.Catalog.GetService(context.Background(), core.ServiceID(args[0])); err != nil {
+			// Skip leading global flags (e.g. `one --json github issues.list`)
+			// so the service name is found regardless of flag position. Flags
+			// taking a value consume the following token. The full args slice
+			// (flags included) is still passed to the executor, which parses
+			// per-action flags itself.
+			pos := skipLeadingGlobalFlags(args)
+			if pos < 0 || pos >= len(args) {
 				return cmd.Help()
 			}
-			if len(args) < 2 {
+			if _, err := deps.Catalog.GetService(context.Background(), core.ServiceID(args[pos])); err != nil {
 				return cmd.Help()
 			}
-			return runExecuteFromArgs(cmd.Context(), deps, args)
+			if pos+2 > len(args) {
+				return cmd.Help()
+			}
+			return runExecuteFromArgs(cmd.Context(), deps, args[pos:])
 		},
 	}
 
@@ -110,6 +119,43 @@ func BuildRoot(deps Deps) *cobra.Command {
 	)
 
 	return root
+}
+
+// boolGlobalFlags are global flags that take no value.
+var boolGlobalFlags = map[string]bool{"--json": true, "--dry-run": true}
+
+// valueGlobalFlags are global flags that consume the following token as value.
+var valueGlobalFlags = map[string]bool{"--account": true, "--project": true}
+
+// skipLeadingGlobalFlags returns the index of the first non-global-flag arg
+// (the service name) given a DisableFlagParsing args slice. It tolerates global
+// flags appearing before the service name in `--flag value` and `--flag=value`
+// forms. Returns len(args) if everything was consumed.
+func skipLeadingGlobalFlags(args []string) int {
+	i := 0
+	for i < len(args) {
+		a := args[i]
+		switch {
+		case boolGlobalFlags[a]:
+			i++
+		case valueGlobalFlags[a]:
+			i += 2 // flag + its value
+		case len(a) > 2 && a[:2] == "--" && hasEq(a):
+			i++ // --flag=value form (json/dry-run/account/project)
+		default:
+			return i
+		}
+	}
+	return i
+}
+
+func hasEq(s string) bool {
+	for i := 0; i < len(s); i++ {
+		if s[i] == '=' {
+			return true
+		}
+	}
+	return false
 }
 
 // projectDir returns the --project flag value, falling back to cwd.
