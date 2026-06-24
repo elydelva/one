@@ -18,8 +18,8 @@ type InstallInput struct {
 // InstallOutput holds the rendered guide(s).
 type InstallOutput struct {
 	Service string
-	Guide   *core.InstallGuide   // populated for single-guide mode
-	All     []core.InstallGuide  // populated when List is true
+	Guide   *core.InstallGuide  // populated for single-guide mode
+	All     []core.InstallGuide // populated when List is true
 }
 
 // ShowGuide renders an install guide for a service.

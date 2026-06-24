@@ -133,10 +133,10 @@ func (uc *CatalogOps) Scaffold(_ context.Context, id string) (string, error) {
 	if _, err := os.Stat(dir); err == nil {
 		return dir, fmt.Errorf("catalog scaffold: %s already exists", dir)
 	}
-	if err := os.MkdirAll(filepath.Join(dir, "actions"), 0o755); err != nil {
+	if err := os.MkdirAll(filepath.Join(dir, "actions"), 0o750); err != nil {
 		return "", err
 	}
-	if err := os.MkdirAll(filepath.Join(dir, "guides"), 0o755); err != nil {
+	if err := os.MkdirAll(filepath.Join(dir, "guides"), 0o750); err != nil {
 		return "", err
 	}
 	svcYAML := fmt.Sprintf(`version: 1
@@ -151,11 +151,11 @@ auth:
       header: Authorization
       format: "Bearer {access_token}"
 `, id, id)
-	if err := os.WriteFile(filepath.Join(dir, "service.yaml"), []byte(svcYAML), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(dir, "service.yaml"), []byte(svcYAML), 0o600); err != nil {
 		return "", err
 	}
 	skill := fmt.Sprintf("# %s\n\nTODO: describe this service for agents.\n", id)
-	if err := os.WriteFile(filepath.Join(dir, "SKILL.md"), []byte(skill), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(dir, "SKILL.md"), []byte(skill), 0o600); err != nil {
 		return "", err
 	}
 	return dir, nil

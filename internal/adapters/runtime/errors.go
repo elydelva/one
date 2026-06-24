@@ -25,8 +25,8 @@ func MapHTTPError(resp *http.Response, action core.Action) error {
 	case http.StatusNotFound: // 404
 		return core.ErrNotFound{
 			Service: action.Service, Action: action.ID,
-			Hint:    hint(spec, hasSpec, ""),
-			Guide:   guide(spec, hasSpec),
+			Hint:  hint(spec, hasSpec, ""),
+			Guide: guide(spec, hasSpec),
 		}
 	case http.StatusTooManyRequests: // 429
 		return core.ErrRateLimited{Service: action.Service, RetryAfter: resp.Header.Get("Retry-After")}

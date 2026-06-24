@@ -30,6 +30,13 @@ linters:
     gosec:
       excludes:
         - G304
+    errcheck:
+      # fmt.Fprint* to stdout/stderr cannot meaningfully fail and the error is
+      # conventionally ignored. Real file/network writes use os.WriteFile etc.
+      exclude-functions:
+        - fmt.Fprint
+        - fmt.Fprintf
+        - fmt.Fprintln
     revive:
       rules:
         - name: var-naming
@@ -40,6 +47,14 @@ linters:
       default-signifies-exhaustive: true
   exclusions:
     rules:
+      # WASM host-boundary code converts memory offsets/lengths (uint32 in the
+      # wasm32 address space) to/from Go int. These are non-negative and bounded
+      # by the linear-memory limit, so G115 overflow warnings are false positives.
+      # Scoped to the runtime package so G115 stays active everywhere else.
+      - path: "internal/adapters/runtime/"
+        linters:
+          - gosec
+        text: "G115"
       - path: "internal/testing/"
         linters:
           - errcheck

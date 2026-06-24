@@ -3,6 +3,7 @@ module elydelva/one
 go 1.26.1
 
 require (
+	aead.dev/minisign v0.3.0
 	filippo.io/age v1.3.1
 	github.com/charmbracelet/bubbletea v1.3.10
 	github.com/charmbracelet/glamour v0.9.1
@@ -17,7 +18,6 @@ require (
 )
 
 require (
-	aead.dev/minisign v0.3.0 // indirect
 	filippo.io/hpke v0.4.0 // indirect
 	github.com/alecthomas/chroma/v2 v2.20.0 // indirect
 	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect

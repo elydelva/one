@@ -130,10 +130,10 @@ func parseGuideMarkdown(raw []byte, id string, svc core.ServiceID) (*core.Instal
 // Other fields (auto_install, auto_detect_on_error) are surfaced separately
 // in Slice D when the install use case is implemented.
 type guideFrontmatter struct {
-	Title              string         `yaml:"title"`
-	AutoInstall        string         `yaml:"auto_install,omitempty"`
-	AutoDetectOnError  string         `yaml:"auto_detect_on_error,omitempty"`
-	Verify             *verifyMeta    `yaml:"verify,omitempty"`
+	Title             string      `yaml:"title"`
+	AutoInstall       string      `yaml:"auto_install,omitempty"`
+	AutoDetectOnError string      `yaml:"auto_detect_on_error,omitempty"`
+	Verify            *verifyMeta `yaml:"verify,omitempty"`
 }
 
 type verifyMeta struct {

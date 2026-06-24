@@ -10,10 +10,10 @@ import (
 
 // Config tunes the NetHTTP transport.
 type Config struct {
-	Timeout       time.Duration
-	RedirectCap   int
-	AllowHTTP     bool     // false in prod: only https:// scheme accepted
-	AllowedHosts  []string // bypass SSRF guard (test-only escape, e.g. ["127.0.0.1"])
+	Timeout      time.Duration
+	RedirectCap  int
+	AllowHTTP    bool     // false in prod: only https:// scheme accepted
+	AllowedHosts []string // bypass SSRF guard (test-only escape, e.g. ["127.0.0.1"])
 }
 
 // Option mutates Config.
@@ -36,8 +36,8 @@ func WithAllowedHosts(hosts ...string) Option {
 
 // NetHTTP wraps the standard net/http.Client with SSRF block + scheme guard.
 type NetHTTP struct {
-	client    *http.Client
-	cfg       Config
+	client *http.Client
+	cfg    Config
 }
 
 // NewNetHTTP creates a hardened transport.

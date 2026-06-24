@@ -119,7 +119,7 @@ func (s *FileScopeStore) Save(dir string, scope core.Scope) error {
 	if err := tmp.Close(); err != nil {
 		return err
 	}
-	if err := os.Chmod(tmpPath, 0o644); err != nil {
+	if err := os.Chmod(tmpPath, 0o644); err != nil { //nolint:gosec // G302: scope file is non-secret project config, intended to be VCS-committed
 		return err
 	}
 	if err := os.Rename(tmpPath, path); err != nil {

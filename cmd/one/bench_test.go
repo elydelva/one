@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"os/exec"
 	"testing"
 )
@@ -19,7 +20,7 @@ func BenchmarkColdStart_Version(b *testing.B) {
 	}
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		cmd := exec.Command("bin/one", "--version")
+		cmd := exec.CommandContext(context.Background(), "bin/one", "--version")
 		if err := cmd.Run(); err != nil {
 			b.Fatal(err)
 		}

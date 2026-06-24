@@ -39,11 +39,11 @@ func (p *CertificateProvider) Login(_ context.Context, svc core.ServiceID, alias
 	if certPath == "" || keyPath == "" {
 		return core.Credential{}, fmt.Errorf("certificate: set %sCERT and %sKEY env vars", envPrefix, envPrefix)
 	}
-	certPEM, err := os.ReadFile(certPath)
+	certPEM, err := os.ReadFile(certPath) //nolint:gosec // G703: path comes from trusted local user config
 	if err != nil {
 		return core.Credential{}, fmt.Errorf("certificate: read %s: %w", certPath, err)
 	}
-	keyPEM, err := os.ReadFile(keyPath)
+	keyPEM, err := os.ReadFile(keyPath) //nolint:gosec // G703: path comes from trusted local user config
 	if err != nil {
 		return core.Credential{}, fmt.Errorf("certificate: read %s: %w", keyPath, err)
 	}

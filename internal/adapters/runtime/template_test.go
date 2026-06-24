@@ -1,6 +1,7 @@
 package runtime
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -80,7 +81,7 @@ func TestInterpolate_UnknownFilter(t *testing.T) {
 }
 
 func TestInjectAuth_Bearer(t *testing.T) {
-	req := httptest.NewRequest(http.MethodGet, "https://api.github.com/", nil)
+	req := httptest.NewRequestWithContext(context.Background(), http.MethodGet, "https://api.github.com/", nil)
 	cred := core.Credential{Provider: core.ProviderPAT, AccessToken: core.NewSecret("ghp_abc")}
 	inj := core.AuthInjection{Header: "Authorization", Format: "Bearer {access_token}"}
 	if err := InjectAuth(req, cred, inj); err != nil {
@@ -92,7 +93,7 @@ func TestInjectAuth_Bearer(t *testing.T) {
 }
 
 func TestInjectAuth_MissingRule(t *testing.T) {
-	req := httptest.NewRequest(http.MethodGet, "https://x/", nil)
+	req := httptest.NewRequestWithContext(context.Background(), http.MethodGet, "https://x/", nil)
 	err := InjectAuth(req, core.Credential{}, core.AuthInjection{})
 	if err == nil {
 		t.Errorf("expected error")

@@ -134,8 +134,8 @@ func (e *errCat) GetService(context.Context, core.ServiceID) (*core.Service, err
 func (e *errCat) GetAction(context.Context, core.ServiceID, core.ActionID) (*core.Action, error) {
 	return nil, e.err
 }
-func (e *errCat) ListServices(context.Context) ([]core.Service, error)                  { return nil, e.err }
-func (e *errCat) GetSkill(context.Context, core.ServiceID) (string, error)              { return "", e.err }
+func (e *errCat) ListServices(context.Context) ([]core.Service, error)     { return nil, e.err }
+func (e *errCat) GetSkill(context.Context, core.ServiceID) (string, error) { return "", e.err }
 func (e *errCat) GetGuide(context.Context, core.ServiceID, string) (*core.InstallGuide, error) {
 	return nil, e.err
 }

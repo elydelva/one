@@ -23,6 +23,7 @@ func resp(status int, body string, headers http.Header) *http.Response {
 
 func TestMapHTTPError_401(t *testing.T) {
 	r := resp(401, "bad", nil)
+	defer func() { _ = r.Body.Close() }()
 	err := MapHTTPError(r, core.Action{Service: "github", ID: "issues.read"})
 	var notAuth core.ErrNotAuthenticated
 	if !errors.As(err, &notAuth) {
@@ -32,6 +33,7 @@ func TestMapHTTPError_401(t *testing.T) {
 
 func TestMapHTTPError_403(t *testing.T) {
 	r := resp(403, "no", nil)
+	defer func() { _ = r.Body.Close() }()
 	err := MapHTTPError(r, core.Action{Service: "github", ID: "issues.read"})
 	var f core.ErrForbidden
 	if !errors.As(err, &f) {
@@ -41,6 +43,7 @@ func TestMapHTTPError_403(t *testing.T) {
 
 func TestMapHTTPError_404WithHint(t *testing.T) {
 	r := resp(404, "", nil)
+	defer func() { _ = r.Body.Close() }()
 	act := core.Action{
 		Service: "notion", ID: "pages.read",
 		Errors: map[int]core.ErrorSpec{404: {Code: "not_found", Hint: "Share the page with the integration.", InstallGuide: "share-page"}},
@@ -58,6 +61,7 @@ func TestMapHTTPError_404WithHint(t *testing.T) {
 func TestMapHTTPError_429(t *testing.T) {
 	h := http.Header{"Retry-After": []string{"60"}}
 	r := resp(429, "", h)
+	defer func() { _ = r.Body.Close() }()
 	err := MapHTTPError(r, core.Action{Service: "github"})
 	var rl core.ErrRateLimited
 	if !errors.As(err, &rl) {
@@ -70,6 +74,7 @@ func TestMapHTTPError_429(t *testing.T) {
 
 func TestMapHTTPError_5xx(t *testing.T) {
 	r := resp(503, "down", nil)
+	defer func() { _ = r.Body.Close() }()
 	err := MapHTTPError(r, core.Action{Service: "github"})
 	var api core.ErrAPIError
 	if !errors.As(err, &api) || api.Status != 503 {

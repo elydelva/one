@@ -13,8 +13,8 @@ import (
 
 // countingCatalog records call counts and returns a static service or error.
 type countingCatalog struct {
-	svc  *core.Service
-	err  error
+	svc   *core.Service
+	err   error
 	calls int
 }
 
@@ -29,8 +29,10 @@ func (c *countingCatalog) GetService(_ context.Context, _ core.ServiceID) (*core
 func (c *countingCatalog) GetAction(_ context.Context, _ core.ServiceID, _ core.ActionID) (*core.Action, error) {
 	return nil, errors.New("nope")
 }
-func (c *countingCatalog) ListServices(_ context.Context) ([]core.Service, error)         { return nil, nil }
-func (c *countingCatalog) GetSkill(_ context.Context, _ core.ServiceID) (string, error)   { return "", nil }
+func (c *countingCatalog) ListServices(_ context.Context) ([]core.Service, error) { return nil, nil }
+func (c *countingCatalog) GetSkill(_ context.Context, _ core.ServiceID) (string, error) {
+	return "", nil
+}
 func (c *countingCatalog) GetGuide(_ context.Context, _ core.ServiceID, _ string) (*core.InstallGuide, error) {
 	return nil, nil
 }

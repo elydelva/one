@@ -29,10 +29,10 @@ import (
 // add time. Subsequent updates verify the tap's CATALOG.minisig against this
 // key and fail if signature verification breaks.
 type TapEntry struct {
-	Name      string    `json:"name"`                  // "user/repo" or "host/owner/.../repo"
-	URL       string    `json:"url"`                   // https clone URL
-	SHA       string    `json:"sha"`                   // pinned commit SHA (full)
-	PublicKey string    `json:"public_key,omitempty"`  // minisign public key (empty = unsigned tap, TOFU only)
+	Name      string    `json:"name"`                 // "user/repo" or "host/owner/.../repo"
+	URL       string    `json:"url"`                  // https clone URL
+	SHA       string    `json:"sha"`                  // pinned commit SHA (full)
+	PublicKey string    `json:"public_key,omitempty"` // minisign public key (empty = unsigned tap, TOFU only)
 	AddedAt   time.Time `json:"added_at"`
 }
 
@@ -168,7 +168,7 @@ func (uc *TapOps) AddWith(ctx context.Context, name string, opts AddOptions, con
 	cloneURL := target.cloneURL
 	dir := uc.CloneDir(target.canonical)
 	_ = name // canonical replaces user-supplied form below
-	if err := os.MkdirAll(filepath.Dir(dir), 0o755); err != nil {
+	if err := os.MkdirAll(filepath.Dir(dir), 0o750); err != nil {
 		return nil, err
 	}
 	if _, statErr := os.Stat(dir); statErr == nil {
@@ -326,7 +326,7 @@ func (uc *TapOps) load() (*tapRegistry, error) {
 }
 
 func (uc *TapOps) save(reg *tapRegistry) error {
-	if err := os.MkdirAll(uc.root, 0o755); err != nil {
+	if err := os.MkdirAll(uc.root, 0o750); err != nil {
 		return err
 	}
 	reg.Version = 1
@@ -334,7 +334,7 @@ func (uc *TapOps) save(reg *tapRegistry) error {
 	if err != nil {
 		return err
 	}
-	return os.WriteFile(filepath.Join(uc.root, "registry.json"), raw, 0o644)
+	return os.WriteFile(filepath.Join(uc.root, "registry.json"), raw, 0o600)
 }
 
 // tapNameRE matches GitHub-style user/repo. Conservative — refuses dots,
