@@ -5,6 +5,8 @@ import (
 	"testing"
 
 	"elydelva/one/internal/adapters/scopestore"
+	"elydelva/one/internal/core"
+	"elydelva/one/internal/testing/fake"
 )
 
 func TestListCapabilities_ScopeOnly(t *testing.T) {
@@ -31,12 +33,41 @@ func TestListCapabilities_ScopeOnly(t *testing.T) {
 	}
 }
 
-func TestListCapabilities_RejectsNonScopeMode(t *testing.T) {
-	s := scopestore.NewFileScopeStore()
-	uc := NewListCapabilities(nil, s)
-	_, err := uc.Run(context.Background(), CapabilitiesInput{ScopeOnly: false, ProjectDir: t.TempDir()})
-	if err == nil {
-		t.Errorf("expected error for non-scope-only mode in v0.1")
+func TestListCapabilities_CatalogBacked(t *testing.T) {
+	cat := fake.NewCatalog([]core.Service{
+		{ID: "github", Name: "GitHub", Actions: []core.Action{
+			{ID: "issues.read", Permission: "issues.read"},
+			{ID: "issues.create", Permission: "issues.create"},
+		}},
+		{ID: "notion", Name: "Notion", Actions: []core.Action{
+			{ID: "pages.read", Permission: "pages.read"},
+		}},
+	})
+	uc := NewListCapabilities(cat, scopestore.NewFileScopeStore())
+	got, err := uc.Run(context.Background(), CapabilitiesInput{ScopeOnly: false})
+	if err != nil {
+		t.Fatalf("run: %v", err)
+	}
+	if len(got.Services) != 2 {
+		t.Fatalf("expected 2 services, got %d: %+v", len(got.Services), got.Services)
+	}
+	if got.Services[0].ID != "github" || len(got.Services[0].Actions) != 2 {
+		t.Errorf("github actions = %+v", got.Services[0])
+	}
+}
+
+func TestListCapabilities_CatalogBacked_FilterByService(t *testing.T) {
+	cat := fake.NewCatalog([]core.Service{
+		{ID: "github", Name: "GitHub", Actions: []core.Action{{ID: "issues.read", Permission: "issues.read"}}},
+		{ID: "notion", Name: "Notion", Actions: []core.Action{{ID: "pages.read", Permission: "pages.read"}}},
+	})
+	uc := NewListCapabilities(cat, scopestore.NewFileScopeStore())
+	got, err := uc.Run(context.Background(), CapabilitiesInput{ScopeOnly: false, Service: "notion"})
+	if err != nil {
+		t.Fatalf("run: %v", err)
+	}
+	if len(got.Services) != 1 || got.Services[0].ID != "notion" {
+		t.Errorf("filter failed: %+v", got.Services)
 	}
 }
 
