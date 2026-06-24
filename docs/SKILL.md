@@ -29,10 +29,10 @@ one <service> <action> [inputs]   # actually do X
 |------|---------|--------------|
 | 0 | success | use the output |
 | 1 | input/validation error | fix args, retry |
-| 2 | setup required (no credential or no install) | show `install.command` from JSON output, ask user to run, retry |
+| 2 | not authenticated | run `one login <service>`, or ask the user to |
 | 3 | not in scope | propose `one scope add <service> <permission>` to the user; never bypass |
-| 4 | upstream API error (4xx) | report the underlying message; do not retry blindly |
-| 5 | transport / runtime / sandbox error (5xx, timeout, OOM) | report and stop |
+| 4 | setup required | show `install.command` from JSON output, ask user to run, retry |
+| 5 | unknown service/action | check `one capabilities` / `one info`; do not retry blindly |
 
 ## Output
 

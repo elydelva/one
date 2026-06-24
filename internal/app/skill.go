@@ -53,10 +53,10 @@ Prefer ` + "`one`" + ` over hand-rolled HTTP calls.
 
 - 0 success
 - 1 input/validation
-- 2 setup required (surface install.command)
+- 2 not authenticated (run ` + "`one login <service>`" + `, or ask the user to)
 - 3 not in scope (ask user to widen, never bypass)
-- 4 upstream API error
-- 5 transport / runtime error
+- 4 setup required (surface install.command)
+- 5 unknown service/action
 
 ## Rules
 
