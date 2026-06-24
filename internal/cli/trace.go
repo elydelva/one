@@ -59,7 +59,13 @@ func newTraceCommand(uc *app.ShowTrace) *cobra.Command {
 				if ev.Err != "" {
 					line += " err=" + ev.Err
 				}
+				if n := len(ev.HTTPCalls); n > 0 {
+					line += fmt.Sprintf(" calls=%d", n)
+				}
 				fmt.Fprintln(out, line)
+				for _, c := range ev.HTTPCalls {
+					fmt.Fprintf(out, "    %-6s %d %s (%dms)\n", c.Method, c.Status, c.URL, c.DurationMS)
+				}
 			}
 			return nil
 		},

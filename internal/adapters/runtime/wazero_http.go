@@ -121,13 +121,19 @@ func (r *WazeroRuntime) doHostHTTP(ctx context.Context, st *invocationState, raw
 		hreq.Header.Set(k, v)
 	}
 
+	start := r.clock.Now()
 	resp, err := r.transport.Do(hreq)
 	if err != nil {
 		return nil, err
 	}
 	defer func() { _ = resp.Body.Close() }()
 
-	st.httpCalls = append(st.httpCalls, ports.HTTPCall{Method: method, URL: hr.URL, Status: resp.StatusCode})
+	st.httpCalls = append(st.httpCalls, ports.HTTPCall{
+		Method:     method,
+		URL:        hr.URL,
+		Status:     resp.StatusCode,
+		DurationMS: r.clock.Now().Sub(start).Milliseconds(),
+	})
 
 	bs, err := io.ReadAll(resp.Body)
 	if err != nil {

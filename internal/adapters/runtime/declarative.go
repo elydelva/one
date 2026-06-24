@@ -74,13 +74,19 @@ func (r *DeclarativeRuntime) executeOnce(ctx context.Context, svc *core.Service,
 		return r.dryRunResult(httpReq), nil
 	}
 
+	start := r.clock.Now()
 	resp, err := r.transport.Do(httpReq)
 	if err != nil {
 		return ports.ExecuteResult{}, err
 	}
 	defer func() { _ = resp.Body.Close() }()
 
-	call := ports.HTTPCall{Method: httpReq.Method, URL: httpReq.URL.String(), Status: resp.StatusCode}
+	call := ports.HTTPCall{
+		Method:     httpReq.Method,
+		URL:        httpReq.URL.String(),
+		Status:     resp.StatusCode,
+		DurationMS: r.clock.Now().Sub(start).Milliseconds(),
+	}
 
 	if resp.StatusCode >= 400 {
 		return ports.ExecuteResult{Calls: []ports.HTTPCall{call}}, MapHTTPError(resp, req.Action)

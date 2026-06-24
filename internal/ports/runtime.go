@@ -7,12 +7,10 @@ import (
 	"elydelva/one/internal/core"
 )
 
-// HTTPCall records an outbound HTTP request made during action execution (for audit).
-type HTTPCall struct {
-	Method string
-	URL    string
-	Status int
-}
+// HTTPCall records an outbound HTTP request made during action execution (for
+// audit). It is an alias of core.HTTPCall so the same value flows from the
+// runtime into the audit log without a cross-layer conversion.
+type HTTPCall = core.HTTPCall
 
 // ExecuteRequest carries everything the runtime needs to run an action.
 type ExecuteRequest struct {
