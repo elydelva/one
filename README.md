@@ -59,6 +59,12 @@ one github issues.create \
   --body "Detailed description"
 ```
 
+To enable every currently catalogued GitHub action—including Projects v2,
+gists, workflows, and repository deletion—start from the
+[GitHub full-access scope example](./examples/github-full-access/.onerc.yaml).
+It includes `repo.delete`; GitHub's corresponding `delete_repo` OAuth scope
+is account-wide, while `.onerc.yaml` limits actions One itself will run.
+
 JSON output:
 
 ```json

@@ -29,6 +29,17 @@ authorization page, displays a short code, and waits while you approve it.
 The `repo` OAuth scope supports private repositories. One stores the resulting
 credential in the local OS keychain.
 
+The full GitHub request also asks for `project`, `gist`, `workflow`, and
+`delete_repo` so One can cover Projects v2, gists, workflow dispatch, and
+repository deletion. `delete_repo` is account-wide at GitHub. One's
+`.onerc.yaml` still limits which catalogued actions One runs, but it cannot
+restrict the token when used outside One. Existing OAuth accounts must log in
+again to authorize the expanded scope request. To review every One permission,
+see [`examples/github-full-access/.onerc.yaml`](../../../../examples/github-full-access/.onerc.yaml).
+
+PATs remain an option. Fine-grained PATs allow repository selection and can be
+preferable when you do not need OAuth's broad `repo` or `delete_repo` grants.
+
 ## Notes
 
 - A fine-grained token only reaches repositories you explicitly select — if a

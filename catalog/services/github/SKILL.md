@@ -1,6 +1,12 @@
 # GitHub
 
-Use the GitHub REST API via `one github <action>`. Auth: PAT or OAuth Device Flow (`oauth2_device`).
+Use GitHub REST actions and Projects v2 GraphQL operations via `one github <action>`. Auth: PAT or OAuth Device Flow (`oauth2_device`).
+
+The [full-access example](../../../examples/github-full-access/.onerc.yaml) grants every GitHub permission currently catalogued by One. Review it before copying: the GitHub OAuth request includes `delete_repo`, which can delete any repository you administer, beyond a project's local One scope. OAuth scopes grant token access at GitHub; `.onerc.yaml` independently limits actions One will execute.
+
+After adding scopes to the GitHub OAuth app request, existing OAuth accounts must authorize again with `one login github --provider oauth2_device --as <alias>`. PATs remain available for users who prefer a token with GitHub-managed repository selection.
+
+Run an action with `one --account <alias> github <action> ...`. Destructive actions require interactive confirmation, or `--confirm` in non-TTY runs.
 
 ## Issues
 - `issues.list`, `issues.read`, `issues.create`, `issues.update` (close via `state=closed`)
@@ -14,7 +20,11 @@ Use the GitHub REST API via `one github <action>`. Auth: PAT or OAuth Device Flo
 - `pulls.review.create`, `pulls.review_comment.create`
 
 ## Repos
-- `repos.read`, `repos.update`, `repos.create`
+- `repos.read`, `repos.update`, `repos.create`, `repos.delete` (`repo.delete`)
+
+## Projects v2
+- `projects.viewer.read`, `projects.list`, `projects.read`
+- `projects.create`, `projects.update`, `projects.items.add`, `projects.delete`
 
 ## Search
 - `search.issues`, `search.repos`, `search.code`

@@ -130,7 +130,7 @@ auth:
       client_id: Ov23ligEslOs680eGllp
       device_endpoint: https://github.com/login/device/code
       token_endpoint: https://github.com/login/oauth/access_token
-      scopes: [repo]
+      scopes: [repo, project, gist, workflow, delete_repo]
 ```
 
 Flow:
@@ -452,8 +452,14 @@ one login github --provider oauth2_device
 
 Opens or displays GitHub's device authorization page, prints a code, and waits
 for approval. The public client ID is embedded in the GitHub catalog.
-The `repo` scope permits access to private repositories; One's project scope
-still controls which actions the CLI will execute.
+GitHub's `repo` scope permits access to private repositories. The configured
+`project`, `gist`, `workflow`, and `delete_repo` scopes enable the complete
+catalogued capability set; `delete_repo` is an account-wide GitHub grant.
+OAuth scopes bound what the token can do at GitHub. One's `.onerc.yaml` is a
+separate local boundary for actions One will execute, and does not constrain
+that token outside One. Existing OAuth accounts must authorize again after
+the requested scopes change. PATs remain an alternative, including
+fine-grained PATs restricted to selected repositories.
 
 ## GitHub client ID
 
