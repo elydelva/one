@@ -75,8 +75,23 @@ func TestCatalogEmbed_GitHubUsesDeviceOAuthForPrivateRepositories(t *testing.T) 
 	if cfg.TokenEndpoint != "https://github.com/login/oauth/access_token" {
 		t.Errorf("token endpoint = %q", cfg.TokenEndpoint)
 	}
-	if len(cfg.Scopes) != 1 || cfg.Scopes[0] != "repo" {
-		t.Errorf("scopes = %v, want [repo] for private repository access", cfg.Scopes)
+	wantScopes := map[string]bool{
+		"repo": false, "project": false, "gist": false, "workflow": false, "delete_repo": false,
+	}
+	for _, scope := range cfg.Scopes {
+		if _, ok := wantScopes[scope]; !ok {
+			t.Errorf("unexpected OAuth scope %q", scope)
+			continue
+		}
+		wantScopes[scope] = true
+	}
+	if len(cfg.Scopes) != len(wantScopes) {
+		t.Errorf("scopes = %v, want exactly repo, project, gist, workflow, and delete_repo", cfg.Scopes)
+	}
+	for scope, found := range wantScopes {
+		if !found {
+			t.Errorf("OAuth scope %q missing from %v", scope, cfg.Scopes)
+		}
 	}
 }
 

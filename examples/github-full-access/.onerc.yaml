@@ -1,0 +1,22 @@
+version: 1
+
+# Intentionally grants every GitHub capability currently catalogued by One.
+# OAuth's delete_repo scope can delete any repository you administer, even if
+# a project's One scope denies repo.delete.
+services:
+  github:
+    allow:
+      - actions.read
+      - actions.write
+      - gist.read
+      - gist.write
+      - issues.read
+      - issues.write
+      - pulls.read
+      - pulls.write
+      - projects.read
+      - projects.write
+      - repo.delete
+      - repo.read
+      - repo.write
+      - user.read

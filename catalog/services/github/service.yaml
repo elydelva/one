@@ -21,3 +21,7 @@ auth:
       token_endpoint: https://github.com/login/oauth/access_token
       scopes:
         - repo
+        - project
+        - gist
+        - workflow
+        - delete_repo
