@@ -1,7 +1,9 @@
 # GitHub capability smoke test
 
-Date: 2026-09-28  
-Branch: `feat/github-capability-coverage`  
+Date: 2026-09-28
+
+Branch: `feat/github-capability-coverage`
+
 Authentication: GitHub OAuth Device Flow succeeded with the dedicated One alias `full-test`. No credential or token value is recorded here.
 
 The run used a temporary local project with `examples/github-full-access/.onerc.yaml` and a private, disposable GitHub repository. The tested actions were invoked through One with `--account full-test`.
