@@ -1,0 +1,23 @@
+id: projects.create
+description: Create a user-owned GitHub Project v2
+permission: projects.write
+side_effects: write
+request:
+  method: POST
+  path: /graphql
+  response_errors_key: errors
+  body: '{"query":"mutation ($ownerId: ID!, $title: String!) { createProjectV2(input: {ownerId: $ownerId, title: $title}) { projectV2 { id title url } } }","variables":{"ownerId":{owner_id|json},"title":{title|json}}}'
+inputs:
+  - name: owner_id
+    type: string
+    required: true
+    location: body
+    description: GraphQL node ID of the user who will own the project
+  - name: title
+    type: string
+    required: true
+    location: body
+errors:
+  "401": {code: auth_failed}
+  "403": {code: forbidden}
+  "404": {code: not_found}

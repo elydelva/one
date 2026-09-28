@@ -2,6 +2,7 @@ package catalog
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	"elydelva/one/internal/core"
@@ -47,6 +48,42 @@ func TestCatalogEmbed_GitHubServiceLoads(t *testing.T) {
 	}
 	if act.Pagination == nil || act.Pagination.Style != "cursor" {
 		t.Errorf("issues.list pagination = %+v", act.Pagination)
+	}
+}
+
+func TestCatalogEmbed_GitHubProjectV2Actions(t *testing.T) {
+	want := map[core.ActionID]core.PermissionPath{
+		"projects.viewer.read": "projects.read",
+		"projects.list":        "projects.read",
+		"projects.read":        "projects.read",
+		"projects.create":      "projects.write",
+		"projects.update":      "projects.write",
+		"projects.items.add":   "projects.write",
+		"projects.delete":      "projects.write",
+	}
+	catalog := NewCatalogEmbed()
+	for id, permission := range want {
+		action, err := catalog.GetAction(context.Background(), "github", id)
+		if err != nil {
+			t.Errorf("get %s: %v", id, err)
+			continue
+		}
+		if action.Permission != permission {
+			t.Errorf("%s permission = %q, want %q", id, action.Permission, permission)
+		}
+		if action.Request == nil || action.Request.Method != "POST" || action.Request.Path != "/graphql" {
+			t.Errorf("%s request = %+v, want POST /graphql", id, action.Request)
+			continue
+		}
+		if action.Request.ResponseErrorsKey != "errors" {
+			t.Errorf("%s response errors key = %q, want errors", id, action.Request.ResponseErrorsKey)
+		}
+		if !strings.Contains(action.Request.Body, `"query"`) {
+			t.Errorf("%s request body has no fixed GraphQL query: %q", id, action.Request.Body)
+		}
+		if id == "projects.delete" && !action.IsDestructive() {
+			t.Errorf("%s must be marked destructive", id)
+		}
 	}
 }
 

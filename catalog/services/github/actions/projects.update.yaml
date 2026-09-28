@@ -1,0 +1,23 @@
+id: projects.update
+description: Update a GitHub Project v2 title
+permission: projects.write
+side_effects: write
+request:
+  method: POST
+  path: /graphql
+  response_errors_key: errors
+  body: '{"query":"mutation ($projectId: ID!, $title: String!) { updateProjectV2(input: {projectId: $projectId, title: $title}) { projectV2 { id title url } } }","variables":{"projectId":{project_id|json},"title":{title|json}}}'
+inputs:
+  - name: project_id
+    type: string
+    required: true
+    location: body
+    description: GitHub GraphQL node ID for the project
+  - name: title
+    type: string
+    required: true
+    location: body
+errors:
+  "401": {code: auth_failed}
+  "403": {code: forbidden}
+  "404": {code: not_found}

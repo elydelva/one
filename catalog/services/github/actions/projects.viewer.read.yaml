@@ -1,0 +1,12 @@
+id: projects.viewer.read
+description: Read the authenticated user's GitHub node ID
+permission: projects.read
+side_effects: read
+request:
+  method: POST
+  path: /graphql
+  response_errors_key: errors
+  body: '{"query":"query { viewer { id login } }"}'
+errors:
+  "401": {code: auth_failed}
+  "403": {code: forbidden}

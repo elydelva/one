@@ -102,6 +102,45 @@ func TestDeclarative_ReturnsErrorForDeclaredResponseErrors(t *testing.T) {
 	}
 }
 
+func TestDeclarative_GraphQLVariablesAreJSONEscaped(t *testing.T) {
+	rt, srv, _ := newDeclWithFakeAPI(t, []fakeapi.Route{
+		{Method: "POST", Path: "/graphql", Status: 200, Body: map[string]any{
+			"data": map[string]any{"createProjectV2": map[string]any{"projectV2": map[string]any{"id": "PVT_test"}}},
+		}},
+	})
+	action, err := catalog.NewCatalogEmbed().GetAction(context.Background(), "github", "projects.create")
+	if err != nil {
+		t.Fatalf("get projects.create: %v", err)
+	}
+	title := "roadmap \"quotes\" \\ slash\nsecond line"
+	_, err = rt.Execute(context.Background(), ports.ExecuteRequest{
+		Action:     *action,
+		Inputs:     core.Inputs{"owner_id": "MDQ6VXNlcjEyMzQ=", "title": title},
+		Credential: core.Credential{Provider: core.ProviderPAT, AccessToken: core.NewSecret("test-token")},
+	})
+	if err != nil {
+		t.Fatalf("execute projects.create: %v", err)
+	}
+	received := srv.Received()
+	if len(received) != 1 {
+		t.Fatalf("received %d requests, want 1", len(received))
+	}
+	var body struct {
+		Query     string         `json:"query"`
+		Variables map[string]any `json:"variables"`
+	}
+	if err := json.Unmarshal(received[0].Body, &body); err != nil {
+		t.Fatalf("GraphQL request body is invalid JSON: %v", err)
+	}
+	wantQuery := "mutation ($ownerId: ID!, $title: String!) { createProjectV2(input: {ownerId: $ownerId, title: $title}) { projectV2 { id title url } } }"
+	if body.Query != wantQuery {
+		t.Errorf("query = %q, want fixed query %q", body.Query, wantQuery)
+	}
+	if body.Variables["ownerId"] != "MDQ6VXNlcjEyMzQ=" || body.Variables["title"] != title {
+		t.Errorf("variables = %#v, want owner ID and original title", body.Variables)
+	}
+}
+
 func TestDeclarative_AuthHeaderInjected(t *testing.T) {
 	rt, srv, svc := newDeclWithFakeAPI(t, []fakeapi.Route{
 		{Method: "GET", Path: "/repos/x/y/issues/1", Status: 200, Body: map[string]any{"ok": true}},

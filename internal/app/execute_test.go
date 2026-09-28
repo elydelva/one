@@ -27,6 +27,10 @@ func fixtureService() core.Service {
 					{"name":"n","type":"integer","required":true,"location":"path"}
 				]`),
 			},
+			{
+				ID: "projects.read", Service: "github", Permission: "projects.read",
+				Request: &core.RequestSpec{Method: "POST", Path: "/graphql"},
+			},
 		},
 	}
 }
@@ -151,6 +155,18 @@ func TestExecute_NotInScope(t *testing.T) {
 	var nis core.ErrNotInScope
 	if !errors.As(err, &nis) {
 		t.Errorf("got %T: %v", err, err)
+	}
+}
+
+func TestExecute_ProjectsActionRequiresProjectsRead(t *testing.T) {
+	uc, _, _, dir := newExec(t) // grants issues.*, not projects.read
+	_, err := uc.Run(context.Background(), ExecuteInput{
+		Service: "github", Action: "projects.read",
+		Inputs: map[string]any{"project_id": "PVT_test"}, ProjectDir: dir,
+	})
+	var notInScope core.ErrNotInScope
+	if !errors.As(err, &notInScope) {
+		t.Fatalf("got %T: %v, want ErrNotInScope", err, err)
 	}
 }
 

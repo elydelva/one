@@ -1,0 +1,24 @@
+id: projects.items.add
+description: Add an issue or pull request to a GitHub Project v2
+permission: projects.write
+side_effects: write
+request:
+  method: POST
+  path: /graphql
+  response_errors_key: errors
+  body: '{"query":"mutation ($projectId: ID!, $contentId: ID!) { addProjectV2ItemById(input: {projectId: $projectId, contentId: $contentId}) { item { id } } }","variables":{"projectId":{project_id|json},"contentId":{content_id|json}}}'
+inputs:
+  - name: project_id
+    type: string
+    required: true
+    location: body
+    description: GitHub GraphQL node ID for the project
+  - name: content_id
+    type: string
+    required: true
+    location: body
+    description: GitHub GraphQL node ID for the issue or pull request
+errors:
+  "401": {code: auth_failed}
+  "403": {code: forbidden}
+  "404": {code: not_found}
