@@ -173,6 +173,37 @@ func TestDeclarative_GraphQLVariablesAreJSONEscaped(t *testing.T) {
 	}
 }
 
+func TestDeclarative_BranchesCreateBuildsValidJSON(t *testing.T) {
+	rt, _, _ := newDeclWithFakeAPI(t, nil)
+	action, err := catalog.NewCatalogEmbed().GetAction(context.Background(), "github", "branches.create")
+	if err != nil {
+		t.Fatalf("get branches.create: %v", err)
+	}
+	result, err := rt.Execute(context.Background(), ports.ExecuteRequest{
+		Action: *action,
+		Inputs: core.Inputs{
+			"owner": "elydelva", "repo": "one-capability-smoke-20260928b",
+			"branch": "refs/heads/one-smoke-branch", "sha": "671950ecafc0671c9b66bd2806153c458ba121e7",
+		}, DryRun: true,
+	})
+	if err != nil {
+		t.Fatalf("dry run: %v", err)
+	}
+	var request struct {
+		Body string `json:"body"`
+	}
+	if err := json.Unmarshal(result.Output, &request); err != nil {
+		t.Fatalf("dry-run output: %v", err)
+	}
+	var body map[string]string
+	if err := json.Unmarshal([]byte(request.Body), &body); err != nil {
+		t.Fatalf("request body is invalid JSON: %v: %s", err, request.Body)
+	}
+	if body["ref"] != "refs/heads/one-smoke-branch" || body["sha"] != "671950ecafc0671c9b66bd2806153c458ba121e7" {
+		t.Errorf("request body = %v", body)
+	}
+}
+
 func TestDeclarative_AuthHeaderInjected(t *testing.T) {
 	rt, srv, svc := newDeclWithFakeAPI(t, []fakeapi.Route{
 		{Method: "GET", Path: "/repos/x/y/issues/1", Status: 200, Body: map[string]any{"ok": true}},

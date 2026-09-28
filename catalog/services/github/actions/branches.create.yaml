@@ -5,7 +5,7 @@ side_effects: write
 request:
   method: POST
   path: /repos/{owner}/{repo}/git/refs
-  body: '{"ref":"refs/heads/{branch|json}","sha":{sha|json}}'
+  body: '{"ref":{branch|json},"sha":{sha|json}}'
 inputs:
   - name: owner
     type: string
@@ -19,7 +19,7 @@ inputs:
     type: string
     required: true
     location: body
-    description: "New branch name (without refs/heads/ prefix)"
+    description: "Full git ref (e.g. refs/heads/new-branch)"
   - name: sha
     type: string
     required: true
