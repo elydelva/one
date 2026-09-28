@@ -87,6 +87,37 @@ func TestCatalogEmbed_GitHubProjectV2Actions(t *testing.T) {
 	}
 }
 
+func TestCatalogEmbed_GitHubRepoDelete(t *testing.T) {
+	action, err := NewCatalogEmbed().GetAction(context.Background(), "github", "repos.delete")
+	if err != nil {
+		t.Fatalf("get repos.delete: %v", err)
+	}
+	if action.Permission != "repo.delete" {
+		t.Errorf("permission = %q, want repo.delete", action.Permission)
+	}
+	if !action.IsDestructive() {
+		t.Error("repos.delete must be destructive")
+	}
+	if action.Request == nil || action.Request.Method != "DELETE" || action.Request.Path != "/repos/{owner}/{repo}" {
+		t.Errorf("request = %+v, want DELETE /repos/{owner}/{repo}", action.Request)
+	}
+	schema, err := core.ParseInputSchema(action.InputSchema)
+	if err != nil {
+		t.Fatalf("parse input schema: %v", err)
+	}
+	for _, name := range []string{"owner", "repo"} {
+		found := false
+		for _, input := range schema.Defs {
+			if input.Name == name && input.Required && input.Location == "path" {
+				found = true
+			}
+		}
+		if !found {
+			t.Errorf("required path input %q missing from %+v", name, schema)
+		}
+	}
+}
+
 func TestCatalogEmbed_GitHubUsesDeviceOAuthForPrivateRepositories(t *testing.T) {
 	c := NewCatalogEmbed()
 	svc, err := c.GetService(context.Background(), "github")

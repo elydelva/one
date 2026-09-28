@@ -1,0 +1,20 @@
+id: repos.delete
+description: Delete a repository owned by the authenticated user
+permission: repo.delete
+side_effects: destructive
+request:
+  method: DELETE
+  path: /repos/{owner}/{repo}
+inputs:
+  - name: owner
+    type: string
+    required: true
+    location: path
+  - name: repo
+    type: string
+    required: true
+    location: path
+errors:
+  "401": {code: auth_failed}
+  "403": {code: permission_denied}
+  "404": {code: not_found}
