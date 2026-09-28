@@ -1,6 +1,6 @@
 # GitHub
 
-Use the GitHub REST API via `one github <action>`. Auth: PAT or OAuth user-flow.
+Use the GitHub REST API via `one github <action>`. Auth: PAT or OAuth Device Flow (`oauth2_device`).
 
 ## Issues
 - `issues.list`, `issues.read`, `issues.create`, `issues.update` (close via `state=closed`)

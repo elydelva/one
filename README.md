@@ -38,7 +38,7 @@ brew install one-cli/tap/one
 cd my-project
 one init                              # creates .onerc.yaml
 
-one login github                      # OAuth flow, browser
+one login github --provider oauth2_device # Device flow, browser or phone
 one login notion --as kaampus         # OAuth, alias for multi-account
 
 one scope add github "issues.*"       # globs supported

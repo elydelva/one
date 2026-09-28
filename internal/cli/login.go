@@ -1,6 +1,8 @@
 package cli
 
 import (
+	"fmt"
+
 	"github.com/spf13/cobra"
 
 	"elydelva/one/internal/app"
@@ -14,15 +16,19 @@ func newLoginCommand(uc *app.Login) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			alias, _ := cmd.Flags().GetString("as")
 			provider, _ := cmd.Flags().GetString("provider")
-			return uc.Run(cmd.Context(), app.LoginInput{
+			if err := uc.Run(cmd.Context(), app.LoginInput{
 				Service:  args[0],
 				Account:  alias,
 				Provider: parseProviderKind(provider),
-			})
+			}); err != nil {
+				return err
+			}
+			fmt.Fprintf(cmd.ErrOrStderr(), "Signed in to %s as %s.\n", args[0], alias)
+			return nil
 		},
 	}
 	cmd.Flags().StringP("as", "a", "default", "account alias")
-	cmd.Flags().String("provider", "pat", "auth provider (pat, api_key)")
+	cmd.Flags().String("provider", "pat", "auth provider (pat, oauth2_device, api_key)")
 	return cmd
 }
 

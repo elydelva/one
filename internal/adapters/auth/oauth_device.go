@@ -46,8 +46,11 @@ func (p *OAuthDeviceProvider) Login(ctx context.Context, svc core.ServiceID, ali
 	if err != nil {
 		return core.Credential{}, err
 	}
-	if cfg.ClientID == "" || cfg.DeviceEndpoint == "" || cfg.TokenEndpoint == "" {
-		return core.Credential{}, fmt.Errorf("oauth2_device: missing client_id/device_endpoint/token_endpoint for %s", svc)
+	if cfg.ClientID == "" {
+		return core.Credential{}, fmt.Errorf("oauth2_device: missing client_id in catalog config for %s", svc)
+	}
+	if cfg.DeviceEndpoint == "" || cfg.TokenEndpoint == "" {
+		return core.Credential{}, fmt.Errorf("oauth2_device: missing device_endpoint/token_endpoint for %s", svc)
 	}
 	dev, err := p.requestDeviceCode(ctx, cfg)
 	if err != nil {
@@ -56,15 +59,18 @@ func (p *OAuthDeviceProvider) Login(ctx context.Context, svc core.ServiceID, ali
 	if dev.Interval <= 0 {
 		dev.Interval = 5
 	}
-	fmt.Fprintf(os.Stderr, "Visit %s and enter code: %s\n", dev.VerificationURI, dev.UserCode)
+	expiresIn := time.Duration(dev.ExpiresIn) * time.Second
+	if expiresIn <= 0 {
+		expiresIn = 15 * time.Minute
+	}
+	writeDeviceInstructions(os.Stderr, dev.VerificationURI, dev.UserCode, expiresIn)
 	if dev.VerificationURIComplete != "" {
 		_ = openBrowser(dev.VerificationURIComplete)
+	} else {
+		_ = openBrowser(dev.VerificationURI)
 	}
 
-	deadline := p.clock.Now().Add(time.Duration(dev.ExpiresIn) * time.Second)
-	if dev.ExpiresIn <= 0 {
-		deadline = p.clock.Now().Add(15 * time.Minute)
-	}
+	deadline := p.clock.Now().Add(expiresIn)
 	interval := time.Duration(dev.Interval) * time.Second
 
 	for {
@@ -99,6 +105,11 @@ func (p *OAuthDeviceProvider) Login(ctx context.Context, svc core.ServiceID, ali
 			return core.Credential{}, fmt.Errorf("oauth2_device: %s", errCode)
 		}
 	}
+}
+
+func writeDeviceInstructions(out io.Writer, verificationURI, userCode string, expiresIn time.Duration) {
+	fmt.Fprintf(out, "Authorization required\n\n1. Open %s\n2. Enter code: %s\n\nWaiting for authorization (code expires in %s)...\n",
+		verificationURI, userCode, expiresIn.Round(time.Second))
 }
 
 func (p *OAuthDeviceProvider) Refresh(ctx context.Context, cred core.Credential) (core.Credential, error) {

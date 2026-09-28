@@ -113,15 +113,24 @@ Open this URL to continue:
 
 ### `oauth2_device`
 
-For contexts without a browser (headless SSH, remote terminals). RFC 8628.
+For CLI contexts, including headless terminals. GitHub One CLI uses this flow
+so users only share the public client ID; no client secret is distributed.
+GitHub's OAuth app must have Device Flow enabled. Configure the public client
+ID in the embedded GitHub catalog.
 
 ```yaml
-oauth:
-  type: oauth2_device
-  device_authorization_url: https://github.com/login/device/code
-  token_url: https://github.com/login/oauth/access_token
-  client_id: "{env.ONE_GITHUB_CLIENT_ID}"
-  scopes: [repo, read:org]
+auth:
+  providers: [oauth2_device]
+  injection:
+    oauth2_device:
+      header: Authorization
+      format: "Bearer {access_token}"
+  config:
+    oauth2_device:
+      client_id: Ov23ligEslOs680eGllp
+      device_endpoint: https://github.com/login/device/code
+      token_endpoint: https://github.com/login/oauth/access_token
+      scopes: [repo]
 ```
 
 Flow:
@@ -322,6 +331,11 @@ Structure in the keychain:
 - **Service name** (keychain field): `one`
 - **Account name** (keychain field): `<service>:<account_alias>` (e.g. `github:work`)
 - **Password**: serialized JSON of `Credential`
+- **Account index**: a separate keychain entry per service containing only the saved aliases, so `one accounts <service>` can list accounts without exposing credentials.
+
+The keychain cannot enumerate older entries. One discovers a legacy `default`
+account automatically; re-login once for a legacy named account to add it to the
+index.
 
 ### Source 3: age-encrypted file
 
@@ -430,39 +444,26 @@ Total vault override. Use only in CI.
 
 ### Mechanism 4: device flow
 
-For humans on headless terminals who have access to a browser elsewhere (phone). Selected via the provider, not a dedicated flag:
+For local and headless terminal use. Selected via the provider, not a dedicated flag:
 
 ```bash
 one login github --provider oauth2_device
 ```
 
-Displays a code and a URL, the user validates on their phone.
+Opens or displays GitHub's device authorization page, prints a code, and waits
+for approval. The public client ID is embedded in the GitHub catalog.
+The `repo` scope permits access to private repositories; One's project scope
+still controls which actions the CLI will execute.
 
-## The `client_id`, a policy question
+## GitHub client ID
 
-OAuth requires a `client_id` registered with each service. Two possible options:
+The GitHub catalog contains the public client ID. The corresponding GitHub
+OAuth App must have Device Flow enabled. No client secret is used or needed for
+this flow.
 
-### Option A: official One CLI client_ids
-
-The binary ships with a hardcoded `client_id` per service. The OAuth app is called "One CLI". Simple for the user, but:
-
-- You become responsible for rate limits
-- You become responsible for the terms of use at each service
-- You must maintain the registered app at each service
-
-### Option B: BYOC (Bring Your Own client_id)
-
-The user registers their own app. The `service.yaml` documents how. The user sets an env var (`ONE_GITHUB_CLIENT_ID`) or passes `--client-id`.
-
-More friction, but no dependency on you.
-
-### Recommended hybrid
-
-For v0:
-
-- **Official apps** for: GitHub, Notion, Linear, Slack (major services, low risk)
-- **BYOC required** for: Google, Microsoft (long verification processes, friction to publish an app)
-- **Not applicable** for: Stripe, OpenAI, AWS (no OAuth)
+The configured `repo` scope grants broad access to private repositories. The
+project's One scope limits what One will execute, but it does not reduce the
+permissions of the token outside One.
 
 Document on the site:
 

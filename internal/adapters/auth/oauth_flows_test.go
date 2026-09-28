@@ -151,6 +151,38 @@ func TestOAuthDeviceProvider_HappyPath(t *testing.T) {
 	}
 }
 
+func TestOAuthDeviceProvider_MissingClientIDExplainsConfiguration(t *testing.T) {
+	cat := &stubCatalog{svc: &core.Service{
+		ID: "github",
+		AuthConfigs: map[core.ProviderKind]core.AuthConfig{
+			core.ProviderOAuthDevice: {
+				DeviceEndpoint: "https://github.com/login/device/code",
+				TokenEndpoint:  "https://github.com/login/oauth/access_token",
+			},
+		},
+	}}
+	p := NewOAuthDeviceProvider(nil, cat, fake.NewClock(time.Now()))
+	_, err := p.Login(context.Background(), "github", "default")
+	if err == nil || !strings.Contains(err.Error(), "catalog config") {
+		t.Fatalf("error = %v, want catalog configuration hint", err)
+	}
+}
+
+func TestWriteDeviceInstructions(t *testing.T) {
+	var out strings.Builder
+	writeDeviceInstructions(&out, "https://github.com/login/device", "ABCD-EFGH", time.Minute)
+	for _, want := range []string{
+		"Authorization required",
+		"https://github.com/login/device",
+		"ABCD-EFGH",
+		"Waiting for authorization",
+	} {
+		if !strings.Contains(out.String(), want) {
+			t.Errorf("instructions %q do not include %q", out.String(), want)
+		}
+	}
+}
+
 func TestTokenPasteProvider_ValidationRejects401(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Header.Get("Authorization") == "" {

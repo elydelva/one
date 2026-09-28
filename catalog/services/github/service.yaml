@@ -6,11 +6,18 @@ base_url: https://api.github.com
 auth:
   providers:
     - pat
-    - oauth2_user
+    - oauth2_device
   injection:
     pat:
       header: Authorization
       format: "Bearer {access_token}"
-    oauth2_user:
+    oauth2_device:
       header: Authorization
       format: "Bearer {access_token}"
+  config:
+    oauth2_device:
+      client_id: Ov23ligEslOs680eGllp
+      device_endpoint: https://github.com/login/device/code
+      token_endpoint: https://github.com/login/oauth/access_token
+      scopes:
+        - repo

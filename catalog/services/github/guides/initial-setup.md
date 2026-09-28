@@ -2,9 +2,10 @@
 title: GitHub — Initial Setup
 ---
 
-One CLI talks to the GitHub REST API at `https://api.github.com`. Two auth
-options are supported: a Personal Access Token (`pat`, simplest) or an OAuth
-user flow (`oauth2_user`).
+One CLI talks to the GitHub REST API at `https://api.github.com`. You can sign
+in with a Personal Access Token (`pat`) or the GitHub OAuth Device Flow
+(`oauth2_device`). The Device Flow needs a client ID from a GitHub OAuth App
+with Device Flow enabled. One's public client ID is included in the catalog.
 
 ## Option A — Personal Access Token (recommended for local use)
 
@@ -21,11 +22,12 @@ user flow (`oauth2_user`).
    one capabilities github     # confirm actions are visible
    ```
 
-## Option B — OAuth user flow
+## Option B — OAuth Device Flow
 
-Use `one login github --provider oauth2_user` if your project is configured for
-an OAuth app. This opens a browser to authorize and stores the resulting token
-in the vault.
+Run `one login github --provider oauth2_device`. One opens the GitHub device
+authorization page, displays a short code, and waits while you approve it.
+The `repo` OAuth scope supports private repositories. One stores the resulting
+credential in the local OS keychain.
 
 ## Notes
 

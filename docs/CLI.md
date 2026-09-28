@@ -142,8 +142,7 @@ Authenticates to the service. Default provider: `pat`.
 
 ```bash
 one login github                              # provider pat
-one login github --provider oauth2_user       # OAuth user-flow
-one login github --provider oauth2_device     # device flow (headless)
+one login github --provider oauth2_device     # GitHub device flow
 one login github --as perso                   # creates/overwrites the "perso" alias
 ```
 
@@ -169,6 +168,9 @@ one accounts github
 ```
 
 Output: one `<service>:<alias>` line per account, or `no accounts`.
+New logins and imports are indexed in the OS keychain. Existing `default`
+credentials are discovered automatically; re-login once for a previously saved
+non-default alias that was created before account indexing was added.
 
 #### `one rotate <service> <account>`
 
@@ -485,6 +487,7 @@ one stripe customers.create --email ...
 |---|---|
 | `~/.one/catalog/` | Local FS catalog (override via `ONE_CATALOG_ROOT`) |
 | `~/.one/locks/<service>:<alias>.lock` | Refresh file locks (gofrs/flock, 10s timeout) |
+| `~/.one/locks/vault-index.lock` | Serializes updates to the keychain account index |
 | `~/.one/vault.age` | Age vault (if the age layer is enabled) |
 | `~/.one/cache/wasm/` | Cache of compiled WASM modules |
 
