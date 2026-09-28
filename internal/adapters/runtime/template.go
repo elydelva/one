@@ -17,6 +17,8 @@ import (
 //   - json    : json.Marshal(value) — yields a JSON literal (quoted strings,
 //     escaped specials, booleans/numbers/objects unquoted). Use this
 //     to safely embed values inside JSON body templates.
+//   - path    : a relative, slash-separated path. Each segment is URL-escaped,
+//     while safe directory separators are retained.
 //
 // urlEscape applies after filtering. With urlEscape=true, the substituted
 // string must not contain `..` or `/` (anti path-traversal).
@@ -45,6 +47,7 @@ func Interpolate(tpl string, vars map[string]any, urlEscape bool) (string, error
 			return "", fmt.Errorf("unresolved placeholder {%s}", name)
 		}
 		var s string
+		pathValue := false
 		switch filter {
 		case "":
 			s = fmt.Sprint(val)
@@ -54,19 +57,45 @@ func Interpolate(tpl string, vars map[string]any, urlEscape bool) (string, error
 				return "", fmt.Errorf("placeholder {%s|json}: %w", name, err)
 			}
 			s = string(b)
+		case "path":
+			s = fmt.Sprint(val)
+			pathValue = true
 		default:
 			return "", fmt.Errorf("placeholder {%s}: unknown filter %q", name, filter)
 		}
 		if urlEscape {
-			if strings.Contains(s, "..") || strings.Contains(s, "/") {
+			switch {
+			case pathValue:
+				var err error
+				s, err = escapeNestedPath(s)
+				if err != nil {
+					return "", fmt.Errorf("placeholder {%s|path}: %w", name, err)
+				}
+			case strings.Contains(s, "..") || strings.Contains(s, "/"):
 				return "", fmt.Errorf("placeholder {%s} value %q would introduce path traversal", name, s)
+			default:
+				s = url.PathEscape(s)
 			}
-			s = url.PathEscape(s)
 		}
 		sb.WriteString(s)
 		i = end + 1
 	}
 	return sb.String(), nil
+}
+
+func escapeNestedPath(value string) (string, error) {
+	if value == "" || strings.HasPrefix(value, "/") || strings.Contains(value, `\`) {
+		return "", fmt.Errorf("must be a non-empty relative path using slash separators")
+	}
+	segments := strings.Split(value, "/")
+	for i, segment := range segments {
+		decoded, err := url.PathUnescape(segment)
+		if err != nil || decoded == "" || decoded == "." || decoded == ".." || strings.ContainsAny(decoded, `/\\`) {
+			return "", fmt.Errorf("unsafe path segment %q", segment)
+		}
+		segments[i] = url.PathEscape(segment)
+	}
+	return strings.Join(segments, "/"), nil
 }
 
 // findPlaceholderEnd returns the index of the closing `}` for a placeholder

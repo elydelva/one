@@ -34,6 +34,26 @@ func TestInterpolate_PathTraversalBlocked(t *testing.T) {
 	}
 }
 
+func TestInterpolate_SafeNestedPath(t *testing.T) {
+	out, err := Interpolate("/repos/x/y/contents/{path|path}", map[string]any{"path": ".github/workflows/one-smoke.yml"}, true)
+	if err != nil {
+		t.Fatalf("safe nested path was rejected: %v", err)
+	}
+	if out != "/repos/x/y/contents/.github/workflows/one-smoke.yml" {
+		t.Errorf("path = %q", out)
+	}
+}
+
+func TestInterpolate_NestedPathTraversalBlocked(t *testing.T) {
+	for _, value := range []string{"../secret", "safe/../secret", "safe/%2e%2e/secret", "/absolute/path", `safe\\..\\secret`} {
+		t.Run(value, func(t *testing.T) {
+			if _, err := Interpolate("/files/{path|path}", map[string]any{"path": value}, true); err == nil {
+				t.Errorf("expected traversal rejection for %q", value)
+			}
+		})
+	}
+}
+
 func TestInterpolate_EscapesSpecialChars(t *testing.T) {
 	out, _ := Interpolate("/q/{q}", map[string]any{"q": "a b&c"}, true)
 	if !strings.Contains(out, "%20") {
