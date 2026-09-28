@@ -6,7 +6,7 @@ The [full-access example](../../../examples/github-full-access/.onerc.yaml) gran
 
 After adding scopes to the GitHub OAuth app request, existing OAuth accounts must authorize again with `one login github --provider oauth2_device --as <alias>`. PATs remain available for users who prefer a token with GitHub-managed repository selection.
 
-Run an action with `one --account <alias> github <action> ...`. Destructive actions require interactive confirmation, or `--confirm` in non-TTY runs.
+Run an action with `one github <action> ... --account <alias>`. Destructive actions require interactive confirmation, or `--confirm` in non-TTY runs.
 
 ## Issues
 - `issues.list`, `issues.read`, `issues.create`, `issues.update` (close via `state=closed`)

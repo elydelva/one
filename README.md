@@ -59,6 +59,8 @@ one github issues.create \
   --body "Detailed description"
 ```
 
+Select a non-default account with `--account <alias>` after the action name and inputs, for example `one github issues.list --owner me --repo myrepo --account work`.
+
 To enable every currently catalogued GitHub action—including Projects v2,
 gists, workflows, and repository deletion—start from the
 [GitHub full-access scope example](./examples/github-full-access/.onerc.yaml).
