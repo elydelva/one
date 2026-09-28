@@ -118,6 +118,29 @@ func TestCatalogEmbed_GitHubRepoDelete(t *testing.T) {
 	}
 }
 
+func TestCatalogEmbed_GitHubGistDelete(t *testing.T) {
+	action, err := NewCatalogEmbed().GetAction(context.Background(), "github", "gists.delete")
+	if err != nil {
+		t.Fatalf("get gists.delete: %v", err)
+	}
+	if action.Permission != "gist.write" {
+		t.Errorf("permission = %q, want gist.write", action.Permission)
+	}
+	if !action.IsDestructive() {
+		t.Error("gists.delete must be destructive")
+	}
+	if action.Request == nil || action.Request.Method != "DELETE" || action.Request.Path != "/gists/{gist_id}" {
+		t.Errorf("request = %+v, want DELETE /gists/{gist_id}", action.Request)
+	}
+	schema, err := core.ParseInputSchema(action.InputSchema)
+	if err != nil {
+		t.Fatalf("parse input schema: %v", err)
+	}
+	if len(schema.Defs) != 1 || schema.Defs[0].Name != "gist_id" || !schema.Defs[0].Required || schema.Defs[0].Location != "path" {
+		t.Errorf("inputs = %+v, want required gist_id path input", schema.Defs)
+	}
+}
+
 func TestCatalogEmbed_GitHubUsesDeviceOAuthForPrivateRepositories(t *testing.T) {
 	c := NewCatalogEmbed()
 	svc, err := c.GetService(context.Background(), "github")

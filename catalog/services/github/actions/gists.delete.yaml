@@ -1,0 +1,16 @@
+id: gists.delete
+description: Delete a gist owned by the authenticated user
+permission: gist.write
+side_effects: destructive
+request:
+  method: DELETE
+  path: /gists/{gist_id}
+inputs:
+  - name: gist_id
+    type: string
+    required: true
+    location: path
+errors:
+  "401": {code: auth_failed}
+  "403": {code: permission_denied}
+  "404": {code: not_found}

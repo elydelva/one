@@ -33,7 +33,9 @@ Use the GitHub REST API via `one github <action>`. Auth: PAT or OAuth Device Flo
 ## Releases + users + gists
 - `releases.list`, `releases.create`, `releases.update`
 - `users.read`, `users.repos`
-- `gists.create`, `gists.list`, `gists.update`
+- `gists.create`, `gists.list`, `gists.update`, `gists.delete`
+
+`gists.delete` and other destructive actions require `--confirm` when run without an interactive terminal.
 
 ## Workflows
 - `actions.workflow_runs.list`, `actions.workflow.dispatch`
