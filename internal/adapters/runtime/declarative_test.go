@@ -72,6 +72,36 @@ func TestDeclarative_GetHappyPath(t *testing.T) {
 	}
 }
 
+func TestDeclarative_ReturnsErrorForDeclaredResponseErrors(t *testing.T) {
+	rt, _, svc := newDeclWithFakeAPI(t, []fakeapi.Route{
+		{Method: "POST", Path: "/graphql", Status: 200, Body: map[string]any{
+			"data":   nil,
+			"errors": []any{map[string]any{"message": "Resource not accessible by integration"}},
+		}},
+	})
+	act := core.Action{
+		ID: "projects.read", Service: svc.ID,
+		Request: &core.RequestSpec{
+			Method: "POST", Path: "/graphql", Body: `{"query":"query { viewer { id } }"}`,
+			ResponseErrorsKey: "errors",
+		},
+	}
+
+	result, err := rt.Execute(context.Background(), ports.ExecuteRequest{
+		Action: act, Credential: core.Credential{Provider: core.ProviderPAT, AccessToken: core.NewSecret("test-token")},
+	})
+	var apiErr core.ErrAPIError
+	if !errors.As(err, &apiErr) {
+		t.Fatalf("execute error = %T %v, want core.ErrAPIError", err, err)
+	}
+	if apiErr.Status != http.StatusOK || !strings.Contains(apiErr.Body, "Resource not accessible by integration") {
+		t.Errorf("API error = %+v, want HTTP 200 GraphQL error details", apiErr)
+	}
+	if len(result.Calls) != 1 || result.Calls[0].Status != http.StatusOK {
+		t.Errorf("calls = %+v, want one recorded HTTP 200 call", result.Calls)
+	}
+}
+
 func TestDeclarative_AuthHeaderInjected(t *testing.T) {
 	rt, srv, svc := newDeclWithFakeAPI(t, []fakeapi.Route{
 		{Method: "GET", Path: "/repos/x/y/issues/1", Status: 200, Body: map[string]any{"ok": true}},

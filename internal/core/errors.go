@@ -171,7 +171,8 @@ func (e ErrRateLimited) Error() string {
 	return fmt.Sprintf("rate limited by %s", e.Service)
 }
 
-// ErrAPIError is returned for HTTP 5xx and any unmapped >= 400 status.
+// ErrAPIError is returned for upstream API failures, including HTTP errors and
+// successful HTTP responses that declare an API error envelope.
 type ErrAPIError struct {
 	Service ServiceID
 	Status  int

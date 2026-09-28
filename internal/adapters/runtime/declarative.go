@@ -96,6 +96,28 @@ func (r *DeclarativeRuntime) executeOnce(ctx context.Context, svc *core.Service,
 	if err != nil {
 		return ports.ExecuteResult{Calls: []ports.HTTPCall{call}}, err
 	}
+	if key := req.Action.Request.ResponseErrorsKey; key != "" {
+		var envelope map[string]json.RawMessage
+		if err := json.Unmarshal(body, &envelope); err != nil {
+			return ports.ExecuteResult{Calls: []ports.HTTPCall{call}}, core.ErrAPIError{
+				Service: req.Action.Service, Status: resp.StatusCode, Body: string(body),
+			}
+		}
+		if rawErrors, ok := envelope[key]; ok {
+			var apiErrors []json.RawMessage
+			if err := json.Unmarshal(rawErrors, &apiErrors); err != nil {
+				if string(rawErrors) != "null" {
+					return ports.ExecuteResult{Calls: []ports.HTTPCall{call}}, core.ErrAPIError{
+						Service: req.Action.Service, Status: resp.StatusCode, Body: string(rawErrors),
+					}
+				}
+			} else if len(apiErrors) > 0 {
+				return ports.ExecuteResult{Calls: []ports.HTTPCall{call}}, core.ErrAPIError{
+					Service: req.Action.Service, Status: resp.StatusCode, Body: string(rawErrors),
+				}
+			}
+		}
+	}
 	return ports.ExecuteResult{Output: body, Calls: []ports.HTTPCall{call}}, nil
 }
 

@@ -2,6 +2,7 @@ package catalog
 
 import (
 	"context"
+	"os"
 	"path/filepath"
 	"runtime"
 	"testing"
@@ -16,6 +17,29 @@ func fixtureRoot(t *testing.T) string {
 	t.Helper()
 	_, thisFile, _, _ := runtime.Caller(0)
 	return filepath.Join(filepath.Dir(thisFile), "..", "..", "testing", "fixture", "catalog", "v1-minimal")
+}
+
+func TestCatalogFS_MapsResponseErrorsKey(t *testing.T) {
+	root := t.TempDir()
+	actionsDir := filepath.Join(root, "github", "actions")
+	if err := os.MkdirAll(actionsDir, 0o755); err != nil {
+		t.Fatalf("mkdir actions: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(root, "github", "service.yaml"), []byte("version: 1\nid: github\nname: GitHub\nbase_url: https://api.github.com\n"), 0o644); err != nil {
+		t.Fatalf("write service: %v", err)
+	}
+	actionYAML := "id: projects.read\ndescription: Read a project\npermission: projects.read\nrequest:\n  method: POST\n  path: /graphql\n  response_errors_key: errors\n"
+	if err := os.WriteFile(filepath.Join(actionsDir, "projects.read.yaml"), []byte(actionYAML), 0o644); err != nil {
+		t.Fatalf("write action: %v", err)
+	}
+
+	action, err := NewCatalogFS(root).GetAction(context.Background(), "github", "projects.read")
+	if err != nil {
+		t.Fatalf("get action: %v", err)
+	}
+	if action.Request == nil || action.Request.ResponseErrorsKey != "errors" {
+		t.Fatalf("response errors key = %+v, want errors", action.Request)
+	}
 }
 
 func TestCatalogFS_Contract(t *testing.T) {
