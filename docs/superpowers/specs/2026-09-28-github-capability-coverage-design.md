@@ -26,20 +26,30 @@ the Projects permissions added here. Keep `allow` entries explicit so readers
 can remove capabilities they do not want. Document that OAuth scopes and One
 permissions are separate controls.
 
+Add a destructive `repos.delete` action under a separate `repo.delete`
+permission so One can clean up the disposable test repository without treating
+repository deletion as an ordinary write. Deletion of repositories requires
+the explicit GitHub OAuth `delete_repo` scope; make this elevated account-wide
+capability clear in the setup guide and full-access example.
+
 Add focused Projects v2 actions over GitHub's GraphQL endpoint: list and read
 the authenticated user's projects, create a user-owned project, add an
 existing issue or pull request, and delete a project for lifecycle cleanup.
+Also support updating a project's title.
 Use a dedicated One permission pair `projects.read` / `projects.write` so a
 project can grant read access without granting mutations. Keep GraphQL
 operation text fixed in catalog actions and expose only typed variables as
 inputs; do not expose an arbitrary query input that bypasses One's action
 allowlist.
 
-Expand GitHub Device Flow scopes to `repo`, `project`, `gist`, and `workflow`
-to cover private repository access, Projects v2, gists, and workflow dispatch.
-Existing OAuth accounts do not gain scopes automatically; users must authorize
-the updated request again. PAT login remains supported, and GitHub's token
-permissions still depend on the token type and its grants.
+Expand GitHub Device Flow scopes to `repo`, `project`, `gist`, `workflow`, and
+`delete_repo` to cover private repository access, Projects v2, gists, workflow
+dispatch, and repository deletion. `delete_repo` allows the OAuth token to
+delete any repository the user can administer, even when a particular One
+project does not allow `repo.delete`. Existing OAuth accounts do not gain
+scopes automatically; users must authorize the updated request again. PAT
+login remains supported, and GitHub's token permissions still depend on the
+token type and its grants.
 
 ## Verification
 
@@ -50,7 +60,8 @@ denials and successful action routing.
 
 Run a live, opt-in manual matrix through One using a dedicated OAuth alias and
 a randomly named private repository. Exercise representative reads and writes
-for all 11 existing permission groups, plus Projects v2 create/read/add/delete.
+for all 11 existing permission groups, plus `repo.delete` and Projects v2
+create/read/update/add/delete.
 Create only disposable issues, branches, pull requests, a gist, and a minimal
 workflow as needed to exercise operations. Delete standalone resources
 explicitly and delete the test repository last; verify cleanup. Never use `gh`
