@@ -118,7 +118,51 @@ func (r *DeclarativeRuntime) executeOnce(ctx context.Context, svc *core.Service,
 			}
 		}
 	}
+	if len(req.Action.Request.ResponseRedactedFields) > 0 {
+		redacted, err := redactResponseFields(body, req.Action.Request.ResponseRedactedFields)
+		if err != nil {
+			return ports.ExecuteResult{Calls: []ports.HTTPCall{call}}, core.ErrAPIError{
+				Service: req.Action.Service, Status: resp.StatusCode, Body: "response redaction failed: invalid JSON",
+			}
+		}
+		body = redacted
+	}
 	return ports.ExecuteResult{Output: body, Calls: []ports.HTTPCall{call}}, nil
+}
+
+func redactResponseFields(body []byte, fields []string) ([]byte, error) {
+	var value any
+	if err := json.Unmarshal(body, &value); err != nil {
+		return nil, err
+	}
+	redactJSONValue(value, fields)
+	return json.Marshal(value)
+}
+
+func redactJSONValue(value any, fields []string) {
+	switch object := value.(type) {
+	case map[string]any:
+		for key, child := range object {
+			if containsField(fields, key) {
+				object[key] = "[REDACTED]"
+				continue
+			}
+			redactJSONValue(child, fields)
+		}
+	case []any:
+		for _, child := range object {
+			redactJSONValue(child, fields)
+		}
+	}
+}
+
+func containsField(fields []string, key string) bool {
+	for _, field := range fields {
+		if field == key {
+			return true
+		}
+	}
+	return false
 }
 
 // buildRequest constructs the *http.Request from the action spec + inputs +

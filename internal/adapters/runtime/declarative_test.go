@@ -102,6 +102,38 @@ func TestDeclarative_ReturnsErrorForDeclaredResponseErrors(t *testing.T) {
 	}
 }
 
+func TestDeclarative_RedactsConfiguredResponseFields(t *testing.T) {
+	rt, _, svc := newDeclWithFakeAPI(t, []fakeapi.Route{
+		{Method: "GET", Path: "/repos/x/y", Status: 200, Body: map[string]any{
+			"name": "y", "temp_clone_token": "sensitive-test-value",
+			"nested": map[string]any{"temp_clone_token": "sensitive-nested-value"},
+		}},
+	})
+	act := core.Action{
+		ID: "repos.read", Service: svc.ID,
+		Request:     &core.RequestSpec{Method: "GET", Path: "/repos/{owner}/{repo}", ResponseRedactedFields: []string{"temp_clone_token"}},
+		InputSchema: json.RawMessage(`[{"name":"owner","type":"string","required":true,"location":"path"},{"name":"repo","type":"string","required":true,"location":"path"}]`),
+	}
+	result, err := rt.Execute(context.Background(), ports.ExecuteRequest{
+		Action: act, Inputs: core.Inputs{"owner": "x", "repo": "y"},
+		Credential: core.Credential{Provider: core.ProviderPAT, AccessToken: core.NewSecret("test-token")},
+	})
+	if err != nil {
+		t.Fatalf("execute: %v", err)
+	}
+	var got map[string]any
+	if err := json.Unmarshal(result.Output, &got); err != nil {
+		t.Fatalf("output is not JSON: %v", err)
+	}
+	if got["temp_clone_token"] != "[REDACTED]" {
+		t.Errorf("top-level token = %#v, want redacted", got["temp_clone_token"])
+	}
+	nested := got["nested"].(map[string]any)
+	if nested["temp_clone_token"] != "[REDACTED]" {
+		t.Errorf("nested token = %#v, want redacted", nested["temp_clone_token"])
+	}
+}
+
 func TestDeclarative_GraphQLVariablesAreJSONEscaped(t *testing.T) {
 	rt, srv, _ := newDeclWithFakeAPI(t, []fakeapi.Route{
 		{Method: "POST", Path: "/graphql", Status: 200, Body: map[string]any{

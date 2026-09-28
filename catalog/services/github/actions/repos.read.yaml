@@ -5,6 +5,7 @@ side_effects: read
 request:
   method: GET
   path: /repos/{owner}/{repo}
+  response_redacted_fields: [temp_clone_token]
 inputs:
   - name: owner
     type: string

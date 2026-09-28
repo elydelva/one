@@ -236,11 +236,12 @@ func toCoreAction(svcID core.ServiceID, def pkgcatalog.ActionDef) (core.Action, 
 	}
 	if def.Request != nil {
 		out.Request = &core.RequestSpec{
-			Method:            strings.ToUpper(def.Request.Method),
-			Path:              def.Request.Path,
-			Headers:           def.Request.Headers,
-			Body:              def.Request.Body,
-			ResponseErrorsKey: def.Request.ResponseErrorsKey,
+			Method:                 strings.ToUpper(def.Request.Method),
+			Path:                   def.Request.Path,
+			Headers:                def.Request.Headers,
+			Body:                   def.Request.Body,
+			ResponseErrorsKey:      def.Request.ResponseErrorsKey,
+			ResponseRedactedFields: def.Request.ResponseRedactedFields,
 		}
 	}
 	if def.Pagination != nil {

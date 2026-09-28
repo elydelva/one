@@ -27,11 +27,12 @@ type HandlerRef struct {
 
 // RequestSpec is the HTTP template for a declarative action.
 type RequestSpec struct {
-	Method            string            // GET, POST, PUT, PATCH, DELETE
-	Path              string            // supports {var} interpolation
-	Headers           map[string]string // values support interpolation
-	Body              string            // "$inputs" → JSON of body-located inputs; "{tpl}" → interpolated; "" → no body
-	ResponseErrorsKey string            // non-empty response envelope errors indicate API failure
+	Method                 string            // GET, POST, PUT, PATCH, DELETE
+	Path                   string            // supports {var} interpolation
+	Headers                map[string]string // values support interpolation
+	Body                   string            // "$inputs" → JSON of body-located inputs; "{tpl}" → interpolated; "" → no body
+	ResponseErrorsKey      string            // non-empty response envelope errors indicate API failure
+	ResponseRedactedFields []string          // JSON object keys replaced with [REDACTED] recursively
 }
 
 // PaginationSpec declares cursor pagination behavior for an action.

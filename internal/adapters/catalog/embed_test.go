@@ -118,6 +118,16 @@ func TestCatalogEmbed_GitHubRepoDelete(t *testing.T) {
 	}
 }
 
+func TestCatalogEmbed_GitHubRepoReadRedactsTemporaryCloneToken(t *testing.T) {
+	action, err := NewCatalogEmbed().GetAction(context.Background(), "github", "repos.read")
+	if err != nil {
+		t.Fatalf("get repos.read: %v", err)
+	}
+	if action.Request == nil || len(action.Request.ResponseRedactedFields) != 1 || action.Request.ResponseRedactedFields[0] != "temp_clone_token" {
+		t.Errorf("redacted fields = %+v, want temp_clone_token", action.Request)
+	}
+}
+
 func TestCatalogEmbed_GitHubGistDelete(t *testing.T) {
 	action, err := NewCatalogEmbed().GetAction(context.Background(), "github", "gists.delete")
 	if err != nil {

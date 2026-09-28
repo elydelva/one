@@ -56,10 +56,11 @@ type ActionDef struct {
 
 // RequestDef declares the HTTP request shape for declarative actions.
 type RequestDef struct {
-	Method            string            `yaml:"method" json:"method"` // GET, POST, PUT, PATCH, DELETE
-	Path              string            `yaml:"path" json:"path"`     // supports {var} interpolation
-	Headers           map[string]string `yaml:"headers,omitempty" json:"headers,omitempty"`
-	ResponseErrorsKey string            `yaml:"response_errors_key,omitempty" json:"response_errors_key,omitempty"`
+	Method                 string            `yaml:"method" json:"method"` // GET, POST, PUT, PATCH, DELETE
+	Path                   string            `yaml:"path" json:"path"`     // supports {var} interpolation
+	Headers                map[string]string `yaml:"headers,omitempty" json:"headers,omitempty"`
+	ResponseErrorsKey      string            `yaml:"response_errors_key,omitempty" json:"response_errors_key,omitempty"`
+	ResponseRedactedFields []string          `yaml:"response_redacted_fields,omitempty" json:"response_redacted_fields,omitempty"`
 	// Body can be:
 	//   - "$inputs"            → marshal all body-located inputs as JSON
 	//   - "{template}"         → interpolated string
